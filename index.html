@@ -8,31 +8,11 @@
     <link rel="manifest" href="manifest.json">
     <style>
         :root {
-            --ink: #0b1220;
-            --ink-2: #131d33;
-            --ink-3: #1e2a45;
-            --brand: #059669;
-            --brand-dark: #047857;
-            --brand-soft: #e6f6ef;
-            --accent: #f59e0b;
-            --accent-soft: #fef3c7;
-            --blue: #2563eb;
-            --blue-soft: #e8efff;
-            --danger: #dc2626;
-            --danger-soft: #fdecec;
-            --warning: #d97706;
-            --bg: #f3f5f8;
-            --surface: #ffffff;
-            --text: #0f172a;
-            --muted: #64748b;
-            --line: #e6eaf0;
-            --shadow-sm: 0 1px 2px rgba(15, 23, 42, .06);
-            --shadow-md: 0 6px 20px -6px rgba(15, 23, 42, .12);
-            --shadow-lg: 0 24px 48px -12px rgba(15, 23, 42, .35);
-            --radius: 16px;
-            --radius-sm: 10px;
-            --safe-b: env(safe-area-inset-bottom, 0px);
-            --safe-t: env(safe-area-inset-top, 0px);
+            --ink: #0b1220; --ink-2: #131d33; --ink-3: #1e2a45; --brand: #059669; --brand-dark: #047857; --brand-soft: #e6f6ef;
+            --accent: #f59e0b; --accent-soft: #fef3c7; --blue: #2563eb; --blue-soft: #e8efff; --danger: #dc2626; --danger-soft: #fdecec;
+            --warning: #d97706; --bg: #f3f5f8; --surface: #ffffff; --text: #0f172a; --muted: #64748b; --line: #e6eaf0;
+            --shadow-sm: 0 1px 2px rgba(15, 23, 42, .06); --shadow-md: 0 6px 20px -6px rgba(15, 23, 42, .12); --shadow-lg: 0 24px 48px -12px rgba(15, 23, 42, .35);
+            --radius: 16px; --radius-sm: 10px; --safe-b: env(safe-area-inset-bottom, 0px); --safe-t: env(safe-area-inset-top, 0px);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -43,10 +23,7 @@
         .view.active { display: flex; }
 
         /* ---------- Login ---------- */
-        #login-view { justify-content: center; align-items: center; padding: 24px; background:
-            radial-gradient(900px 400px at 85% -10%, rgba(5,150,105,.35), transparent 60%),
-            radial-gradient(700px 400px at -10% 110%, rgba(245,158,11,.18), transparent 60%),
-            var(--ink); color: #fff; }
+        #login-view { justify-content: center; align-items: center; padding: 24px; background: radial-gradient(900px 400px at 85% -10%, rgba(5,150,105,.35), transparent 60%), radial-gradient(700px 400px at -10% 110%, rgba(245,158,11,.18), transparent 60%), var(--ink); color: #fff; }
         .login-card { width: 100%; max-width: 340px; text-align: center; }
         .brand-mark { width: 68px; height: 68px; border-radius: 20px; margin: 0 auto 20px; display: grid; place-items: center; font-weight: 800; font-size: 24px; letter-spacing: -1px; color: #fff; background: linear-gradient(135deg, var(--brand) 0%, #10b981 100%); box-shadow: 0 12px 32px -8px rgba(16,185,129,.55); }
         .login-card h1 { font-size: 26px; font-weight: 800; letter-spacing: -.6px; }
@@ -86,7 +63,6 @@
         .back-link svg { width: 16px; height: 16px; }
         .section-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; margin: 24px 0 12px; }
         .section-title svg { width: 18px; height: 18px; color: var(--muted); }
-
         .card { background: var(--surface); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--line); }
         .card h3 { margin-bottom: 14px; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
         .card h3 svg { width: 18px; height: 18px; color: var(--brand); }
@@ -193,6 +169,24 @@
         .modal-content h3 { margin-bottom: 18px; font-size: 18px; font-weight: 800; letter-spacing: -.3px; }
         @keyframes sheet { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 
+        /* Custom Dialogs (Alert/Confirm) */
+        .dialog-overlay { display: none; position: fixed; inset: 0; background: rgba(11,18,32,.7); z-index: 1000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+        .dialog-overlay.active { display: flex; }
+        .dialog-box { background: #fff; border-radius: 20px; padding: 24px; width: 100%; max-width: 340px; text-align: center; box-shadow: var(--shadow-lg); animation: pop .2s ease; }
+        @keyframes pop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .dialog-box h3 { font-size: 18px; font-weight: 800; margin-bottom: 12px; }
+        .dialog-box p { font-size: 14px; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
+        .dialog-actions { display: flex; gap: 12px; }
+        .dialog-actions .btn { margin-top: 0; padding: 12px; font-size: 14px; }
+        
+        /* Toast Notifications */
+        #toast-container { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 350px; pointer-events: none; }
+        .toast { background: var(--ink); color: #fff; padding: 14px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; box-shadow: var(--shadow-md); display: flex; align-items: center; gap: 10px; animation: slideUpToast 0.3s ease, fadeOut 0.3s ease 2.7s forwards; }
+        .toast.err { background: var(--danger); }
+        .toast.success { background: var(--brand); }
+        @keyframes slideUpToast { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
+
         @media (min-width: 700px) {
             main { max-width: 640px; width: 100%; margin: 0 auto; }
             .modal { align-items: center; } .modal-content { border-radius: 24px; }
@@ -244,10 +238,25 @@
         <nav id="bottom-nav"></nav>
     </div>
 
-    <!-- MODAL -->
+    <!-- MODAL (Bottom Sheet for Forms) -->
     <div id="modal" class="modal" onclick="if(event.target===this)closeModal()">
         <div class="modal-content" id="modal-body"></div>
     </div>
+
+    <!-- DIALOG MODAL (For Alerts/Confirms) -->
+    <div id="dialog-overlay" class="dialog-overlay">
+        <div class="dialog-box">
+            <h3 id="dialog-title">Title</h3>
+            <p id="dialog-msg">Message</p>
+            <div class="dialog-actions" id="dialog-btns">
+                <button class="btn btn-outline" onclick="closeDialog()">Cancel</button>
+                <button class="btn btn-primary" id="dialog-confirm-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container"></div>
 
 <script>
     // --- Icons ---
@@ -274,7 +283,8 @@
         cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>',
         arrowIn: '<path d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14"/>',
         arrowOut: '<path d="M12 20V8m0 0l-4 4m4-4l4 4M5 4h14"/>',
-        box: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5"/>'
+        box: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5"/>',
+        check: '<path d="M5 13l4 4L19 7"/>'
     };
     function ico(name, cls) { return `<svg class="ic ${cls||''}" viewBox="0 0 24 24">${ICONS[name]||''}</svg>`; }
 
@@ -282,14 +292,11 @@
     const i18n = {
         en: { 
             home: "Home", sales: "Sales", debts: "Debts", expenses: "Expenses", production: "Production", dashboard: "Dashboard",
-            newSale: "New Sale", recentSales: "Recent Sales", customer: "Customer Name", date: "Date",
-            phone: "Phone Number", size: "Block Size", qty: "Quantity", price: "Price per Block (₦)", 
-            delivery: "Delivery Charge (₦)", paid: "Amount Paid (₦)", save: "Save Sale", 
-            receipt: "Receipt", remind: "Remind on WhatsApp", pay: "Record Payment", 
+            newSale: "New Sale", customer: "Customer Name", date: "Date", phone: "Phone Number", size: "Block Size", qty: "Quantity", price: "Price per Block (₦)", 
+            delivery: "Delivery Charge (₦)", paid: "Amount Paid (₦)", save: "Save Sale", receipt: "Receipt", remind: "Remind on WhatsApp", pay: "Record Payment", 
             amount: "Amount (₦)", balance: "Balance Owing", total: "Total Amount",
             newExpense: "New Expense", category: "Category", note: "Note", saveExpense: "Save Expense",
-            wages: "Wages", repairs: "Machine Repairs", generator_fuel: "Generator Fuel", 
-            rent: "Rent", transport: "Transport", loaders: "Loaders", phone_data: "Phone/Data", other: "Other",
+            wages: "Wages", repairs: "Machine Repairs", generator_fuel: "Generator Fuel", rent: "Rent", transport: "Transport", loaders: "Loaders", phone_data: "Phone/Data", other: "Other",
             newBatch: "Log Production Batch", worker: "Worker Name", blocksProduced: "Blocks Produced",
             cementBags: "Cement Bags Used", costPerBag: "Cost per Bag (₦)", sandCost: "Sand Cost (₦)", sandQty: "Sand Qty (Trips)",
             fuelCost: "Fuel/Diesel Cost (₦)", fuelQty: "Fuel Qty (Litres)", otherCost: "Water/Other Cost (₦)", breakages: "Breakages (Qty)",
@@ -313,14 +320,11 @@
         },
         ha: { 
             home: "Gida", sales: "Tallace", debts: "Bashi", expenses: "Kashe-kashe", production: "Samarwa", dashboard: "Dashboard",
-            newSale: "Sabuwar Sayarwa", recentSales: "Kwanan nan", customer: "Sunan Abokin Ciniki", date: "Kwanan Wata",
-            phone: "Lambar Waya", size: "Girman Bulo", qty: "Yawa", price: "Farashin Bulo (₦)", 
-            delivery: "Kudin Jigila (₦)", paid: "Kudin da aka Biya (₦)", save: "Ajiye", 
-            receipt: "Rasit", remind: "Tuna a WhatsApp", pay: "Yi Biyan Bashi", 
+            newSale: "Sabuwar Sayarwa", customer: "Sunan Abokin Ciniki", date: "Kwanan Wata", phone: "Lambar Waya", size: "Girman Bulo", qty: "Yawa", price: "Farashin Bulo (₦)", 
+            delivery: "Kudin Jigila (₦)", paid: "Kudin da aka Biya (₦)", save: "Ajiye", receipt: "Rasit", remind: "Tuna a WhatsApp", pay: "Yi Biyan Bashi", 
             amount: "Kudi (₦)", balance: "Sauran Bashi", total: "Jimillar Kudi",
             newExpense: "Sabbin Kashe-kashe", category: "Rukuni", note: "Bayani", saveExpense: "Ajiye Kashewa",
-            wages: "Albashi", repairs: "Gyaran Injin", generator_fuel: "Man Fetur", 
-            rent: "Kudin Gida", transport: "Jigila", loaders: "Loda", phone_data: "Waya/Data", other: "Sauran",
+            wages: "Albashi", repairs: "Gyaran Injin", generator_fuel: "Man Fetur", rent: "Kudin Gida", transport: "Jigila", loaders: "Loda", phone_data: "Waya/Data", other: "Sauran",
             newBatch: "Ajiye Yawan Bulo", worker: "Sunan Ma'aikaci", blocksProduced: "Yawan Bulo",
             cementBags: "Buhun Siminti", costPerBag: "Kudin Buhu (₦)", sandCost: "Kudin Yashi (₦)", sandQty: "Yawan Yashi",
             fuelCost: "Kudin Man Fetur (₦)", fuelQty: "Yawan Man Fetur", otherCost: "Kudin Ruwa/Sauran (₦)", breakages: "Karye",
@@ -335,7 +339,7 @@
             lowStock: "KARANCIN KAYA", varianceWarning: "GARGAJIYA: Bambanci tsakanin lissafi da kidaya!",
             expected: "Wanda ake tsammani", physicalCount: "Kidaya ta Hannu", stockCheck: "Duba Ajiya",
             plReport: "Rahoton Riba da Asara", month: "Wata", revenue: "Kudin Shiga", cogs: "Kudin Kayan Sayarwa",
-            exportCSV: "Fitar da CSV", exportJSON: "Ajiye JSON", importJSON: "Dawo da JSON",
+            exportCSV: "Fitar da CSV", exportJSON: "Ajiye Backup", importJSON: "Dawo da JSON",
             clearData: "Goge Duk Bayanai", confirmClear: "Shigar da PIN na Mai Gida don goge DUK bayanai:", wrongPin: "PIN ba daidai ba",
             profitMargins: "Ribar Kowane Bulo", logBreakage: "Yi Rikodin Karye", breakageReason: "Dalili/Bayani",
             salesHistory: "Tarihin Sayarwa", noSalesYet: "Babu wata sayarwa da aka yi.", broken: "Ya karye",
@@ -369,22 +373,56 @@
     function formatNaira(num) { return '₦' + Number(num).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2}); }
     function backBtn(to) { return `<button class="back-link" onclick="nav('${to}')">${ico('back')} ${i18n[settings.lang][to] || 'Back'}</button>`; }
 
+    // --- UI Helpers (Toasts and Custom Dialogs) ---
+    function showToast(msg, type = 'default') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        let icon = type === 'success' ? ico('check') : (type === 'err' ? ico('alert') : ico('update'));
+        toast.innerHTML = `${icon} <span>${msg}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => { toast.remove(); }, 3000);
+    }
+
+    let dialogCallback = null;
+    function showDialog(title, msg, onConfirm, isPrompt = false) {
+        document.getElementById('dialog-title').textContent = title;
+        
+        if (isPrompt) {
+            document.getElementById('dialog-msg').innerHTML = `<input type="password" id="dialog-input" class="form-group input" style="width:100%; padding:12px; border:1.5px solid var(--line); border-radius:8px; font-size:16px; text-align:center; margin-top:10px;" placeholder="••••">`;
+            setTimeout(() => document.getElementById('dialog-input').focus(), 100);
+        } else {
+            document.getElementById('dialog-msg').innerHTML = msg;
+        }
+
+        const confirmBtn = document.getElementById('dialog-confirm-btn');
+        // Clone button to remove old event listeners
+        const newBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+        
+        newBtn.onclick = () => {
+            let val = isPrompt ? document.getElementById('dialog-input').value : true;
+            closeDialog();
+            if (onConfirm) onConfirm(val);
+        };
+
+        document.getElementById('dialog-overlay').classList.add('active');
+    }
+    function closeDialog() {
+        document.getElementById('dialog-overlay').classList.remove('active');
+    }
+
     // --- Clear Cache / Update ---
-    async function forceUpdate() {
-        if (confirm("CLEAR APP CACHE?\n\nThis only downloads new app updates.\nYOUR STOCK, SALES, AND DEBTS WILL NOT BE DELETED.\n\nContinue?")) {
+    function forceUpdate() {
+        showDialog("Clear App Cache?", "This only downloads new app updates. YOUR STOCK, SALES, AND DEBTS WILL NOT BE DELETED.", async () => {
             if ('serviceWorker' in navigator) {
                 const registrations = await navigator.serviceWorker.getRegistrations();
-                for (let registration of registrations) {
-                    await registration.unregister();
-                }
+                for (let registration of registrations) { await registration.unregister(); }
             }
             const keys = await caches.keys();
-            for (let key of keys) {
-                await caches.delete(key);
-            }
-            alert("Cache cleared! The app will now reload and download the latest version.");
-            window.location.reload(true);
-        }
+            for (let key of keys) { await caches.delete(key); }
+            location.reload(true);
+        });
     }
 
     // --- Auth & Navigation ---
@@ -401,10 +439,7 @@
 
     function restoreSession() {
         const savedUser = localStorage.getItem('asad:auth');
-        if (savedUser) {
-            currentUser = savedUser;
-            loadApp();
-        }
+        if (savedUser) { currentUser = savedUser; loadApp(); }
     }
 
     function loadApp() {
@@ -507,26 +542,23 @@
         saveData('settings', settings);
         closeModal();
         
-        if (langChanged) {
-            buildNav();
-            nav(currentView);
-        } else {
-            nav(currentView);
-        }
+        if (langChanged) { buildNav(); }
+        nav(currentView);
+        showToast('Settings saved successfully', 'success');
     }
 
     function clearAllData() {
         const t = i18n[settings.lang];
-        const pin = prompt(t.confirmClear);
-        if (pin === settings.ownerPin) {
-            if (confirm("WARNING: This will permanently delete all sales, expenses, and production data. Are you sure?")) {
-                localStorage.clear();
-                alert("All data cleared. The app will now reload.");
-                location.reload();
+        showDialog("Enter Owner PIN", t.confirmClear, (pin) => {
+            if (pin === settings.ownerPin) {
+                showDialog("WARNING!", "This will permanently delete all sales, expenses, and production data. Are you sure?", () => {
+                    localStorage.clear();
+                    location.reload();
+                });
+            } else if (pin !== null) {
+                showToast(t.wrongPin, 'err');
             }
-        } else if (pin !== null) {
-            alert(t.wrongPin);
-        }
+        }, true);
     }
 
     // --- Views ---
@@ -780,6 +812,7 @@
         delete stockCounts[size];
         saveData('stockCounts', stockCounts);
         nav('inventory');
+        showToast('System adjusted to match physical count', 'success');
     }
 
     function openBreakage(size) {
@@ -802,11 +835,12 @@
 
     function saveBreakage(size) {
         const qty = parseInt(document.getElementById('break-qty').value) || 0;
-        if (qty <= 0) return alert('Enter valid quantity');
+        if (qty <= 0) return showToast('Enter valid quantity', 'err');
         breakagesLog.push({ id: Date.now().toString(), date: new Date().toISOString().split('T')[0], size: size, blocks: qty, reason: document.getElementById('break-reason').value || 'Unknown' });
         saveData('breakages', breakagesLog);
         closeModal();
         nav('inventory');
+        showToast('Breakage logged', 'success');
     }
 
     function openPurchase() {
@@ -839,12 +873,13 @@
         const qty = parseFloat(document.getElementById('pur-qty').value) || 0;
         const cost = parseFloat(document.getElementById('pur-cost').value) || 0;
         const paid = parseFloat(document.getElementById('pur-paid').value) || 0;
-        if (qty <= 0) return alert('Enter valid quantity');
+        if (qty <= 0) return showToast('Enter valid quantity', 'err');
         
         purchases.push({ id: Date.now().toString(), date: new Date().toISOString().split('T')[0], supplierName: document.getElementById('pur-supplier').value || 'Unknown', material: document.getElementById('pur-mat').value, qty: qty, cost: cost, amountPaid: paid });
         saveData('purchases', purchases);
         closeModal();
         nav('inventory');
+        showToast('Purchase logged successfully', 'success');
     }
 
     function openStockCheck(size, expected) {
@@ -865,7 +900,7 @@
     function verifyStock(size, expected) {
         const counted = parseInt(document.getElementById('check-count').value) || 0;
         if (counted === expected) {
-            alert('Stock matches perfectly!');
+            showToast('Stock matches perfectly!', 'success');
             delete stockCounts[size];
             saveData('stockCounts', stockCounts);
         } else {
@@ -898,7 +933,7 @@
             <div class="card">
                 <h3>${ico('update')} Backup & Restore</h3>
                 <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">Save your data to a file or restore from a previous backup.</p>
-                <button class="btn btn-blue" style="margin-top:0;" onclick="exportJSON()">${t.exportJSON}</button>
+                <button class="btn btn-blue" style="margin-top:0;" onclick="exportJSON()">📤 ${t.exportJSON}</button>
                 <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
                 <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">${t.importJSON}</button>
             </div>
@@ -941,6 +976,7 @@
         const a = document.createElement('a');
         a.href = url; a.download = `AsadTech_Report_${new Date().toISOString().split('T')[0]}.csv`;
         a.click();
+        showToast('CSV Exported', 'success');
     }
 
     async function exportJSON() {
@@ -950,16 +986,24 @@
             if (key.startsWith('asad:')) data[key] = JSON.parse(localStorage.getItem(key));
         }
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const filename = \`AsadTech_Backup_\${new Date().toISOString().split('T')[0]}.json\`;
+        const filename = `AsadTech_Backup_${new Date().toISOString().split('T')[0]}.json`;
         const file = new File([blob], filename, { type: 'application/json' });
+
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            try { await navigator.share({ files: [file], title: 'Business Backup', text: 'Here is the backup file.' }); } catch (e) { console.log(e); }
+            try {
+                await navigator.share({ files: [file], title: 'Business Backup', text: 'Here is the backup file.' });
+                showToast('Backup shared successfully', 'success');
+            } catch (e) { 
+                console.log(e);
+                showToast('Share cancelled', 'err');
+            }
         } else {
+            // Fallback to download
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url; a.download = filename; a.click();
             window.URL.revokeObjectURL(url);
-            alert('Sharing not supported. File downloaded instead.');
+            showToast('Backup downloaded to phone', 'success');
         }
     }
 
@@ -972,10 +1016,10 @@
                 const data = JSON.parse(e.target.result);
                 if (!data['asad:settings']) throw new Error('Invalid backup file');
                 Object.keys(data).forEach(key => { localStorage.setItem(key, JSON.stringify(data[key])); });
-                alert('Data restored successfully! The app will now reload.');
-                location.reload();
+                showToast('Data restored successfully! Reloading...', 'success');
+                setTimeout(() => location.reload(), 1500);
             } catch (err) {
-                alert('Invalid JSON file: ' + err.message);
+                showToast('Invalid JSON file: ' + err.message, 'err');
             }
         };
         reader.readAsText(file);
@@ -1051,6 +1095,8 @@
         const paid = parseInt(document.getElementById('s-paid').value) || 0;
         const saleDate = document.getElementById('s-date').value || new Date().toISOString().split('T')[0];
         
+        if(qty <= 0) return showToast('Enter valid quantity', 'err');
+
         const total = (qty * price) + delivery;
         const balance = total - paid;
         const sale = { id: Date.now().toString(), date: saleDate, customerName: document.getElementById('s-customer').value || 'Walk-in', customerPhone: document.getElementById('s-phone').value, size: document.getElementById('s-size').value, quantity: qty, pricePerBlock: price, deliveryCharge: delivery, totalAmount: total, amountPaidAtSale: paid, balanceOwing: balance };
@@ -1136,7 +1182,7 @@
     }
     function saveBatch() {
         const blocks = parseInt(document.getElementById('p-blocks').value) || 0;
-        if (blocks <= 0) return alert('Enter valid number of blocks produced');
+        if (blocks <= 0) return showToast('Enter valid number of blocks', 'err');
         const cb = (parseFloat(document.getElementById('p-cement-bags').value) || 0) * (parseFloat(document.getElementById('p-cement-cost').value) || 0);
         const sc = parseFloat(document.getElementById('p-sand-cost').value) || 0;
         const fc = parseFloat(document.getElementById('p-fuel-cost').value) || 0;
@@ -1144,8 +1190,9 @@
         const totalCost = cb + sc + fc + oc;
         const batch = { id: Date.now().toString(), date: document.getElementById('p-date').value, size: document.getElementById('p-size').value, worker: document.getElementById('p-worker').value || 'Unknown', blocksProduced: blocks, breakages: parseInt(document.getElementById('p-breakages').value) || 0, curingLoss: parseInt(document.getElementById('p-curing-loss').value) || 0, cementBags: parseFloat(document.getElementById('p-cement-bags').value) || 0, sandQty: parseFloat(document.getElementById('p-sand-qty').value) || 0, fuelQty: parseFloat(document.getElementById('p-fuel-qty').value) || 0, totalCost: totalCost, costPerBlock: totalCost / blocks, status: 'curing' };
         batches.push(batch); saveData('batches', batches); nav('production');
+        showToast('Production batch saved', 'success');
     }
-    function markReady(id) { const b = batches.find(x => x.id === id); if (b) { b.status = 'ready'; saveData('batches', batches); nav('production'); } }
+    function markReady(id) { const b = batches.find(x => x.id === id); if (b) { b.status = 'ready'; saveData('batches', batches); nav('production'); showToast('Batch marked ready', 'success'); } }
 
     function renderExpenses(main) { 
         const t = i18n[settings.lang]; const today = new Date().toISOString().split('T')[0];
@@ -1166,9 +1213,10 @@
     }
     function saveExpense() {
         const amount = parseInt(document.getElementById('e-amount').value) || 0;
-        if (amount <= 0) return alert('Enter valid amount');
+        if (amount <= 0) return showToast('Enter valid amount', 'err');
         const exp = { id: Date.now().toString(), date: document.getElementById('e-date').value, category: document.getElementById('e-category').value, amount: amount, note: document.getElementById('e-note').value };
         expenses.push(exp); saveData('expenses', expenses); nav('expenses');
+        showToast('Expense logged', 'success');
     }
 
     // --- Debts Module ---
@@ -1236,13 +1284,14 @@
     }
     function recordPayment(saleId) {
         const amount = parseInt(document.getElementById('pay-amount').value) || 0;
-        if (amount <= 0) return alert('Enter valid amount');
+        if (amount <= 0) return showToast('Enter valid amount', 'err');
         const sale = sales.find(s => s.id === saleId);
         if (!sale) return;
         sale.balanceOwing -= amount;
         if (sale.balanceOwing < 0) sale.balanceOwing = 0;
         payments.push({ id: Date.now().toString(), saleId: saleId, amount: amount, date: new Date().toISOString().split('T')[0] });
         saveData('sales', sales); saveData('customerPayments', payments); closeModal(); nav('debts');
+        showToast('Payment recorded', 'success');
     }
 
     function openSupplierPayment(purchaseId) {
@@ -1252,7 +1301,7 @@
     }
     function recordSupplierPayment(purchaseId) {
         const amount = parseInt(document.getElementById('pay-supp-amount').value) || 0;
-        if (amount <= 0) return alert('Enter valid amount');
+        if (amount <= 0) return showToast('Enter valid amount', 'err');
         const pur = purchases.find(p => p.id === purchaseId);
         if (!pur) return;
         
@@ -1262,6 +1311,7 @@
         saveData('purchases', purchases); 
         closeModal(); 
         nav('debts');
+        showToast('Supplier payment recorded', 'success');
     }
     
     function closeModal() { document.getElementById('modal').classList.remove('active'); }

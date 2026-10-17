@@ -212,6 +212,19 @@
         </div>
     </div>
 
+    
+    <div id="setup-view" class="view">
+        <div class="login-card">
+            <div class="brand-mark">AJ</div>
+            <h1>Setup Account</h1>
+            <div class="sub">Create your business profile</div>
+            <input type="text" id="setup-biz" class="pin-input" style="font-size:16px; letter-spacing:normal; text-indent:0;" placeholder="Business Name">
+            <input type="password" id="setup-owner" class="pin-input" maxlength="4" placeholder="Owner PIN (4 digits)">
+            <input type="password" id="setup-staff" class="pin-input" maxlength="4" placeholder="Staff PIN (4 digits)">
+            <button class="btn-primary" onclick="createAccount()">Create Account</button>
+        </div>
+    </div>
+
     <div id="app-view" class="view">
         <header>
             <div class="hdr-brand">
@@ -394,7 +407,36 @@
         });
     }
 
-    // --- Auth & Navigation ---
+    
+    function checkFirstTime() {
+        if (!localStorage.getItem('asad:settings')) {
+            document.getElementById('login-view').classList.remove('active');
+            document.getElementById('setup-view').classList.add('active');
+        } else {
+            restoreSession();
+        }
+    }
+
+    function createAccount() {
+        const biz = document.getElementById('setup-biz').value || 'My Business';
+        const ownerPin = document.getElementById('setup-owner').value;
+        const staffPin = document.getElementById('setup-staff').value;
+        
+        if (ownerPin.length !== 4 || staffPin.length !== 4) {
+            return showToast('PINs must be exactly 4 digits', 'err');
+        }
+        
+        settings.businessName = biz;
+        settings.ownerPin = ownerPin;
+        settings.staffPin = staffPin;
+        saveData('settings', settings);
+        
+        showToast('Account created successfully!', 'success');
+        document.getElementById('setup-view').classList.remove('active');
+        document.getElementById('login-view').classList.add('active');
+    }
+
+// --- Auth & Navigation ---
     function login() {
         const pin = document.getElementById('pin-input').value;
         const err = document.getElementById('login-error');
@@ -490,7 +532,14 @@
                 <div class="form-group"><label>${t.sand}</label><input type="number" id="set-low-sand" value="${settings.lowSand}"></div>
                 <div class="form-group"><label>${t.fuel}</label><input type="number" id="set-low-fuel" value="${settings.lowFuel}"></div>
             </div>
+            
+            <div class="eyebrow">Security</div>
+            <div class="row">
+                <div class="form-group"><label>Owner PIN</label><input type="password" id="set-owner-pin" maxlength="4" value="${settings.ownerPin}"></div>
+                <div class="form-group"><label>Staff PIN</label><input type="password" id="set-staff-pin" maxlength="4" value="${settings.staffPin}"></div>
+            </div>
             <button class="btn" onclick="saveSettings()">${t.saveSettings}</button>
+
             <button class="btn btn-outline" style="margin-top:10px;" onclick="closeModal()">Cancel</button>
             <button class="btn btn-danger" style="margin-top:22px;" onclick="clearAllData()">${t.clearData}</button>
         `;
@@ -502,6 +551,9 @@
         const langChanged = newLang !== settings.lang;
         
         settings.lang = newLang;
+        settings.ownerPin = document.getElementById('set-owner-pin').value || settings.ownerPin;
+        settings.staffPin = document.getElementById('set-staff-pin').value || settings.staffPin;
+
         settings.marginAlertPct = parseFloat(document.getElementById('set-margin').value) || 0;
         settings.fixedCostsMonthly = parseFloat(document.getElementById('set-fixed').value) || 0;
         settings.lowCement = parseFloat(document.getElementById('set-low-cement').value) || 0;
@@ -1311,7 +1363,7 @@
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed', err));
     }
-    restoreSession();
+    checkFirstTime();
 </script>
 </body>
 </html>

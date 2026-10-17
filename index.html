@@ -903,7 +903,7 @@
                 <h3>${ico('update')} Backup & Restore</h3>
                 <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">Save your data to a file or restore from a previous backup.</p>
                 <button class="btn btn-blue" style="margin-top:0;" onclick="exportJSON()">📤 ${t.exportJSON}</button>
-                <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
+                <input type="file" id="import-file" accept=".json,.txt" style="display:none;" onchange="importJSON(event)">
                 <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">${t.importJSON}</button>
             </div>
         `;

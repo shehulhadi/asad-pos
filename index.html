@@ -213,32 +213,6 @@
     </div>
 
     
-    <div id="setup-view" class="view">
-        <div class="login-card">
-            <div style="text-align: center; margin-bottom: 24px;">
-                <div class="brand-mark">AJ</div>
-                <h1>Setup Account</h1>
-                <div class="sub">Create your business profile</div>
-            </div>
-            
-            <div class="form-group">
-                <label>Business Name</label>
-                <input type="text" id="setup-biz" placeholder="e.g. A. Jibrialla Construction">
-            </div>
-            <div class="row">
-                <div class="form-group">
-                    <label>Owner PIN (4 digits)</label>
-                    <input type="password" id="setup-owner" maxlength="4" placeholder="••••">
-                </div>
-                <div class="form-group">
-                    <label>Staff PIN (4 digits)</label>
-                    <input type="password" id="setup-staff" maxlength="4" placeholder="••••">
-                </div>
-            </div>
-            <button class="btn-primary" onclick="createAccount()" style="margin-top: 10px;">Create Account</button>
-        </div>
-    </div>
-
     <div id="app-view" class="view">
         <header>
             <div class="hdr-brand">
@@ -422,34 +396,9 @@
     }
 
     
-    function checkFirstTime() {
-        if (!localStorage.getItem('asad:settings')) {
-            document.getElementById('login-view').classList.remove('active');
-            document.getElementById('setup-view').classList.add('active');
-        } else {
-            restoreSession();
-        }
-    }
 
-    function createAccount() {
-        const biz = document.getElementById('setup-biz').value || 'My Business';
-        const ownerPin = document.getElementById('setup-owner').value;
-        const staffPin = document.getElementById('setup-staff').value;
-        
-        if (ownerPin.length !== 4 || staffPin.length !== 4) {
-            return showToast('PINs must be exactly 4 digits', 'err');
-        }
-        
-        settings.businessName = biz;
-        settings.ownerPin = ownerPin;
-        settings.staffPin = staffPin;
-        saveData('settings', settings);
-        
-        showToast('Account created successfully! Please login.', 'success');
-        document.getElementById('setup-view').classList.remove('active');
-        document.getElementById('login-view').classList.add('active');
-        document.getElementById('pin-input').focus();
-    }
+
+
 
 // --- Auth & Navigation ---
     function login() {
@@ -1378,7 +1327,7 @@
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed', err));
     }
-    checkFirstTime();
+    restoreSession();
 </script>
 </body>
 </html>

@@ -215,13 +215,26 @@
     
     <div id="setup-view" class="view">
         <div class="login-card">
-            <div class="brand-mark">AJ</div>
-            <h1>Setup Account</h1>
-            <div class="sub">Create your business profile</div>
-            <input type="text" id="setup-biz" class="pin-input" style="font-size:16px; letter-spacing:normal; text-indent:0;" placeholder="Business Name">
-            <input type="password" id="setup-owner" class="pin-input" maxlength="4" placeholder="Owner PIN (4 digits)">
-            <input type="password" id="setup-staff" class="pin-input" maxlength="4" placeholder="Staff PIN (4 digits)">
-            <button class="btn-primary" onclick="createAccount()">Create Account</button>
+            <div style="text-align: center;">
+                <div class="brand-mark">AJ</div>
+                <h1>Setup Account</h1>
+                <div class="sub">Create your business profile</div>
+            </div>
+            <div class="form-group">
+                <label>Business Name</label>
+                <input type="text" id="setup-biz" placeholder="e.g. A. Jibrialla Construction">
+            </div>
+            <div class="row">
+                <div class="form-group">
+                    <label>Owner PIN (4 digits)</label>
+                    <input type="password" id="setup-owner" maxlength="4" placeholder="••••">
+                </div>
+                <div class="form-group">
+                    <label>Staff PIN (4 digits)</label>
+                    <input type="password" id="setup-staff" maxlength="4" placeholder="••••">
+                </div>
+            </div>
+            <button class="btn-primary" onclick="createAccount()" style="margin-top: 10px;">Create Account</button>
         </div>
     </div>
 
@@ -431,9 +444,10 @@
         settings.staffPin = staffPin;
         saveData('settings', settings);
         
-        showToast('Account created successfully!', 'success');
+        showToast('Account created successfully! Please login.', 'success');
         document.getElementById('setup-view').classList.remove('active');
         document.getElementById('login-view').classList.add('active');
+        document.getElementById('pin-input').focus();
     }
 
 // --- Auth & Navigation ---

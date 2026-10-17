@@ -901,7 +901,7 @@
 
             <div class="card">
                 <h3>${ico('update')} Backup & Restore</h3>
-                <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">Save your data to a file or restore from a previous backup.</p>
+                <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">Save your data to a file or restore from a previous backup.<br><br><strong style="color:var(--warning);">Recommendation:</strong> Always save your backup to Google Drive, WhatsApp, or email. If you lose this phone, this file is the <strong>only</strong> way to recover your data.</p>
                 <button class="btn btn-blue" style="margin-top:0;" onclick="exportJSON()">📤 ${t.exportJSON}</button>
                 <input type="file" id="import-file" accept=".json,.txt" style="display:none;" onchange="importJSON(event)">
                 <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">${t.importJSON}</button>

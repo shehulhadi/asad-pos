@@ -14,7 +14,6 @@
             --shadow-sm: 0 1px 2px rgba(15, 23, 42, .06); --shadow-md: 0 6px 20px -6px rgba(15, 23, 42, .12); --shadow-lg: 0 24px 48px -12px rgba(15, 23, 42, .35);
             --radius: 16px; --radius-sm: 10px; --safe-b: env(safe-area-inset-bottom, 0px); --safe-t: env(safe-area-inset-top, 0px);
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
         html { -webkit-text-size-adjust: 100%; }
         body { background: var(--bg); color: var(--text); height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; line-height: 1.45; font-size: 15px; }
@@ -22,7 +21,7 @@
         .view { display: none; flex: 1; flex-direction: column; min-height: 0; }
         .view.active { display: flex; }
 
-        /* ---------- Login ---------- */
+        /* Login */
         #login-view { justify-content: center; align-items: center; padding: 24px; background: radial-gradient(900px 400px at 85% -10%, rgba(5,150,105,.35), transparent 60%), radial-gradient(700px 400px at -10% 110%, rgba(245,158,11,.18), transparent 60%), var(--ink); color: #fff; }
         .login-card { width: 100%; max-width: 340px; text-align: center; }
         .brand-mark { width: 68px; height: 68px; border-radius: 20px; margin: 0 auto 20px; display: grid; place-items: center; font-weight: 800; font-size: 24px; letter-spacing: -1px; color: #fff; background: linear-gradient(135deg, var(--brand) 0%, #10b981 100%); box-shadow: 0 12px 32px -8px rgba(16,185,129,.55); }
@@ -35,7 +34,7 @@
         .btn-primary:active { transform: scale(.98); }
         #login-error { color: #fca5a5; margin-top: 16px; display: none; font-weight: 600; font-size: 14px; }
 
-        /* ---------- Shell ---------- */
+        /* Shell */
         header { background: var(--ink); color: #fff; padding: calc(12px + var(--safe-t)) 16px 12px; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
         .hdr-brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
         .hdr-brand .brand-mark { width: 38px; height: 38px; border-radius: 11px; margin: 0; font-size: 14px; box-shadow: none; }
@@ -56,7 +55,7 @@
         .nav-btn.active { color: var(--brand-dark); }
         .nav-btn.active .pill { background: var(--brand-soft); }
 
-        /* ---------- Page elements ---------- */
+        /* Elements */
         .page-title { font-size: 22px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 4px; }
         .page-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
         .back-link { display: inline-flex; align-items: center; gap: 4px; background: none; border: none; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 10px; padding: 4px 0; }
@@ -136,7 +135,6 @@
         .stat .dot.b { background: var(--blue-soft); color: var(--blue); }
         .stat h4 { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .4px; line-height: 1.2; }
         .stat .val { font-size: 18px; font-weight: 800; letter-spacing: -.5px; }
-
         .periods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
         .periods > div { background: #f8fafc; border: 1px solid var(--line); border-radius: 12px; padding: 10px 8px; text-align: center; }
         .periods small { display: block; font-size: 10px; color: var(--muted); text-transform: uppercase; font-weight: 700; letter-spacing: .5px; }
@@ -151,7 +149,6 @@
         .breakeven { background: linear-gradient(135deg, var(--ink) 0%, var(--ink-3) 100%); color: #fff; border: none; }
         .breakeven h3, .breakeven h3 svg { color: #fff; }
         .pos { color: var(--brand-dark); } .neg { color: var(--danger); }
-
         .stock-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; text-align: center; }
         .stock-tile { padding: 12px 6px; border-radius: 12px; border: 1px solid #bfe8d6; background: var(--brand-soft); }
         .stock-tile.low { background: var(--danger-soft); border-color: #f7bcbc; }
@@ -169,7 +166,7 @@
         .modal-content h3 { margin-bottom: 18px; font-size: 18px; font-weight: 800; letter-spacing: -.3px; }
         @keyframes sheet { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 
-        /* Custom Dialogs (Alert/Confirm) */
+        /* Custom Dialogs */
         .dialog-overlay { display: none; position: fixed; inset: 0; background: rgba(11,18,32,.7); z-index: 1000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
         .dialog-overlay.active { display: flex; }
         .dialog-box { background: #fff; border-radius: 20px; padding: 24px; width: 100%; max-width: 340px; text-align: center; box-shadow: var(--shadow-lg); animation: pop .2s ease; }
@@ -178,8 +175,8 @@
         .dialog-box p { font-size: 14px; color: var(--muted); margin-bottom: 24px; line-height: 1.5; }
         .dialog-actions { display: flex; gap: 12px; }
         .dialog-actions .btn { margin-top: 0; padding: 12px; font-size: 14px; }
-        
-        /* Toast Notifications */
+
+        /* Toasts */
         #toast-container { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 350px; pointer-events: none; }
         .toast { background: var(--ink); color: #fff; padding: 14px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; box-shadow: var(--shadow-md); display: flex; align-items: center; gap: 10px; animation: slideUpToast 0.3s ease, fadeOut 0.3s ease 2.7s forwards; }
         .toast.err { background: var(--danger); }
@@ -192,7 +189,6 @@
             .modal { align-items: center; } .modal-content { border-radius: 24px; }
             .modal-content::before { display: none; }
         }
-
         @media print {
             nav, header, .btn, .actions, .icon-btn, .modal-content > button, .back-link, .quick { display: none !important; }
             body { height: auto; overflow: visible; background: #fff; }
@@ -205,7 +201,6 @@
 </head>
 <body>
 
-    <!-- LOGIN VIEW -->
     <div id="login-view" class="view active">
         <div class="login-card">
             <div class="brand-mark">AJ</div>
@@ -217,7 +212,6 @@
         </div>
     </div>
 
-    <!-- APP VIEW -->
     <div id="app-view" class="view">
         <header>
             <div class="hdr-brand">
@@ -238,57 +232,40 @@
         <nav id="bottom-nav"></nav>
     </div>
 
-    <!-- MODAL (Bottom Sheet for Forms) -->
     <div id="modal" class="modal" onclick="if(event.target===this)closeModal()">
         <div class="modal-content" id="modal-body"></div>
     </div>
 
-    <!-- DIALOG MODAL (For Alerts/Confirms) -->
+    <!-- Custom Dialogs & Toasts -->
     <div id="dialog-overlay" class="dialog-overlay">
         <div class="dialog-box">
             <h3 id="dialog-title">Title</h3>
             <p id="dialog-msg">Message</p>
-            <div class="dialog-actions" id="dialog-btns">
+            <div class="dialog-actions">
                 <button class="btn btn-outline" onclick="closeDialog()">Cancel</button>
                 <button class="btn btn-primary" id="dialog-confirm-btn">Confirm</button>
             </div>
         </div>
     </div>
-
-    <!-- TOAST CONTAINER -->
     <div id="toast-container"></div>
 
 <script>
-    // --- Icons ---
     const ICONS = {
-        dashboard: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
-        home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+        dashboard: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>', home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
         sales: '<circle cx="12" cy="12" r="9"/><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.5 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1 0-2-.5-2.5-1.5M12 6v2m0 8v2"/>',
-        production: '<path d="M12 3l9 5v8l-9 5-9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
-        expenses: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/>',
-        debts: '<path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11"/>',
-        settings: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
-        refresh: '<path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/>',
-        update: '<path d="M12 3v12m0 0l-4-4m4 4l4-4M4 20h16"/>',
-        logout: '<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>',
-        report: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>',
-        alert: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
+        production: '<path d="M12 3l9 5v8l-9 5-9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/>', expenses: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/>',
+        debts: '<path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11"/>', settings: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+        refresh: '<path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/>', update: '<path d="M12 3v12m0 0l-4-4m4 4l4-4M4 20h16"/>', logout: '<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>',
+        report: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/>', alert: '<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
         users: '<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5a3 3 0 010 6M21 20c0-2.5-1.5-4.6-3.5-5.5"/>',
-        target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
-        trend: '<path d="M3 17l6-6 4 4 8-8M15 7h6v6"/>',
-        bars: '<path d="M5 21V10M12 21V4M19 21v-8"/>',
-        plus: '<path d="M12 5v14M5 12h14"/>',
-        back: '<path d="M15 5l-7 7 7 7"/>',
+        target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>', trend: '<path d="M3 17l6-6 4 4 8-8M15 7h6v6"/>',
+        bars: '<path d="M5 21V10M12 21V4M19 21v-8"/>', plus: '<path d="M12 5v14M5 12h14"/>', back: '<path d="M15 5l-7 7 7 7"/>',
         trophy: '<path d="M8 4h8v5a4 4 0 01-8 0z"/><path d="M8 6H5a3 3 0 003 4M16 6h3a3 3 0 01-3 4M12 13v4M8 20h8"/>',
-        cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>',
-        arrowIn: '<path d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14"/>',
-        arrowOut: '<path d="M12 20V8m0 0l-4 4m4-4l4 4M5 4h14"/>',
-        box: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5"/>',
-        check: '<path d="M5 13l4 4L19 7"/>'
+        cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>', arrowIn: '<path d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14"/>',
+        arrowOut: '<path d="M12 20V8m0 0l-4 4m4-4l4 4M5 4h14"/>', box: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5"/>', check: '<path d="M5 13l4 4L19 7"/>'
     };
     function ico(name, cls) { return `<svg class="ic ${cls||''}" viewBox="0 0 24 24">${ICONS[name]||''}</svg>`; }
 
-    // --- Translations ---
     const i18n = {
         en: { 
             home: "Home", sales: "Sales", debts: "Debts", expenses: "Expenses", production: "Production", dashboard: "Dashboard",
@@ -311,7 +288,7 @@
             lowStock: "LOW STOCK", varianceWarning: "VARIANCE WARNING: Expected vs Counted mismatch!",
             expected: "Expected", physicalCount: "Physical Count", stockCheck: "Stock Check",
             plReport: "Profit & Loss Report", month: "Month", revenue: "Revenue", cogs: "Cost of Goods Sold",
-            exportCSV: "Export CSV", exportJSON: "Share Backup File", importJSON: "Restore JSON",
+            exportCSV: "Export CSV", exportJSON: "Share Backup", importJSON: "Restore JSON",
             clearData: "Clear All Data", confirmClear: "Enter Owner PIN to clear ALL data:", wrongPin: "Incorrect PIN",
             profitMargins: "Profit per Block", logBreakage: "Log Breakage", breakageReason: "Reason/Notes", 
             salesHistory: "Sales History", noSalesYet: "No sales recorded yet.", broken: "Broken",
@@ -348,7 +325,6 @@
         }
     };
 
-    // --- State & Storage ---
     let settings = JSON.parse(localStorage.getItem('asad:settings')) || {
         ownerPin: '1234', staffPin: '0000', lang: 'en', businessName: 'A. Jibrialla Construction Ltd.', businessPhone: '0906 634 4956',
         marginAlertPct: 20, fixedCostsMonthly: 0, lowCement: 50, lowSand: 5, lowFuel: 20
@@ -373,7 +349,7 @@
     function formatNaira(num) { return '₦' + Number(num).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2}); }
     function backBtn(to) { return `<button class="back-link" onclick="nav('${to}')">${ico('back')} ${i18n[settings.lang][to] || 'Back'}</button>`; }
 
-    // --- UI Helpers (Toasts and Custom Dialogs) ---
+    // --- UI Helpers ---
     function showToast(msg, type = 'default') {
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
@@ -384,35 +360,28 @@
         setTimeout(() => { toast.remove(); }, 3000);
     }
 
-    let dialogCallback = null;
     function showDialog(title, msg, onConfirm, isPrompt = false) {
         document.getElementById('dialog-title').textContent = title;
-        
         if (isPrompt) {
-            document.getElementById('dialog-msg').innerHTML = `<input type="password" id="dialog-input" class="form-group input" style="width:100%; padding:12px; border:1.5px solid var(--line); border-radius:8px; font-size:16px; text-align:center; margin-top:10px;" placeholder="••••">`;
+            document.getElementById('dialog-msg').innerHTML = `<input type="password" id="dialog-input" style="width:100%; padding:12px; border:1.5px solid var(--line); border-radius:8px; font-size:16px; text-align:center; margin-top:10px;" placeholder="••••">`;
             setTimeout(() => document.getElementById('dialog-input').focus(), 100);
         } else {
             document.getElementById('dialog-msg').innerHTML = msg;
         }
-
         const confirmBtn = document.getElementById('dialog-confirm-btn');
-        // Clone button to remove old event listeners
         const newBtn = confirmBtn.cloneNode(true);
         confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
-        
         newBtn.onclick = () => {
             let val = isPrompt ? document.getElementById('dialog-input').value : true;
             closeDialog();
             if (onConfirm) onConfirm(val);
         };
-
         document.getElementById('dialog-overlay').classList.add('active');
     }
-    function closeDialog() {
-        document.getElementById('dialog-overlay').classList.remove('active');
-    }
+    function closeDialog() { document.getElementById('dialog-overlay').classList.remove('active'); }
+    window.alert = (msg) => showToast(msg, 'default');
 
-    // --- Clear Cache / Update ---
+    // --- Clear Cache ---
     function forceUpdate() {
         showDialog("Clear App Cache?", "This only downloads new app updates. YOUR STOCK, SALES, AND DEBTS WILL NOT BE DELETED.", async () => {
             if ('serviceWorker' in navigator) {
@@ -998,7 +967,6 @@
                 showToast('Share cancelled', 'err');
             }
         } else {
-            // Fallback to download
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url; a.download = filename; a.click();
@@ -1316,12 +1284,9 @@
     
     function closeModal() { document.getElementById('modal').classList.remove('active'); }
 
-    // Register Service Worker for PWA
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed', err));
     }
-
-    // Restore session on load
     restoreSession();
 </script>
 </body>

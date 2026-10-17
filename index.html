@@ -952,7 +952,10 @@
         const data = {};
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key.startsWith('asad:')) data[key] = JSON.parse(localStorage.getItem(key));
+            if (key.startsWith('asad:')) {
+                try { data[key] = JSON.parse(localStorage.getItem(key)); } 
+                catch(e) { data[key] = localStorage.getItem(key); }
+            }
         }
         const jsonStr = JSON.stringify(data, null, 2);
         const filename = `AsadTech_Backup_${new Date().toISOString().split('T')[0]}.json`;

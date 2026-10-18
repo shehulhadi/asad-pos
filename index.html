@@ -593,6 +593,34 @@
         const weekRev = sales.filter(s => s.date >= weekAgo).reduce((sum, s) => sum + s.totalAmount, 0);
         const monthRev = sales.filter(s => s.date >= monthAgo).reduce((sum, s) => sum + s.totalAmount, 0);
 
+        // Month-over-Month Calculation
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        const thisMonthRev = sales.filter(s => {
+            const d = new Date(s.date);
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        }).reduce((sum, s) => sum + s.totalAmount, 0);
+
+        const lastMonthDate = new Date(currentYear, currentMonth - 1, 1);
+        const lastMonth = lastMonthDate.getMonth();
+        const lastMonthYear = lastMonthDate.getFullYear();
+        const lastMonthRev = sales.filter(s => {
+            const d = new Date(s.date);
+            return d.getMonth() === lastMonth && d.getFullYear() === lastMonthYear;
+        }).reduce((sum, s) => sum + s.totalAmount, 0);
+
+        let momChangeHtml = '';
+        if (lastMonthRev > 0) {
+            const diff = thisMonthRev - lastMonthRev;
+            const pct = (diff / lastMonthRev) * 100;
+            const isUp = diff >= 0;
+            momChangeHtml = `<div style="display:flex; align-items:center; justify-content:center; gap:4px; font-size:11px; font-weight:800; color:${isUp ? 'var(--brand-dark)' : 'var(--danger)'}; margin-top:4px;">
+                ${isUp ? '↑' : '↓'} ${Math.abs(pct).toFixed(1)}% vs last month
+            </div>`;
+        } else if (thisMonthRev > 0) {
+            momChangeHtml = `<div style="font-size:11px; font-weight:800; color:var(--brand-dark); margin-top:4px;">↑ New sales this month</div>`;
+        }
+
         let chartHtml = ''; let maxDayRev = 0; const days = [];
         for (let i = 6; i >= 0; i--) {
             const d = new Date(today.getTime() - i*24*60*60*1000);
@@ -683,7 +711,7 @@
                 <div class="periods">
                     <div><small>Today</small><strong>${formatNaira(dayRev)}</strong></div>
                     <div><small>This Week</small><strong>${formatNaira(weekRev)}</strong></div>
-                    <div><small>This Month</small><strong>${formatNaira(monthRev)}</strong></div>
+                    <div><small>This Month</small><strong>${formatNaira(monthRev)}</strong>${momChangeHtml}</div>
                 </div>
                 <div class="chart-container">${maxDayRev > 0 ? chartHtml : '<p style="font-size:13px; color:var(--muted); width:100%; text-align:center; align-self:center;">No sales data yet.</p>'}</div>
             </div>

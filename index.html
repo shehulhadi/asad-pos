@@ -389,6 +389,21 @@
     }
 
     function showDialog(title, msg, onConfirm, isPrompt = false) {
+        const overlay = document.getElementById('dialog-overlay');
+        
+        // Fallback to native browser dialogs if the HTML is missing or broken
+        if (!overlay) {
+            if (isPrompt) {
+                const val = prompt(title + "\n\n" + msg);
+                if (val !== null && onConfirm) onConfirm(val);
+            } else {
+                if (confirm(title + "\n\n" + msg)) {
+                    if (onConfirm) onConfirm(true);
+                }
+            }
+            return;
+        }
+
         document.getElementById('dialog-title').textContent = title;
         if (isPrompt) {
             document.getElementById('dialog-msg').innerHTML = `<input type="password" id="dialog-input" style="width:100%; padding:12px; border:1.5px solid var(--line); border-radius:8px; font-size:16px; text-align:center; margin-top:10px;" placeholder="••••">`;
@@ -396,15 +411,21 @@
         } else {
             document.getElementById('dialog-msg').innerHTML = msg;
         }
+        
         const confirmBtn = document.getElementById('dialog-confirm-btn');
         const newBtn = confirmBtn.cloneNode(true);
         confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+        
         newBtn.onclick = () => {
             let val = isPrompt ? document.getElementById('dialog-input').value : true;
             closeDialog();
             if (onConfirm) onConfirm(val);
         };
-        document.getElementById('dialog-overlay').classList.add('active');
+        overlay.classList.add('active');
+    }
+    function closeDialog() { 
+        const overlay = document.getElementById('dialog-overlay');
+        if(overlay) overlay.classList.remove('active'); 
     }
     function closeDialog() { document.getElementById('dialog-overlay').classList.remove('active'); }
     window.alert = (msg) => showToast(msg, 'default');
@@ -445,6 +466,7 @@
     // --- Clear Cache ---
     async function forceUpdate() {
         showDialog("Update App?", "This will download the latest version.\nYOUR STOCK, SALES, AND DEBTS WILL NOT BE DELETED.", async () => {
+            showToast('Clearing cache and updating...', 'success');
             try {
                 if ('serviceWorker' in navigator) {
                     const registrations = await navigator.serviceWorker.getRegistrations();
@@ -454,10 +476,9 @@
                 for (let key of keys) { await caches.delete(key); }
             } catch(e) { console.log('Cache clear error', e); }
             
-            showToast('Clearing cache and updating...', 'success');
             setTimeout(() => {
-                // Force a hard reload bypassing browser cache
-                window.location.href = window.location.pathname + '?v=' + Date.now();
+                // Force a hard reload bypassing all caches
+                window.location.href = window.location.href.split('?')[0] + '?v=' + Date.now();
             }, 1000);
         });
     }
@@ -1468,6 +1489,9 @@
     restoreSession();
 </script>
 
+    
+    
+
     <!-- DIALOG MODAL (For Alerts/Confirms) -->
     <div id="dialog-overlay" class="modal" style="z-index: 10000;">
         <div class="modal-content" style="text-align: center;">
@@ -1479,6 +1503,6 @@
             </div>
         </div>
     </div>
-    
+
 </body>
 </html>

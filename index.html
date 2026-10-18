@@ -1004,10 +1004,26 @@
         const paid = parseFloat(document.getElementById('pur-paid').value) || 0;
         if (qty <= 0) return showToast('Enter valid quantity', 'err');
         
-        purchases.push({ id: Date.now().toString(), date: new Date().toISOString().split('T')[0], supplierName: document.getElementById('pur-supplier').value || 'Unknown', material: document.getElementById('pur-mat').value, qty: qty, cost: cost, amountPaid: paid });
+        purchases.push({ 
+            id: Date.now().toString(), 
+            date: new Date().toISOString().split('T')[0], 
+            supplierName: document.getElementById('pur-supplier').value || 'Unknown', 
+            material: document.getElementById('pur-mat').value, 
+            qty: qty, 
+            cost: cost, 
+            amountPaid: paid 
+        });
         saveData('purchases', purchases);
         closeModal();
-        nav('inventory');
+        
+        // Smart Navigation: Stay on Debts if that's where we are, otherwise go to Inventory
+        if (currentView === 'debts') {
+            currentDebtTab = 'supplier';
+            nav('debts');
+        } else {
+            nav('inventory');
+        }
+        
         showToast('Purchase logged successfully', 'success');
     }
 

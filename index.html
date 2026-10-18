@@ -177,34 +177,52 @@
             main { max-width: 640px; width: 100%; margin: 0 auto; }
         }
         @media print {
-            /* Hide everything on the page by default */
-            body > * { display: none !important; }
+            /* Hide everything on the page */
+            body * { visibility: hidden !important; }
             
-            /* Print ONLY the modal (receipt) if a modal is active */
-            body.printing-modal #modal { display: block !important; position: static !important; background: transparent !important; padding: 0 !important; }
-            body.printing-modal #modal .modal-content { display: block !important; box-shadow: none !important; border: none !important; width: 100% !important; max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
-            
-            /* Hide buttons/actions inside the printed modal */
-            body.printing-modal #modal button, 
+            /* Make ONLY the active modal and its contents visible */
+            body.printing-modal #modal, body.printing-modal #modal * { visibility: visible !important; }
+            body.printing-modal #modal { 
+                position: absolute !important; 
+                left: 0 !important; 
+                top: 0 !important; 
+                width: 100% !important; 
+                display: block !important; 
+                background: #fff !important; 
+                backdrop-filter: none !important;
+                -webkit-backdrop-filter: none !important;
+                padding: 0 !important; 
+                margin: 0 !important; 
+            }
+            body.printing-modal #modal .modal-content { 
+                box-shadow: none !important; 
+                border: none !important; 
+                max-height: none !important; 
+                overflow: visible !important; 
+                padding: 0 !important; 
+                margin: 0 !important; 
+                width: 100% !important; 
+                max-width: 100% !important; 
+                background: #fff !important;
+                animation: none !important;
+            }
+            /* Hide buttons in the printed modal */
             body.printing-modal #modal .actions, 
-            body.printing-modal #modal .row,
-            body.printing-modal #modal a { display: none !important; }
-            
-            /* Print ONLY the main content (e.g. Reports) if no modal is active */
-            body.printing-page main { display: block !important; position: static !important; padding: 0 !important; width: 100% !important; }
-            body.printing-page header, body.printing-page nav { display: none !important; }
-            
-            /* Hide inputs and buttons on the page being printed */
-            body.printing-page .btn, 
-            body.printing-page .actions, 
-            body.printing-page input, 
-            body.printing-page select, 
+            body.printing-modal #modal .row, 
+            body.printing-modal #modal button { display: none !important; }
+
+            /* Make ONLY the main content visible for Reports */
+            body.printing-page main, body.printing-page main * { visibility: visible !important; }
+            body.printing-page main { 
+                position: absolute !important; 
+                left: 0 !important; 
+                top: 0 !important; 
+                width: 100% !important; 
+                padding: 0 !important; 
+            }
+            body.printing-page header, body.printing-page nav, body.printing-page .btn, 
+            body.printing-page .actions, body.printing-page input, body.printing-page select,
             body.printing-page .back-link { display: none !important; }
-            
-            /* General print formatting */
-            body { height: auto !important; overflow: visible !important; background: #fff !important; }
-            .card { box-shadow: none !important; border: 1px solid #ccc !important; page-break-inside: avoid; }
-            .modal-content { animation: none !important; }
         }
     </style>
 </head>
@@ -503,8 +521,7 @@
 
 
     function printDocument() {
-        const isModalOpen = document.getElementById('modal').classList.contains('active');
-        if (isModalOpen) {
+        if (document.getElementById('modal').classList.contains('active')) {
             document.body.classList.add('printing-modal');
         } else {
             document.body.classList.add('printing-page');
@@ -512,7 +529,6 @@
         
         window.print();
         
-        // Clean up classes after print dialog closes
         setTimeout(() => {
             document.body.classList.remove('printing-modal');
             document.body.classList.remove('printing-page');

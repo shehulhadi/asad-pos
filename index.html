@@ -1371,7 +1371,8 @@
             }
         }
         const jsonStr = JSON.stringify(data, null, 2);
-        const filename = `AsadTech_Backup_${new Date().toISOString().split('T')[0]}.txt`;
+        const safeName = (settings.businessName || 'Business').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+        const filename = `${safeName}_Backup_${new Date().toISOString().split('T')[0]}.txt`;
         const blob = new Blob([jsonStr], { type: 'application/octet-stream' });
         const file = new File([blob], filename, { type: 'application/octet-stream' });
 
@@ -2689,9 +2690,10 @@
                 const jsonStr = JSON.stringify(data, null, 2);
                 const blob = new Blob([jsonStr], { type: 'application/json' });
                 const url = window.URL.createObjectURL(blob);
+                const safeName = (settings.businessName || 'Business').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `AsadTech_AutoBackup_${new Date().toISOString().split('T')[0]}.json`;
+                a.download = `${safeName}_AutoBackup_${new Date().toISOString().split('T')[0]}.json`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);

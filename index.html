@@ -1372,7 +1372,9 @@
         }
         const jsonStr = JSON.stringify(data, null, 2);
         const safeName = (settings.businessName || 'Business').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
-        const filename = `${safeName}_Backup_${new Date().toISOString().split('T')[0]}.txt`;
+        const now = new Date();
+        const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+        const filename = `${safeName}_Backup_${now.toISOString().split('T')[0]}_${timeStr}.txt`;
         const blob = new Blob([jsonStr], { type: 'application/octet-stream' });
         const file = new File([blob], filename, { type: 'application/octet-stream' });
 
@@ -1567,7 +1569,7 @@
             `--------------------------------\n` +
             `*INVOICE / RECEIPT*\n` +
             `Invoice No: ${sale.invoiceNo || 'N/A'}\n` +
-            `Date: ${sale.date}\n` +
+            `Date: ${sale.date} ${sale.createdAt ? new Date(sale.createdAt).toLocaleTimeString() : ''}\n` +
             `Customer: ${sale.customerName}\n` +
             `--------------------------------\n` +
             `Item: ${sale.quantity} pcs of ${sale.size}" Blocks\n` +
@@ -1601,7 +1603,7 @@
         });
         const nextInv = 'INV-' + (maxInv + 1).toString().padStart(4, '0');
 
-        const sale = { id: Date.now().toString(), invoiceNo: nextInv, date: saleDate, customerName: document.getElementById('s-customer').value || 'Walk-in', customerPhone: document.getElementById('s-phone').value, size: document.getElementById('s-size').value, quantity: qty, pricePerBlock: price, deliveryCharge: delivery, totalAmount: total, amountPaidAtSale: paid, balanceOwing: balance, deliveryStatus: 'pending' };
+        const sale = { id: Date.now().toString(), createdAt: new Date().toISOString(), invoiceNo: nextInv, date: saleDate, customerName: document.getElementById('s-customer').value || 'Walk-in', customerPhone: document.getElementById('s-phone').value, size: document.getElementById('s-size').value, quantity: qty, pricePerBlock: price, deliveryCharge: delivery, totalAmount: total, amountPaidAtSale: paid, balanceOwing: balance, deliveryStatus: 'pending' };
         sales.push(sale); saveData('sales', sales);
         const waText = encodeURIComponent(`*🧱 ${settings.businessName.toUpperCase()}*\n📞 ${settings.businessPhone || 'N/A'}\n--------------------------------\n*INVOICE / RECEIPT*\nDate: ${sale.date}\nCustomer: ${sale.customerName}\n--------------------------------\n${sale.quantity} pcs of ${sale.size}\" Blocks @ ₦${sale.pricePerBlock.toLocaleString()}\nDelivery: ₦${sale.deliveryCharge.toLocaleString()}\n*Total Amount: ₦${sale.totalAmount.toLocaleString()}*\nAmount Paid: ₦${sale.amountPaidAtSale.toLocaleString()}\n*Outstanding Balance: ₦${sale.balanceOwing.toLocaleString()}*\n--------------------------------\nThank you for your patronage! 🙏`);
         const waPhone = sale.customerPhone.replace(/^0/, '234');
@@ -2105,7 +2107,7 @@
         ctx.fillStyle = '#0f172a';
         ctx.font = 'bold 16px Arial';
         ctx.fillText(s.invoiceNo || 'N/A', 160, 210);
-        ctx.fillText(s.date, 160, 240);
+        ctx.fillText(s.date + ' ' + (s.createdAt ? new Date(s.createdAt).toLocaleTimeString() : ''), 160, 240);
         ctx.fillText(s.customerName, 160, 270);
 
         // Line
@@ -2205,6 +2207,7 @@
                 ${s.balanceOwing > 0 ? `<span class="tag" style="background:var(--danger-soft); color:var(--danger); margin-top:6px;">Owing ${formatNaira(s.balanceOwing)}</span>` : `<span class="tag green" style="margin-top:6px;">Fully paid</span>`}
             </div>
             <div class="kv"><span>Invoice No.</span><strong>${s.invoiceNo || 'N/A'}</strong></div>
+            <div class="kv"><span>Time</span><strong>${s.createdAt ? new Date(s.createdAt).toLocaleTimeString() : 'N/A'}</strong></div>
             <div class="kv"><span>Price per Block</span><strong>${formatNaira(s.pricePerBlock)}</strong></div>
             <div class="kv"><span>Delivery Charge</span><strong>${formatNaira(s.deliveryCharge)}</strong></div>
             <div class="kv"><span>Amount Paid</span><strong>${formatNaira(s.amountPaidAtSale)}</strong></div>
@@ -2691,9 +2694,11 @@
                 const blob = new Blob([jsonStr], { type: 'application/json' });
                 const url = window.URL.createObjectURL(blob);
                 const safeName = (settings.businessName || 'Business').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+                const now = new Date();
+                const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `${safeName}_AutoBackup_${new Date().toISOString().split('T')[0]}.json`;
+                a.download = `${safeName}_AutoBackup_${now.toISOString().split('T')[0]}_${timeStr}.json`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);

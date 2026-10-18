@@ -386,10 +386,14 @@
     
     let currentRating = 0;
 
+    let ratingTimer;
+
     function checkRatingPrompt() {
         if (!localStorage.getItem('asad:rated')) {
-            setTimeout(() => {
+            ratingTimer = setTimeout(() => {
                 if (document.getElementById('login-view').classList.contains('active')) {
+                    document.getElementById('rating-app-title').textContent = settings.businessName || 'POS App';
+                    document.getElementById('rating-app-footer').textContent = (settings.businessName || 'POS App') + ' (v1.0.0)';
                     document.getElementById('rating-modal').classList.add('active');
                 }
             }, 3000);

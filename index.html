@@ -1416,6 +1416,27 @@
         document.getElementById('s-balance-display').textContent = balance.toLocaleString();
     }
 
+
+    function buildWhatsAppReceipt(sale) {
+        return encodeURIComponent(
+            `*🧱 ${settings.businessName.toUpperCase()}*\n` +
+            `📞 ${settings.businessPhone || 'N/A'}\n` +
+            `--------------------------------\n` +
+            `*INVOICE / RECEIPT*\n` +
+            `Date: ${sale.date}\n` +
+            `Customer: ${sale.customerName}\n` +
+            `--------------------------------\n` +
+            `Item: ${sale.quantity} pcs of ${sale.size}" Blocks\n` +
+            `Price/Block: ₦${sale.pricePerBlock.toLocaleString()}\n` +
+            `Delivery: ₦${sale.deliveryCharge.toLocaleString()}\n` +
+            `*Total Amount: ₦${sale.totalAmount.toLocaleString()}*\n` +
+            `Amount Paid: ₦${sale.amountPaidAtSale.toLocaleString()}\n` +
+            `*Outstanding Balance: ₦${sale.balanceOwing.toLocaleString()}*\n` +
+            `--------------------------------\n` +
+            `Thank you for your patronage! 🙏`
+        );
+    }
+
     function saveSale() {
         const qty = parseInt(document.getElementById('s-qty').value) || 0;
         const price = parseInt(document.getElementById('s-price').value) || 0;
@@ -1808,7 +1829,7 @@
             <div class="kv"><span>Phone</span><strong>${s.customerPhone || 'N/A'}</strong></div>
             
             <div class="actions" style="margin-top:24px; margin-bottom:12px;">
-                <a href="https://wa.me/${(s.customerPhone || '').replace(/^0/, '234')}?text=${encodeURIComponent(`*Receipt - ${settings.businessName}*\n\nCustomer: ${s.customerName}\nSize: ${s.size}"\nQty: ${s.quantity}\nPrice: ₦${s.pricePerBlock}\nDelivery: ₦${s.deliveryCharge}\n*Total: ₦${s.totalAmount}*\nPaid: ₦${s.amountPaidAtSale}\n*Balance: ₦${s.balanceOwing}*\n\nThank you!`)}" target="_blank">
+                <a href="https://wa.me/${(s.customerPhone || '').replace(/^0/, '234')}?text=${buildWhatsAppReceipt(s)}" target="_blank">
                     <button class="wa">WhatsApp</button>
                 </a>
                 <button onclick="printDocument()">Print</button>

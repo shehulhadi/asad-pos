@@ -236,10 +236,10 @@
         <div class="login-card" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 340px; height: 100%;">
             
             <!-- Top: Title & Description -->
-            <div style="text-align: center; margin-bottom: 40px; margin-top: 40px;">
+            <div style="text-align: center; margin-bottom: 40px;">
                 <div class="brand-mark" id="login-logo" style="margin: 0 auto 20px;">AJ</div>
                 <h1 id="login-title-text" style="font-size: 26px; font-weight: 800; letter-spacing: -0.6px; line-height: 1.2;">Loading...</h1>
-                <div class="sub" id="login-sub-text" style="font-size: 13px; font-weight: 500; color: #94a3b8; letter-spacing: 0.5px; margin-top: 8px;">Business Management Portal</div>
+                <div class="sub" id="login-sub-text" style="font-size: 13px; font-weight: 500; color: #94a3b8; letter-spacing: 0.5px; margin-top: 8px;">BUSINESS & INVENTORY MANAGER</div>
             </div>
 
             <!-- Middle: Login Form -->
@@ -2205,7 +2205,7 @@
     if(document.getElementById('login-title-text')) {
         document.getElementById('login-title-text').textContent = bizName;
         document.getElementById('login-logo').textContent = bizName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-        document.getElementById('login-sub-text').textContent = "Block Production & POS Manager";
+        document.getElementById('login-sub-text').textContent = "BUSINESS & INVENTORY MANAGER";
     }
 
     restoreSession();

@@ -1284,7 +1284,10 @@
                         <strong class="pos">${formatNaira(s.totalAmount)}</strong>
                     </div>
                     <div class="list-sub">${s.date} · ${s.size}" × ${s.quantity} · Paid ${formatNaira(s.amountPaidAtSale)}</div>
-                    ${s.balanceOwing > 0 ? `<span class="tag" style="background:var(--danger-soft); color:var(--danger); margin-top:4px;">Owing ${formatNaira(s.balanceOwing)}</span>` : ''}
+                    <div style="display:flex; gap:6px; margin-top:4px; flex-wrap:wrap;">
+                        ${s.balanceOwing > 0 ? `<span class="tag" style="background:var(--danger-soft); color:var(--danger);">Owing ${formatNaira(s.balanceOwing)}</span>` : ''}
+                        ${s.deliveryStatus === 'delivered' ? `<span class="tag green">✅ Delivered</span>` : `<span class="tag" style="background:var(--accent-soft); color:var(--warning);">🚚 Pending Delivery</span>`}
+                    </div>
                 </div>
             `;
         });
@@ -1378,7 +1381,7 @@
 
         const total = (qty * price) + delivery;
         const balance = total - paid;
-        const sale = { id: Date.now().toString(), date: saleDate, customerName: document.getElementById('s-customer').value || 'Walk-in', customerPhone: document.getElementById('s-phone').value, size: document.getElementById('s-size').value, quantity: qty, pricePerBlock: price, deliveryCharge: delivery, totalAmount: total, amountPaidAtSale: paid, balanceOwing: balance };
+        const sale = { id: Date.now().toString(), date: saleDate, customerName: document.getElementById('s-customer').value || 'Walk-in', customerPhone: document.getElementById('s-phone').value, size: document.getElementById('s-size').value, quantity: qty, pricePerBlock: price, deliveryCharge: delivery, totalAmount: total, amountPaidAtSale: paid, balanceOwing: balance, deliveryStatus: 'pending' };
         sales.push(sale); saveData('sales', sales);
         const waText = encodeURIComponent(`*🧱 ${settings.businessName.toUpperCase()}*\n📞 ${settings.businessPhone || 'N/A'}\n--------------------------------\n*INVOICE / RECEIPT*\nDate: ${sale.date}\nCustomer: ${sale.customerName}\n--------------------------------\n${sale.quantity} pcs of ${sale.size}\" Blocks @ ₦${sale.pricePerBlock.toLocaleString()}\nDelivery: ₦${sale.deliveryCharge.toLocaleString()}\n*Total Amount: ₦${sale.totalAmount.toLocaleString()}*\nAmount Paid: ₦${sale.amountPaidAtSale.toLocaleString()}\n*Outstanding Balance: ₦${sale.balanceOwing.toLocaleString()}*\n--------------------------------\nThank you for your patronage! 🙏`);
         const waPhone = sale.customerPhone.replace(/^0/, '234');
@@ -1440,6 +1443,7 @@
 
     function renderProduction(main) { 
         const t = i18n[settings.lang]; const today = new Date().toISOString().split('T')[0];
+        const uniqueWorkers = [...new Set(batches.map(b => b.worker).filter(w => w && w !== 'Unknown' && w !== 'System Adjustment'))];
         let listHtml = ''; const recent = [...batches].reverse().slice(0, 15);
         recent.forEach(b => {
             const isCuring = b.status === 'curing';
@@ -1458,7 +1462,7 @@
                     <div class="form-group"><label>${t.size}</label><select id="p-size"><option value="4">4"</option><option value="6">6"</option><option value="9">9"</option></select></div>
                 </div>
                 <div class="row">
-                    <div class="form-group"><label>${t.worker}</label><input type="text" id="p-worker" placeholder="Worker name"></div>
+                    <div class="form-group"><label>${t.worker}</label><input type="text" id="p-worker" list="worker-names" placeholder="Worker name"><datalist id="worker-names"></datalist></div>
                     <div class="form-group"><label>${t.blocksProduced}</label><input type="number" id="p-blocks" value="0" oninput="calcBatchCost()"><div style="display:flex; gap:6px; margin-top:6px;"><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 100, 'calcBatchCost')">+100</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 500, 'calcBatchCost')">+500</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 1000, 'calcBatchCost')">+1000</button></div></div>
                 </div>
                 <div class="eyebrow">Materials Used</div>
@@ -1486,6 +1490,7 @@
                 <button class="btn btn-blue" style="margin-top:0;" onclick="saveBatch()">${t.saveBatch}</button>
             </div>
             <div class="section-title">${ico('bars')} Recent Batches</div>${listHtml || '<div class="empty">No batches logged yet.</div>'}`;
+        document.getElementById('worker-names').innerHTML = uniqueWorkers.map(w => `<option value="${w}"></option>`).join('');
     }
     function calcBatchCost() {
         const cb = (parseFloat(document.getElementById('p-cement-bags').value) || 0) * (parseFloat(document.getElementById('p-cement-cost').value) || 0);
@@ -1554,7 +1559,10 @@
                         <strong class="pos">${formatNaira(s.totalAmount)}</strong>
                     </div>
                     <div class="list-sub">${s.date} · ${s.size}" × ${s.quantity} · Paid ${formatNaira(s.amountPaidAtSale)}</div>
-                    ${s.balanceOwing > 0 ? `<span class="tag" style="background:var(--danger-soft); color:var(--danger); margin-top:4px;">Owing ${formatNaira(s.balanceOwing)}</span>` : ''}
+                    <div style="display:flex; gap:6px; margin-top:4px; flex-wrap:wrap;">
+                        ${s.balanceOwing > 0 ? `<span class="tag" style="background:var(--danger-soft); color:var(--danger);">Owing ${formatNaira(s.balanceOwing)}</span>` : ''}
+                        ${s.deliveryStatus === 'delivered' ? `<span class="tag green">✅ Delivered</span>` : `<span class="tag" style="background:var(--accent-soft); color:var(--warning);">🚚 Pending Delivery</span>`}
+                    </div>
                 </div>
             `;
         });
@@ -1715,6 +1723,16 @@
         }
     }
 
+
+    function toggleDelivery(id) {
+        const s = sales.find(x => x.id === id);
+        if (!s) return;
+        s.deliveryStatus = s.deliveryStatus === 'delivered' ? 'pending' : 'delivered';
+        saveData('sales', sales);
+        openSaleDetails(id); // Refresh modal
+        showToast('Delivery status updated', 'success');
+    }
+
 // --- Details & Edit Modals ---
     function openSaleDetails(saleId) {
         const s = sales.find(x => x.id === saleId);
@@ -1737,10 +1755,13 @@
                 </a>
                 <button onclick="window.print()">Print</button>
             </div>
-            <div class="row">
+            <div class="row" style="margin-top:12px;">
                 <button class="btn btn-outline" onclick="closeModal()">Close</button>
                 <button class="btn" onclick="editSale('${s.id}')">Edit Sale</button>
             </div>
+            <button class="btn ${s.deliveryStatus === 'delivered' ? 'btn-outline' : 'btn-dark'}" style="margin-top:8px; ${s.deliveryStatus === 'delivered' ? 'border-color:var(--brand); color:var(--brand);' : ''}" onclick="toggleDelivery('${s.id}')">
+                ${s.deliveryStatus === 'delivered' ? '✅ Mark as Pending' : '🚚 Mark as Delivered'}
+            </button>
         `;
         document.getElementById('modal').classList.add('active');
     }

@@ -893,10 +893,10 @@
             }
 
             blockHtml += `
-                <div class="list-item" style="padding: 16px 18px;">
+                <div class="list-item" style="padding: 14px 16px; margin-bottom: 8px;">
                     <div class="list-header"><span>${sz}" Blocks</span><span class="pos">${expectedReady} Ready</span></div>
-                    <div class="list-sub">Curing: ${curing} pcs · Sold: ${sold} pcs · ${t.broken}: ${broken} pcs</div>
-                    <div class="actions">
+                    <div class="list-sub" style="margin-bottom: 8px;">Curing: ${curing} pcs · Sold: ${sold} pcs · ${t.broken}: ${broken} pcs</div>
+                    <div class="actions" style="margin-top: 0;">
                         <button onclick="openStockCheck('${sz}', ${expectedReady})">${t.stockCheck}</button>
                         <button onclick="openBreakage('${sz}')" style="background:var(--accent-soft); color:#92400e; border-color:#fde68a;">${t.logBreakage}</button>
                     </div>
@@ -912,11 +912,15 @@
                 ${stock <= low ? `<div class="w">${t.lowStock}</div>` : ''}
             </div>`;
 
+        const isPurchasesCollapsed = localStorage.getItem('asad:purchasesCollapsed') === 'true';
+        const isBlocksCollapsed = localStorage.getItem('asad:blocksCollapsed') === 'true';
+
         main.innerHTML = `
             ${backBtn(currentUser === 'owner' ? 'dashboard' : 'home')}
             <div class="page-title">${t.inventory}</div>
             <div class="page-sub">Raw materials and finished blocks</div>
             
+            <!-- Raw Materials Card -->
             <div class="card">
                 <h3>${ico('box')} ${t.rawMaterials}</h3>
                 <div class="stock-grid">
@@ -924,15 +928,31 @@
                     ${tile(t.sand, sandStock, settings.lowSand)}
                     ${tile(t.fuel, fuelStock, settings.lowFuel)}
                 </div>
-                <div class="row">
+                <div class="row" style="margin-top:16px;">
                     <button class="btn btn-dark" style="margin-top:0;" onclick="openPurchase()">+ ${t.logPurchase}</button>
                     <button class="btn btn-outline" style="margin-top:0;" onclick="openAdjustStock()">Adjust Stock</button>
                 </div>
-                <div class="section-title" style="margin-top:16px; margin-bottom:8px;">Recent Purchases</div>
+            </div>
+
+            <!-- Finished Blocks (Collapsible) -->
+            <div class="section-title" onclick="toggleSection('blocks-list')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                <span>${ico('production')} ${t.finishedBlocks}</span>
+                <span id="blocks-list-icon" style="font-size:12px; color:var(--muted);">${isBlocksCollapsed ? '▼' : '▲'}</span>
+            </div>
+            <div id="blocks-list" style="display: ${isBlocksCollapsed ? 'none' : 'block'};">
+                ${blockHtml}
+            </div>
+
+            <!-- Recent Purchases (Collapsible) -->
+            <div class="section-title" onclick="toggleSection('purchases-section')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                <span>${ico('report')} Recent Purchases</span>
+                <span id="purchases-section-icon" style="font-size:12px; color:var(--muted);">${isPurchasesCollapsed ? '▼' : '▲'}</span>
+            </div>
+            <div id="purchases-section" style="display: ${isPurchasesCollapsed ? 'none' : 'block'};">
                 <div class="form-group" style="margin-bottom:12px;">
                     <input type="text" id="search-purchases" placeholder="Search supplier..." oninput="filterPurchases(this.value)" style="padding:10px 14px; font-size:14px; border-radius:20px;">
                 </div>
-                <div id="purchases-list">
+                <div id="purchases-inner-list">
                     ${purchases.length > 0 ? [...purchases].reverse().slice(0,5).map(p => `
                         <div class="list-item neutral" style="padding: 12px; margin-bottom: 8px; cursor:pointer;" onclick="openPurchaseDetails('${p.id}')">
                             <div class="list-header"><span>${p.supplierName}</span><span>${p.material.toUpperCase()}</span></div>
@@ -941,9 +961,6 @@
                     `).join('') : '<p style="font-size:13px; color:var(--muted); text-align:center;">No purchases logged yet.</p>'}
                 </div>
             </div>
-
-            <div class="section-title">${ico('production')} ${t.finishedBlocks}</div>
-            ${blockHtml}
         `;
     }
 
@@ -1533,7 +1550,7 @@
                 </div>
             `;
         });
-        document.getElementById('purchases-list').innerHTML = html || `<p style="font-size:13px; color:var(--muted); text-align:center;">No purchases found.</p>`;
+        document.getElementById('purchases-inner-list').innerHTML = html || `<p style="font-size:13px; color:var(--muted); text-align:center;">No purchases found.</p>`;
     }
 
 
@@ -1550,6 +1567,17 @@
             icon.textContent = '▼';
             localStorage.setItem('asad:alertsCollapsed', 'true');
         }
+    }
+
+
+    function toggleSection(id) {
+        const container = document.getElementById(id);
+        const icon = document.getElementById(id + '-icon');
+        if (!container) return;
+        const isNowHidden = container.style.display === 'none';
+        container.style.display = isNowHidden ? 'block' : 'none';
+        if (icon) icon.textContent = isNowHidden ? '▲' : '▼';
+        localStorage.setItem('asad:' + id + 'Collapsed', isNowHidden ? 'false' : 'true');
     }
 
 // --- Details & Edit Modals ---

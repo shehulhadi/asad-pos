@@ -197,14 +197,21 @@
             .modal { display: none !important; position: fixed !important; inset: 0 !important; background: rgba(11,18,32,.6) !important; z-index: 1000 !important; align-items: flex-end; justify-content: center; backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
             .modal-content { box-shadow: none; }
         }
-    </style>
+    
+        /* NUCLEAR MODAL FIX */
+        .modal { display: none !important; position: fixed !important; top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(11,18,32,.8) !important; z-index: 99999 !important; align-items: center !important; justify-content: center !important; backdrop-filter: blur(3px) !important; }
+        .modal.active { display: flex !important; }
+        .modal-content { background: #fff !important; border-radius: 20px !important; padding: 24px !important; width: 90% !important; max-width: 400px !important; max-height: 90vh !important; overflow-y: auto !important; box-shadow: 0 10px 25px rgba(0,0,0,0.3) !important; margin: auto !important; animation: none !important; }
+        .modal-content::before { display: none !important; }
+    
+</style>
 </head>
 <body>
 
     <div id="login-view" class="view active">
         <div class="login-card">
             <div class="brand-mark" id="login-logo">AJ</div>
-            <h1 id="login-title-text" style="font-size: 22px; line-height: 1.2; word-break: break-word;">A. Jibrialla</h1>
+            <h1 id="login-title-text" style="font-size: 22px; line-height: 1.2; word-break: break-word;">Loading...</h1>
             <div class="sub" id="login-sub-text" style="font-size: 11px;">MANAGEMENT PORTAL</div>
             <input type="password" id="pin-input" class="pin-input" placeholder="••••" maxlength="4" inputmode="numeric" autocomplete="off">
             <button class="btn-primary" onclick="login()">Login</button>
@@ -251,6 +258,18 @@
     <div id="toast-container"></div>
 
 <script>
+
+    // Force Title on load
+    document.addEventListener("DOMContentLoaded", () => {
+        const bizName = (JSON.parse(localStorage.getItem('asad:settings')) || {}).businessName || 'My Business';
+        document.title = bizName;
+        if(document.getElementById('login-title-text')) {
+            document.getElementById('login-title-text').textContent = bizName;
+            const initials = bizName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+            document.getElementById('login-logo').textContent = initials;
+        }
+    });
+
     const ICONS = {
         dashboard: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>', home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
         sales: '<circle cx="12" cy="12" r="9"/><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.5 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1 0-2-.5-2.5-1.5M12 6v2m0 8v2"/>',
@@ -386,9 +405,9 @@
     
     let currentRating = 0;
 
+
     let ratingTimer;
     let currentRating = 0;
-
     function checkRatingPrompt() {
         if (!localStorage.getItem('asad:rated')) {
             ratingTimer = setTimeout(() => {
@@ -400,7 +419,6 @@
             }, 3000);
         }
     }
-
     function setStars(stars) {
         currentRating = stars;
         const starsEl = document.getElementById('rating-stars-main');
@@ -410,24 +428,27 @@
         }
         starsEl.innerHTML = display;
     }
-
     function sendFeedback() {
         if (currentRating === 0) return showToast('Please select a star rating first', 'err');
         const text = document.getElementById('feedback-text').value;
         const devPhone = "2348000000000"; 
-        const msg = encodeURIComponent(`Hello Asad Tech Concepts!\n\nApp Rating: ${currentRating} out of 5 stars ⭐\n\nFeedback: ${text || 'No extra text.'}\n\nBusiness: ${settings.businessName || 'N/A'}`);
-        
+        const msg = encodeURIComponent(`Hello Asad Tech Concepts!
+
+App Rating: ${currentRating} out of 5 stars ⭐
+
+Feedback: ${text || 'No extra text.'}
+
+Business: ${settings.businessName || 'N/A'}`);
         localStorage.setItem('asad:rated', 'true');
         document.getElementById('rating-modal').classList.remove('active');
         showToast('Thank you for your feedback!', 'success');
-        
         setTimeout(() => { window.open(`https://wa.me/${devPhone}?text=${msg}`, '_blank'); }, 500);
     }
-
     function closeRating() {
         localStorage.setItem('asad:rated', 'true');
         document.getElementById('rating-modal').classList.remove('active');
     }
+
 
     function submitRating(stars) {
         const starsEl = document.getElementById('rating-stars-main');
@@ -1648,6 +1669,18 @@
     <div id="toast-container"></div>
 
 <script>
+
+    // Force Title on load
+    document.addEventListener("DOMContentLoaded", () => {
+        const bizName = (JSON.parse(localStorage.getItem('asad:settings')) || {}).businessName || 'My Business';
+        document.title = bizName;
+        if(document.getElementById('login-title-text')) {
+            document.getElementById('login-title-text').textContent = bizName;
+            const initials = bizName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+            document.getElementById('login-logo').textContent = initials;
+        }
+    });
+
     const ICONS = {
         dashboard: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>', home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
         sales: '<circle cx="12" cy="12" r="9"/><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.5 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1 2-2.5 2c-1 0-2-.5-2.5-1.5M12 6v2m0 8v2"/>',
@@ -1783,8 +1816,9 @@
     
     let currentRating = 0;
 
-    let ratingTimer;
 
+    let ratingTimer;
+    let currentRating = 0;
     function checkRatingPrompt() {
         if (!localStorage.getItem('asad:rated')) {
             ratingTimer = setTimeout(() => {
@@ -1796,7 +1830,6 @@
             }, 3000);
         }
     }
-
     function setStars(stars) {
         currentRating = stars;
         const starsEl = document.getElementById('rating-stars-main');
@@ -1806,13 +1839,10 @@
         }
         starsEl.innerHTML = display;
     }
-
     function sendFeedback() {
-        if (currentRating === 0) {
-            return showToast('Please select a star rating first', 'err');
-        }
+        if (currentRating === 0) return showToast('Please select a star rating first', 'err');
         const text = document.getElementById('feedback-text').value;
-        const devPhone = "2348000000000"; // <-- Change this to your real WhatsApp number
+        const devPhone = "2348000000000"; 
         const msg = encodeURIComponent(`Hello Asad Tech Concepts!
 
 App Rating: ${currentRating} out of 5 stars ⭐
@@ -1820,18 +1850,16 @@ App Rating: ${currentRating} out of 5 stars ⭐
 Feedback: ${text || 'No extra text.'}
 
 Business: ${settings.businessName || 'N/A'}`);
-        
         localStorage.setItem('asad:rated', 'true');
         document.getElementById('rating-modal').classList.remove('active');
         showToast('Thank you for your feedback!', 'success');
-        
         setTimeout(() => { window.open(`https://wa.me/${devPhone}?text=${msg}`, '_blank'); }, 500);
     }
-
     function closeRating() {
         localStorage.setItem('asad:rated', 'true');
         document.getElementById('rating-modal').classList.remove('active');
     }
+
 
     function submitRating(stars) {
         const starsEl = document.getElementById('rating-stars-main');
@@ -3062,16 +3090,15 @@ Business: ${settings.businessName || 'N/A'}`);
     </div>
 
 
-    <!-- RATING & FEEDBACK MODAL -->
+    
+    <!-- RATING MODAL -->
     <div id="rating-modal" class="modal" onclick="if(event.target===this)closeRating()">
-        <div class="modal-content">
-            <div style="text-align:center; margin-bottom:16px;">
-                <div style="width:56px; height:56px; border-radius:50%; background:var(--accent-soft); color:var(--accent); display:grid; place-items:center; margin:0 auto 14px;">
-                    <svg class="ic" style="width:28px;height:28px;stroke-width:2.2" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                </div>
-                <h3 id="rating-app-title" style="margin-bottom: 4px;">Rate this App</h3>
-                <p style="font-size:13px; color:var(--muted);">How is your experience so far?</p>
+        <div class="modal-content" style="text-align:center;">
+            <div style="width:56px; height:56px; border-radius:50%; background:var(--accent-soft); color:var(--accent); display:grid; place-items:center; margin:0 auto 14px;">
+                <svg class="ic" style="width:28px;height:28px;stroke-width:2.2" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             </div>
+            <h3 id="rating-app-title" style="margin-bottom: 4px;">Rate this App</h3>
+            <p style="font-size:13px; color:var(--muted); margin-bottom: 16px;">How is your experience so far?</p>
             
             <div style="display:flex; justify-content:center; gap:12px; font-size:36px; cursor:pointer; margin-bottom:16px;" id="rating-stars-main">
                 <span onclick="setStars(1)">☆</span>
@@ -3081,15 +3108,15 @@ Business: ${settings.businessName || 'N/A'}`);
                 <span onclick="setStars(5)">☆</span>
             </div>
 
-            <div class="form-group">
-                <textarea id="feedback-text" style="width:100%; height:80px; padding:12px; border:1.5px solid var(--line); border-radius:8px; font-size:14px; resize:none; background:#f8fafc; outline:none;" placeholder="Any feedback or feature requests?"></textarea>
+            <div style="margin-bottom:16px;">
+                <textarea id="feedback-text" style="width:100%; height:70px; padding:12px; border:1.5px solid var(--line); border-radius:8px; font-size:14px; resize:none; background:#f8fafc; outline:none;" placeholder="Any feedback or feature requests?"></textarea>
             </div>
 
-            <button class="btn btn-primary" style="margin-top:0; background:#25D366; color:#fff; box-shadow:none;" onclick="sendFeedback()">Send via WhatsApp</button>
-            <button class="btn btn-outline" style="margin-top:8px;" onclick="closeRating()">Maybe Later</button>
+            <button class="btn btn-primary" style="margin-top:0; background:#25D366; color:#fff; box-shadow:none; margin-bottom:8px;" onclick="sendFeedback()">Send via WhatsApp</button>
+            <button class="btn btn-outline" onclick="closeRating()">Maybe Later</button>
             
-            <div style="text-align:center; margin-top:20px; font-size:11px; color:var(--muted); line-height:1.5;">
-                <strong id="rating-app-footer">App Version 1.0.0</strong><br>
+            <div style="margin-top:20px; font-size:11px; color:var(--muted); line-height:1.5;">
+                <strong id="rating-app-footer">App v1.0.0</strong><br>
                 Built by Asad Tech Concepts<br>
                 <a href="https://wa.me/2348000000000" target="_blank" style="color:var(--brand); text-decoration:none;">Contact Support</a>
             </div>

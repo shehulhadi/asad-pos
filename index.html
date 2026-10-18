@@ -227,7 +227,6 @@
             <div class="hdr-actions">
                 <button class="icon-btn show" onclick="forceUpdate()" title="Clear Cache / Check for Updates" id="ib-update"></button>
                 <button class="icon-btn show" onclick="exportJSON()" title="Backup Data" id="ib-backup"></button>
-                <button class="icon-btn" id="btn-refresh" onclick="nav('dashboard')" title="Refresh Dashboard"></button>
                 <button class="icon-btn" id="btn-settings" onclick="openSettings()" title="Settings"></button>
                 <button class="icon-btn show" onclick="logout()" title="Logout" id="ib-logout"></button>
             </div>
@@ -444,15 +443,22 @@
     }
 
     // --- Clear Cache ---
-    function forceUpdate() {
-        showDialog("Clear App Cache?", "This only downloads new app updates. YOUR STOCK, SALES, AND DEBTS WILL NOT BE DELETED.", async () => {
-            if ('serviceWorker' in navigator) {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (let registration of registrations) { await registration.unregister(); }
-            }
-            const keys = await caches.keys();
-            for (let key of keys) { await caches.delete(key); }
-            location.reload(true);
+    async function forceUpdate() {
+        showDialog("Update App?", "This will download the latest version.\nYOUR STOCK, SALES, AND DEBTS WILL NOT BE DELETED.", async () => {
+            try {
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) { await registration.unregister(); }
+                }
+                const keys = await caches.keys();
+                for (let key of keys) { await caches.delete(key); }
+            } catch(e) { console.log('Cache clear error', e); }
+            
+            showToast('Clearing cache and updating...', 'success');
+            setTimeout(() => {
+                // Force a hard reload bypassing browser cache
+                window.location.href = window.location.pathname + '?v=' + Date.now();
+            }, 1000);
         });
     }
 
@@ -478,13 +484,11 @@
         document.getElementById('app-view').classList.add('active');
         document.getElementById('role-badge').textContent = currentUser === 'owner' ? 'Owner' : 'Staff';
 
-        document.getElementById('ib-update').innerHTML = ico('update');
-        document.getElementById('ib-backup').innerHTML = ico('update'); // Using update icon as backup trigger
+        document.getElementById('ib-update').innerHTML = ico('refresh');
+        document.getElementById('ib-backup').innerHTML = ico('update');
         document.getElementById('ib-logout').innerHTML = ico('logout');
-        document.getElementById('btn-refresh').innerHTML = ico('refresh');
         document.getElementById('btn-settings').innerHTML = ico('settings');
         const owner = currentUser === 'owner';
-        document.getElementById('btn-refresh').classList.toggle('show', owner);
         document.getElementById('btn-settings').classList.toggle('show', owner);
 
         document.getElementById('pin-input').value = '';

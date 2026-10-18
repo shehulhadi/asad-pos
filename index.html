@@ -353,8 +353,9 @@
 
     let settings = JSON.parse(localStorage.getItem('asad:settings')) || {
         ownerPin: '1234', staffPin: '0000', lang: 'en', businessName: 'A. Jibrialla Construction Ltd.', businessPhone: '0906 634 4956',
-        marginAlertPct: 20, fixedCostsMonthly: 0, lowCement: 50, lowSand: 5, lowFuel: 20
+        marginAlertPct: 20, fixedCostsMonthly: 0, lowCement: 50, lowSand: 5, lowFuel: 20, customExpenses: []
     };
+    if(!settings.customExpenses) settings.customExpenses = [];
     if(settings.lowCement === undefined) settings.lowCement = 50;
     if(settings.lowSand === undefined) settings.lowSand = 5;
     if(settings.lowFuel === undefined) settings.lowFuel = 20;
@@ -464,7 +465,21 @@
         document.getElementById('rating-modal').classList.remove('active');
     }
 
-    // --- Clear Cache ---
+    
+    function addExpenseCategory() {
+        const val = document.getElementById('set-new-expense').value.trim();
+        if (!val) return;
+        if (!settings.customExpenses.includes(val)) {
+            settings.customExpenses.push(val);
+            saveData('settings', settings);
+            showToast('Category added', 'success');
+            document.getElementById('set-new-expense').value = '';
+        } else {
+            showToast('Category already exists', 'err');
+        }
+    }
+
+// --- Clear Cache ---
     async function forceUpdate() {
         showDialog("Update App?", "This will download the latest version.\nYOUR STOCK, SALES, AND DEBTS WILL NOT BE DELETED.", async () => {
             showToast('Clearing cache and updating...', 'success');
@@ -578,6 +593,11 @@
                 <div class="form-group"><label>${t.cement}</label><input type="number" id="set-low-cement" value="${settings.lowCement}"></div>
                 <div class="form-group"><label>${t.sand}</label><input type="number" id="set-low-sand" value="${settings.lowSand}"></div>
                 <div class="form-group"><label>${t.fuel}</label><input type="number" id="set-low-fuel" value="${settings.lowFuel}"></div>
+            </div>
+            <div class="eyebrow">Custom Expense Categories</div>
+            <div class="row">
+                <div class="form-group" style="flex:2;"><input type="text" id="set-new-expense" placeholder="e.g. Truck Hire, Tarp"></div>
+                <div class="form-group" style="flex:1;"><button class="btn btn-outline" style="margin-top:0;" onclick="addExpenseCategory()">Add</button></div>
             </div>
             <button class="btn" onclick="saveSettings()">${t.saveSettings}</button>
             <button class="btn btn-outline" style="margin-top:10px;" onclick="closeModal()">Cancel</button>
@@ -1013,7 +1033,7 @@
             <h3>${t.logPurchase}</h3>
             <div class="form-group">
                 <label>${t.supplierName}</label>
-                <input type="text" id="pur-supplier" placeholder="e.g. Dangote, Local Vendor">
+                <input type="text" id="pur-supplier" list="supplier-names" placeholder="e.g. Dangote, Local Vendor"><datalist id="supplier-names"></datalist>
             </div>
             <div class="form-group">
                 <label>Material</label>
@@ -1030,6 +1050,8 @@
             <button class="btn" onclick="savePurchase()">Save</button>
             <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
         `;
+        const uniqueSuppliers = [...new Set(purchases.map(p => p.supplierName).filter(n => n && n !== 'Unknown'))];
+        document.getElementById('supplier-names').innerHTML = uniqueSuppliers.map(name => `<option value="${name}"></option>`).join('');
         document.getElementById('modal').classList.add('active');
     }
 
@@ -1270,14 +1292,14 @@
         main.innerHTML = `
             <div class="card">
                 <h3>${ico('plus')} ${t.newSale}</h3>
-                <div class="form-group"><label>${t.customer}</label><input type="text" id="s-customer" placeholder="Name"></div>
+                <div class="form-group"><label>${t.customer}</label><input type="text" id="s-customer" list="customer-names" placeholder="Name" oninput="autofillPhone(this.value)"><datalist id="customer-names"></datalist></div>
                 <div class="row">
                     <div class="form-group"><label>${t.date}</label><input type="date" id="s-date" value="${new Date().toISOString().split('T')[0]}"></div>
                     <div class="form-group"><label>${t.phone}</label><input type="tel" id="s-phone" placeholder="e.g. 08012345678"></div>
                 </div>
                 <div class="row">
                     <div class="form-group"><label>${t.size}</label><select id="s-size"><option value="4">4"</option><option value="6">6"</option><option value="9">9"</option></select></div>
-                    <div class="form-group"><label>${t.qty}</label><input type="number" id="s-qty" value="1" min="1" oninput="calcSale()"></div>
+                    <div class="form-group"><label>${t.qty}</label><input type="number" id="s-qty" value="1" min="1" oninput="calcSale()"><div style="display:flex; gap:6px; margin-top:6px;"><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('s-qty', 50, 'calcSale')">+50</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('s-qty', 100, 'calcSale')">+100</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('s-qty', 500, 'calcSale')">+500</button></div></div>
                 </div>
                 <div class="row">
                     <div class="form-group"><label>${t.price}</label><input type="number" id="s-price" value="0" oninput="calcSale()"></div>
@@ -1312,7 +1334,24 @@
                 </div>
             `).join('') : '<div class="empty">No returns logged yet.</div>'}
         `;
+        const uniqueCustomers = {};
+        sales.forEach(s => { if(s.customerName && s.customerPhone) uniqueCustomers[s.customerName] = s.customerPhone; });
+        document.getElementById('customer-names').innerHTML = Object.keys(uniqueCustomers).map(name => `<option value="${name}"></option>`).join('');
+
         calcSale();
+    }
+
+    function autofillPhone(name) {
+        const match = sales.slice().reverse().find(s => s.customerName.toLowerCase() === name.toLowerCase());
+        if (match && match.customerPhone) {
+            document.getElementById('s-phone').value = match.customerPhone;
+        }
+    }
+
+    function quickAdd(id, amount, calcFn) {
+        const el = document.getElementById(id);
+        el.value = (parseInt(el.value) || 0) + amount;
+        if (typeof window[calcFn] === 'function') window[calcFn]();
     }
 
     function calcSale() {
@@ -1420,7 +1459,7 @@
                 </div>
                 <div class="row">
                     <div class="form-group"><label>${t.worker}</label><input type="text" id="p-worker" placeholder="Worker name"></div>
-                    <div class="form-group"><label>${t.blocksProduced}</label><input type="number" id="p-blocks" value="0" oninput="calcBatchCost()"></div>
+                    <div class="form-group"><label>${t.blocksProduced}</label><input type="number" id="p-blocks" value="0" oninput="calcBatchCost()"><div style="display:flex; gap:6px; margin-top:6px;"><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 100, 'calcBatchCost')">+100</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 500, 'calcBatchCost')">+500</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 1000, 'calcBatchCost')">+1000</button></div></div>
                 </div>
                 <div class="eyebrow">Materials Used</div>
                 <div class="row">
@@ -1482,7 +1521,10 @@
                 <h3>${ico('expenses')} ${t.newExpense}</h3>
                 <div class="row">
                     <div class="form-group"><label>Date</label><input type="date" id="e-date" value="${today}"></div>
-                    <div class="form-group"><label>${t.category}</label><select id="e-category"><option value="wages">${t.wages}</option><option value="repairs">${t.repairs}</option><option value="generator_fuel">${t.generator_fuel}</option><option value="rent">${t.rent}</option><option value="transport">${t.transport}</option><option value="loaders">${t.loaders}</option><option value="phone_data">${t.phone_data}</option><option value="other">${t.other}</option></select></div>
+                    <div class="form-group"><label>${t.category}</label><select id="e-category">
+                        <option value="wages">${t.wages}</option><option value="repairs">${t.repairs}</option><option value="generator_fuel">${t.generator_fuel}</option><option value="rent">${t.rent}</option><option value="transport">${t.transport}</option><option value="loaders">${t.loaders}</option><option value="phone_data">${t.phone_data}</option><option value="other">${t.other}</option>
+                        ${settings.customExpenses.map(c => `<option value="${c}">${c}</option>`).join('')}
+                    </select></div>
                 </div>
                 <div class="form-group"><label>${t.amount}</label><input type="number" id="e-amount" value="0"></div>
                 <div class="form-group"><label>${t.note}</label><input type="text" id="e-note" placeholder="Optional"></div>

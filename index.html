@@ -1380,7 +1380,7 @@
         const balance = total - paid;
         const sale = { id: Date.now().toString(), date: saleDate, customerName: document.getElementById('s-customer').value || 'Walk-in', customerPhone: document.getElementById('s-phone').value, size: document.getElementById('s-size').value, quantity: qty, pricePerBlock: price, deliveryCharge: delivery, totalAmount: total, amountPaidAtSale: paid, balanceOwing: balance };
         sales.push(sale); saveData('sales', sales);
-        const waText = encodeURIComponent(`*Receipt - ${settings.businessName}*\n\nCustomer: ${sale.customerName}\nSize: ${sale.size}"\nQty: ${sale.quantity}\nPrice: ₦${sale.pricePerBlock}\nDelivery: ₦${sale.deliveryCharge}\n*Total: ₦${sale.totalAmount}*\nPaid: ₦${sale.amountPaidAtSale}\n*Balance: ₦${sale.balanceOwing}*\n\nThank you for your business!`);
+        const waText = encodeURIComponent(`*🧱 ${settings.businessName.toUpperCase()}*\n📞 ${settings.businessPhone || 'N/A'}\n--------------------------------\n*INVOICE / RECEIPT*\nDate: ${sale.date}\nCustomer: ${sale.customerName}\n--------------------------------\n${sale.quantity} pcs of ${sale.size}\" Blocks @ ₦${sale.pricePerBlock.toLocaleString()}\nDelivery: ₦${sale.deliveryCharge.toLocaleString()}\n*Total Amount: ₦${sale.totalAmount.toLocaleString()}*\nAmount Paid: ₦${sale.amountPaidAtSale.toLocaleString()}\n*Outstanding Balance: ₦${sale.balanceOwing.toLocaleString()}*\n--------------------------------\nThank you for your patronage! 🙏`);
         const waPhone = sale.customerPhone.replace(/^0/, '234');
         const waLink = `https://wa.me/${waPhone}?text=${waText}`;
         document.getElementById('modal-body').innerHTML = `

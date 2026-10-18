@@ -415,7 +415,7 @@
 
     let settings = JSON.parse(localStorage.getItem('asad:settings')) || {
         ownerPin: '1234', staffPin: '0000', lang: 'en', businessName: 'A. Jibrialla Construction Ltd.', businessPhone: '0906 634 4956',
-        marginAlertPct: 20, fixedCostsMonthly: 0, lowCement: 50, lowSand: 5, lowFuel: 20, customExpenses: [], streak: 0, lastOpenDate: '', bestDayAmount: 0
+        marginAlertPct: 20, fixedCostsMonthly: 0, lowCement: 50, lowSand: 5, lowFuel: 20, customExpenses: [], streak: 0, lastOpenDate: '', bestDayAmount: 0, reminderInterval: 0
     };
     if(!settings.customExpenses) settings.customExpenses = [];
     if(settings.streak === undefined) settings.streak = 0;
@@ -735,6 +735,17 @@
                 <label style="margin:0; font-size:14px; font-weight:700;">Dark Mode</label>
                 <input type="checkbox" id="set-dark-mode" style="width:20px; height:20px;" ${settings.darkMode ? 'checked' : ''}>
             </div>
+            <div class="form-group" style="margin-top:16px;">
+                <label>Sales Reminder Notification</label>
+                <select id="set-reminder">
+                    <option value="0" ${settings.reminderInterval == 0 ? 'selected' : ''}>Off</option>
+                    <option value="1" ${settings.reminderInterval == 1 ? 'selected' : ''}>Every 1 Hour</option>
+                    <option value="2" ${settings.reminderInterval == 2 ? 'selected' : ''}>Every 2 Hours</option>
+                    <option value="4" ${settings.reminderInterval == 4 ? 'selected' : ''}>Every 4 Hours</option>
+                    <option value="8" ${settings.reminderInterval == 8 ? 'selected' : ''}>Every 8 Hours</option>
+                </select>
+                <p style="font-size:11px; color:var(--muted); margin-top:4px;">Note: Reminders work while the app is running in the background. If you swipe the app away, Android stops the timer.</p>
+            </div>
             <button class="btn btn-outline" style="margin-top:16px;" onclick="openDirectory()">📂 Customer & Supplier Directory</button>
             <button class="btn" style="margin-top:16px;" onclick="saveSettings()">${t.saveSettings}</button>
             <button class="btn btn-outline" style="margin-top:10px;" onclick="closeModal()">Cancel</button>
@@ -750,6 +761,7 @@
         settings.lang = newLang;
         settings.darkMode = document.getElementById('set-dark-mode').checked;
         checkStreak();
+    setupReminders();
     if(settings.darkMode) document.body.classList.add('dark');
         else document.body.classList.remove('dark');
         
@@ -1917,7 +1929,32 @@
     }
 
 
+    
+    let reminderTimer = null;
+    function setupReminders() {
+        if (reminderTimer) clearInterval(reminderTimer);
+        if (settings.reminderInterval && settings.reminderInterval > 0) {
+            if (Notification.permission === 'granted') {
+                reminderTimer = setInterval(() => {
+                    const now = new Date();
+                    // Don't remind at night (10 PM to 6 AM)
+                    if (now.getHours() >= 22 || now.getHours() < 6) return;
+                    
+                    if (document.visibilityState === 'hidden') {
+                        new Notification("🧱 Sales Reminder", {
+                            body: "Don't forget to log your recent block sales!",
+                            icon: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzA1OTY2OSIvPjx0ZXh0IHg9IjUwIiB5PSI1NSIgZm9udC1zaXplPSI0MCIgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSJib2xkIiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSI+Qkk8L3RleHQ+PC9zdmc+"
+                        });
+                    } else {
+                        showToast("⏰ Reminder: Don't forget to log your sales!", "success");
+                    }
+                }, settings.reminderInterval * 60 * 60 * 1000);
+            }
+        }
+    }
+
     // --- Gamification Features ---
+
     function triggerConfetti() {
         const canvas = document.createElement('canvas');
         canvas.style.position = 'fixed'; canvas.style.top = '0'; canvas.style.left = '0';

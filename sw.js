@@ -1,21 +1,21 @@
-const CACHE_NAME = 'asad-tech-v1';
+const CACHE_NAME = 'asad-tech-v66';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json'
 ];
 
-// Install: Save the files to the phone's cache
+// Install: Save files to cache
 self.addEventListener('install', (e) => {
+  self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS);
     })
   );
-  self.skipWaiting();
 });
 
-// Activate: Clean up old caches if we update the app
+// Activate: Clean up old caches and take control immediately
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) => {
@@ -26,19 +26,32 @@ self.addEventListener('activate', (e) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch: Serve files from cache first (offline), then network
+// Fetch: Serve from cache first, fallback to network
 self.addEventListener('fetch', (e) => {
+  // Only handle GET requests
+  if (e.request.method !== 'GET') return;
+
   e.respondWith(
     caches.match(e.request).then((response) => {
-      return response || fetch(e.request);
-    }).catch(() => {
-      // If offline and file not in cache, fallback to index.html
-      return caches.match('./index.html');
+      if (response) {
+        return response; // Return from cache
+      }
+      
+      // If not in cache, try network
+      return fetch(e.request).then((networkResponse) => {
+        // If network works, cache the new file for next time
+        return caches.open(CACHE_NAME).then((cache) => {
+          cache.put(e.request, networkResponse.clone());
+          return networkResponse;
+        });
+      }).catch(() => {
+        // If offline AND not in cache, fallback to index.html
+        return caches.match('./index.html');
+      });
     })
   );
 });

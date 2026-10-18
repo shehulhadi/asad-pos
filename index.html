@@ -663,6 +663,27 @@
         const moneyYouOwe = purchases.reduce((sum, p) => sum + Math.max(0, p.cost - (p.amountPaid || 0)), 0);
         const unsoldValue = batches.filter(b => b.status === 'ready').reduce((sum, b) => sum + ((b.blocksProduced - b.breakages) * b.costPerBlock), 0);
 
+        // Calculate raw stock for alerts
+        const cementPurchased = purchases.filter(p=>p.material==='cement').reduce((s,p)=>s+p.qty,0);
+        const cementUsed = batches.reduce((s,b)=>s+(b.cementBags||0),0);
+        const cementAdj = stockAdjustments.filter(a=>a.material==='cement').reduce((s,a)=>s+a.qty,0);
+        const cementStock = cementPurchased - cementUsed + cementAdj;
+
+        const sandPurchased = purchases.filter(p=>p.material==='sand').reduce((s,p)=>s+p.qty,0);
+        const sandUsed = batches.reduce((s,b)=>s+(b.sandQty||0),0);
+        const sandAdj = stockAdjustments.filter(a=>a.material==='sand').reduce((s,a)=>s+a.qty,0);
+        const sandStock = sandPurchased - sandUsed + sandAdj;
+
+        const fuelPurchased = purchases.filter(p=>p.material==='fuel').reduce((s,p)=>s+p.qty,0);
+        const fuelUsed = batches.reduce((s,b)=>s+(b.fuelQty||0),0);
+        const fuelAdj = stockAdjustments.filter(a=>a.material==='fuel').reduce((s,a)=>s+a.qty,0);
+        const fuelStock = fuelPurchased - fuelUsed + fuelAdj;
+
+        let lowStockHtml = '';
+        if (cementStock <= settings.lowCement) lowStockHtml += `<div class="list-item alert"><div class="list-header"><span>🪨 Cement</span><span>${cementStock} bags left</span></div><div class="list-sub">LOW STOCK ALERT (Threshold: ${settings.lowCement})</div></div>`;
+        if (sandStock <= settings.lowSand) lowStockHtml += `<div class="list-item alert"><div class="list-header"><span>🏖️ Sand</span><span>${sandStock} trips left</span></div><div class="list-sub">LOW STOCK ALERT (Threshold: ${settings.lowSand})</div></div>`;
+        if (fuelStock <= settings.lowFuel) lowStockHtml += `<div class="list-item alert"><div class="list-header"><span>⛽ Fuel</span><span>${fuelStock} litres left</span></div><div class="list-sub">LOW STOCK ALERT (Threshold: ${settings.lowFuel})</div></div>`;
+
         const dayRev = sales.filter(s => s.date === todayStr).reduce((sum, s) => sum + s.totalAmount, 0);
         const weekRev = sales.filter(s => s.date >= weekAgo).reduce((sum, s) => sum + s.totalAmount, 0);
         const monthRev = sales.filter(s => s.date >= monthAgo).reduce((sum, s) => sum + s.totalAmount, 0);
@@ -761,6 +782,8 @@
                 <button onclick="nav('inventory')">${ico('box')} ${t.inventory}</button>
                 <button onclick="nav('reports')">${ico('report')} ${t.reports}</button>
             </div>
+
+            ${lowStockHtml ? `<div class="section-title neg">${ico('alert')} Low Stock Alerts</div>${lowStockHtml}` : ''}
 
             <div class="hero">
                 <div class="lbl">${t.netProfit}</div>
@@ -888,12 +911,17 @@
                     <button class="btn btn-outline" style="margin-top:0;" onclick="openAdjustStock()">Adjust Stock</button>
                 </div>
                 <div class="section-title" style="margin-top:16px; margin-bottom:8px;">Recent Purchases</div>
-                ${purchases.length > 0 ? [...purchases].reverse().slice(0,5).map(p => `
-                    <div class="list-item neutral" style="padding: 12px; margin-bottom: 8px; cursor:pointer;" onclick="openPurchaseDetails('${p.id}')">
-                        <div class="list-header"><span>${p.supplierName}</span><span>${p.material.toUpperCase()}</span></div>
-                        <div class="list-sub">${p.qty} units · ₦${p.cost.toLocaleString()} ${p.amountPaid < p.cost ? '· <span style="color:var(--danger)">Owing</span>' : ''}</div>
-                    </div>
-                `).join('') : '<p style="font-size:13px; color:var(--muted); text-align:center;">No purchases logged yet.</p>'}
+                <div class="form-group" style="margin-bottom:12px;">
+                    <input type="text" id="search-purchases" placeholder="Search supplier..." oninput="filterPurchases(this.value)" style="padding:10px 14px; font-size:14px; border-radius:20px;">
+                </div>
+                <div id="purchases-list">
+                    ${purchases.length > 0 ? [...purchases].reverse().slice(0,5).map(p => `
+                        <div class="list-item neutral" style="padding: 12px; margin-bottom: 8px; cursor:pointer;" onclick="openPurchaseDetails('${p.id}')">
+                            <div class="list-header"><span>${p.supplierName}</span><span>${p.material.toUpperCase()}</span></div>
+                            <div class="list-sub">${p.qty} units · ₦${p.cost.toLocaleString()} ${p.amountPaid < p.cost ? '· <span style="color:var(--danger)">Owing</span>' : ''}</div>
+                        </div>
+                    `).join('') : '<p style="font-size:13px; color:var(--muted); text-align:center;">No purchases logged yet.</p>'}
+                </div>
             </div>
 
             <div class="section-title">${ico('production')} ${t.finishedBlocks}</div>
@@ -1194,7 +1222,12 @@
                 <span>${ico('sales')} ${t.salesHistory}</span>
                 <button class="btn btn-outline" style="width:auto; margin:0; padding:8px 12px; font-size:12px;" onclick="openReturn()">${t.logReturn || 'Log Return'}</button>
             </div>
-            ${historyHtml || `<div class="empty">${t.noSalesYet}</div>`}
+            <div class="form-group" style="margin-bottom:12px;">
+                <input type="text" id="search-sales" placeholder="Search by customer name or date..." oninput="filterSales(this.value)" style="padding:10px 14px; font-size:14px; border-radius:20px;">
+            </div>
+            <div id="sales-history-list">
+                ${historyHtml || `<div class="empty">${t.noSalesYet}</div>`}
+            </div>
             
             <div class="section-title">${ico('back')} ${t.recentReturns || 'Recent Returns'}</div>
             ${returns.length > 0 ? [...returns].reverse().slice(0, 10).map(r => `
@@ -1391,7 +1424,85 @@
     }
 
     
-    // --- Details & Edit Modals ---
+    
+    function filterSales(query) {
+        const q = query.toLowerCase();
+        const filtered = [...sales].reverse().filter(s => s.customerName.toLowerCase().includes(q) || s.date.includes(q)).slice(0, 15);
+        let html = '';
+        filtered.forEach(s => {
+            html += `
+                <div class="list-item" style="cursor:pointer;" onclick="openSaleDetails('${s.id}')">
+                    <div class="list-header">
+                        <span>${s.customerName}</span>
+                        <strong class="pos">${formatNaira(s.totalAmount)}</strong>
+                    </div>
+                    <div class="list-sub">${s.date} · ${s.size}" × ${s.quantity} · Paid ${formatNaira(s.amountPaidAtSale)}</div>
+                    ${s.balanceOwing > 0 ? `<span class="tag" style="background:var(--danger-soft); color:var(--danger); margin-top:4px;">Owing ${formatNaira(s.balanceOwing)}</span>` : ''}
+                </div>
+            `;
+        });
+        document.getElementById('sales-history-list').innerHTML = html || `<div class="empty">No sales found.</div>`;
+    }
+
+    function filterDebts(query) {
+        const q = query.toLowerCase();
+        let html = '';
+        if (currentDebtTab === 'customer') {
+            const owingSales = sales.filter(s => s.balanceOwing > 0 && s.customerName.toLowerCase().includes(q));
+            if (owingSales.length === 0) { html += `<div class="empty">No outstanding customer debts found.</div>`; }
+            else {
+                owingSales.forEach(s => {
+                    const days = Math.floor((new Date() - new Date(s.date)) / (1000 * 60 * 60 * 24));
+                    const waText = encodeURIComponent(`Hello ${s.customerName}, this is a reminder from ${settings.businessName}. Your outstanding balance is ₦${s.balanceOwing}. Please settle. Thank you!`);
+                    const waPhone = (s.customerPhone || '').replace(/^0/, '234');
+                    const waLink = `https://wa.me/${waPhone}?text=${waText}`;
+                    html += `<div class="list-item owing">
+                        <div class="list-header"><span>${s.customerName}</span><span class="neg">₦${s.balanceOwing.toLocaleString()}</span></div>
+                        <div class="list-sub" style="color:${days > 30 ? 'var(--danger)' : 'var(--muted)'}; font-weight:${days > 30 ? '700' : '400'};">${s.size}" Blocks · ${s.quantity} pcs · ${days} ${i18n[settings.lang].daysAgo}</div>
+                        <div class="actions">
+                            <button onclick="openPayment('${s.id}')">${i18n[settings.lang].pay}</button>
+                            <a href="${waLink}" target="_blank"><button class="wa">${i18n[settings.lang].remind}</button></a>
+                        </div>
+                    </div>`;
+                });
+            }
+        } else {
+            const owingPurchases = purchases.filter(p => p.cost > (p.amountPaid || 0) && p.supplierName.toLowerCase().includes(q));
+            if (owingPurchases.length === 0) { html += `<div class="empty">No outstanding supplier debts found.</div>`; }
+            else {
+                owingPurchases.forEach(p => {
+                    const balance = p.cost - (p.amountPaid || 0);
+                    const days = Math.floor((new Date() - new Date(p.date)) / (1000 * 60 * 60 * 24));
+                    html += `<div class="list-item owing">
+                        <div class="list-header"><span>${p.supplierName || 'Unknown Supplier'}</span><span class="neg">₦${balance.toLocaleString()}</span></div>
+                        <div class="list-sub" style="color:${days > 30 ? 'var(--danger)' : 'var(--muted)'}; font-weight:${days > 30 ? '700' : '400'};">${p.material.toUpperCase()} · ${p.qty} units · ${days} ${i18n[settings.lang].daysAgo}</div>
+                        <div class="list-sub">Total ₦${p.cost.toLocaleString()} · Paid ₦${(p.amountPaid || 0).toLocaleString()}</div>
+                        <div class="actions">
+                            <button onclick="openSupplierPayment('${p.id}')" style="background:var(--accent-soft); color:#92400e; border-color:#fde68a;">${i18n[settings.lang].paySupplier}</button>
+                        </div>
+                    </div>`;
+                });
+            }
+        }
+        document.getElementById('debts-list').innerHTML = html;
+    }
+
+    function filterPurchases(query) {
+        const q = query.toLowerCase();
+        const filtered = [...purchases].reverse().filter(p => p.supplierName.toLowerCase().includes(q)).slice(0, 5);
+        let html = '';
+        filtered.forEach(p => {
+            html += `
+                <div class="list-item neutral" style="padding: 12px; margin-bottom: 8px; cursor:pointer;" onclick="openPurchaseDetails('${p.id}')">
+                    <div class="list-header"><span>${p.supplierName}</span><span>${p.material.toUpperCase()}</span></div>
+                    <div class="list-sub">${p.qty} units · ₦${p.cost.toLocaleString()} ${p.amountPaid < p.cost ? '· <span style="color:var(--danger)">Owing</span>' : ''}</div>
+                </div>
+            `;
+        });
+        document.getElementById('purchases-list').innerHTML = html || `<p style="font-size:13px; color:var(--muted); text-align:center;">No purchases found.</p>`;
+    }
+
+// --- Details & Edit Modals ---
     function openSaleDetails(saleId) {
         const s = sales.find(x => x.id === saleId);
         if (!s) return;
@@ -1658,6 +1769,10 @@
                 <button class="${currentDebtTab === 'customer' ? 'on' : ''}" onclick="setDebtTab('customer')">${t.customerDebts}</button>
                 <button class="${currentDebtTab === 'supplier' ? 'on' : ''}" onclick="setDebtTab('supplier')">${t.supplierDebts}</button>
             </div>
+            <div class="form-group" style="margin-bottom:12px;">
+                <input type="text" id="search-debts" placeholder="Search name..." oninput="filterDebts(this.value)" style="padding:10px 14px; font-size:14px; border-radius:20px;">
+            </div>
+            <div id="debts-list">
         `;
 
         if (currentDebtTab === 'customer') {
@@ -1698,6 +1813,7 @@
                 });
             }
         }
+        html += `</div>`; // Close debts-list
         main.innerHTML = html;
     }
 

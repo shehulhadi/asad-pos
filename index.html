@@ -1680,6 +1680,7 @@
                 });
             }
         } else {
+            html += `<button class="btn btn-dark" style="margin-bottom: 16px;" onclick="openPurchase()">+ ${t.logPurchase}</button>`;
             if (owingPurchases.length === 0) { 
                 html += `<div class="empty">${t.noSupplierDebts}</div>`; 
             } else {

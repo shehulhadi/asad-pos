@@ -294,7 +294,7 @@
             profitMargins: "Profit per Block", logBreakage: "Log Breakage", breakageReason: "Reason/Notes", 
             salesHistory: "Sales History", noSalesYet: "No sales recorded yet.", broken: "Broken",
             customerDebts: "Customer Debts", supplierDebts: "Supplier Debts", paySupplier: "Pay Supplier", noSupplierDebts: "No outstanding supplier debts.",
-            daysAgo: "days ago", acceptCount: "Accept Count & Update System", language: "Language"
+            daysAgo: "days ago", acceptCount: "Accept Count & Update System", language: "Language", logReturn: "Log Return", qtyReturned: "Qty Returned", refundAmt: "Refund Amount (₦)", reason: "Reason", recentReturns: "Recent Returns"
         },
         ha: { 
             home: "Gida", sales: "Tallace", debts: "Bashi", expenses: "Kashe-kashe", production: "Samarwa", dashboard: "Dashboard",
@@ -322,7 +322,7 @@
             profitMargins: "Ribar Kowane Bulo", logBreakage: "Yi Rikodin Karye", breakageReason: "Dalili/Bayani",
             salesHistory: "Tarihin Sayarwa", noSalesYet: "Babu wata sayarwa da aka yi.", broken: "Ya karye",
             customerDebts: "Bashin Abokan Ciniki", supplierDebts: "Bashin Masu Sayarwa", paySupplier: "Biya Mai Sayarwa", noSupplierDebts: "Babu bashin mai sayarwa.",
-            daysAgo: "kwanaki da suka wuce", acceptCount: "Yarda da Kidaya & Gyara Lissafi", language: "Harshe"
+            daysAgo: "kwanaki da suka wuce", acceptCount: "Yarda da Kidaya & Gyara Lissafi", language: "Harshe", logReturn: "Yi Rikodin Mayarwa", qtyReturned: "Yawan da aka Mayar", refundAmt: "Kudin da aka Mayar (₦)", reason: "Dalili", recentReturns: "Kwanan nan Mayarwa"
         }
     };
 
@@ -340,6 +340,7 @@
     let batches = JSON.parse(localStorage.getItem('asad:batches')) || [];
     let purchases = JSON.parse(localStorage.getItem('asad:purchases')) || [];
     let breakagesLog = JSON.parse(localStorage.getItem('asad:breakages')) || [];
+    let returns = JSON.parse(localStorage.getItem('asad:returns')) || [];
     let stockCounts = JSON.parse(localStorage.getItem('asad:stockCounts')) || {}; 
     
     let currentUser = null; 
@@ -578,7 +579,8 @@
         const weekAgo = new Date(today.getTime() - 7*24*60*60*1000).toISOString().split('T')[0];
         const monthAgo = new Date(today.getTime() - 30*24*60*60*1000).toISOString().split('T')[0];
 
-        const allRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
+        const totalReturnsAmount = returns.reduce((sum, r) => sum + (r.refundAmount || 0), 0);
+        const allRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0) - totalReturnsAmount;
         const allCOGS = sales.reduce((sum, s) => sum + (s.quantity * getAvgCost(s.size)), 0);
         const allExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
         const netProfit = allRevenue - allCOGS - allExpenses;
@@ -757,8 +759,9 @@
             const curing = curingBatches.reduce((s,b)=>s+b.blocksProduced,0);
             const sold = sales.filter(s => s.size === sz).reduce((s,v)=>s+v.quantity,0);
             const broken = breakagesLog.filter(b => b.size === sz).reduce((s,v)=>s+v.blocks,0);
+            const returned = returns.filter(r => r.size === sz).reduce((s, r) => s + r.quantity, 0);
             
-            const expectedReady = produced - sold - broken;
+            const expectedReady = produced - sold - broken + returned;
 
             const physical = stockCounts[sz];
             let varianceHtml = '';
@@ -1105,8 +1108,19 @@
                 <button class="btn" style="margin-top:0;" onclick="saveSale()">${t.save}</button>
             </div>
 
-            <div class="section-title">${ico('sales')} ${t.salesHistory}</div>
+            <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>${ico('sales')} ${t.salesHistory}</span>
+                <button class="btn btn-outline" style="width:auto; margin:0; padding:8px 12px; font-size:12px;" onclick="openReturn()">${t.logReturn}</button>
+            </div>
             ${historyHtml || `<div class="empty">${t.noSalesYet}</div>`}
+            
+            <div class="section-title">${ico('back')} ${t.recentReturns}</div>
+            ${returns.length > 0 ? [...returns].reverse().slice(0, 10).map(r => `
+                <div class="list-item neutral" style="border-left-color:var(--warning);">
+                    <div class="list-header"><span>${r.customerName}</span><span class="neg">-${formatNaira(r.refundAmount)}</span></div>
+                    <div class="list-sub">${r.date} · ${r.size}" × ${r.quantity} · ${r.reason}</div>
+                </div>
+            `).join('') : '<div class="empty">No returns logged yet.</div>'}
         `;
         calcSale();
     }
@@ -1255,7 +1269,47 @@
         showToast('Expense logged', 'success');
     }
 
-    // --- Debts Module ---
+    
+    function openReturn() {
+        const t = i18n[settings.lang];
+        document.getElementById('modal-body').innerHTML = `
+            <h3>${t.logReturn}</h3>
+            <div class="form-group"><label>${t.customer}</label><input type="text" id="r-customer" placeholder="Name"></div>
+            <div class="row">
+                <div class="form-group"><label>${t.date}</label><input type="date" id="r-date" value="${new Date().toISOString().split('T')[0]}"></div>
+                <div class="form-group"><label>${t.size}</label><select id="r-size"><option value="4">4"</option><option value="6">6"</option><option value="9">9"</option></select></div>
+            </div>
+            <div class="row">
+                <div class="form-group"><label>${t.qtyReturned}</label><input type="number" id="r-qty" value="1" min="1"></div>
+                <div class="form-group"><label>${t.refundAmt}</label><input type="number" id="r-refund" value="0"></div>
+            </div>
+            <div class="form-group"><label>${t.reason}</label><input type="text" id="r-reason" placeholder="e.g. Broken, Wrong size"></div>
+            <button class="btn" onclick="saveReturn()">Save Return</button>
+            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+        `;
+        document.getElementById('modal').classList.add('active');
+    }
+
+    function saveReturn() {
+        const qty = parseInt(document.getElementById('r-qty').value) || 0;
+        if (qty <= 0) return showToast('Enter valid quantity', 'err');
+        
+        returns.push({
+            id: Date.now().toString(),
+            date: document.getElementById('r-date').value,
+            customerName: document.getElementById('r-customer').value || 'Walk-in',
+            size: document.getElementById('r-size').value,
+            quantity: qty,
+            refundAmount: parseFloat(document.getElementById('r-refund').value) || 0,
+            reason: document.getElementById('r-reason').value || 'Unknown'
+        });
+        saveData('returns', returns);
+        closeModal();
+        nav('sales');
+        showToast('Return logged successfully', 'success');
+    }
+
+// --- Debts Module ---
     function renderDebts(main) {
         const t = i18n[settings.lang]; 
         const owingSales = sales.filter(s => s.balanceOwing > 0);

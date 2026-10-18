@@ -1,4 +1,4 @@
-const CACHE_NAME = 'asad-tech-v72';
+const CACHE_NAME = 'asad-tech-v73';
 const ASSETS = [
   './',
   './index.html',

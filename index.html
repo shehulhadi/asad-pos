@@ -440,7 +440,20 @@
     let currentDebtTab = 'customer'; 
     let currentRating = 0;
 
+
+    // --- UTC+1 (Nigeria) Time Helpers ---
+    function getWATDate() {
+        const now = new Date();
+        // Convert local time to UTC, then add 1 hour
+        const watTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (1 * 3600000));
+        return watTime;
+    }
+    function getTodayStr() {
+        return getWATDate().toISOString().split('T')[0];
+    }
+
     function saveData(key, data) { localStorage.setItem('asad:' + key, JSON.stringify(data)); }
+
     function formatNaira(num) { return '₦' + Number(num).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2}); }
     function backBtn(to) { return `<button class="back-link" onclick="nav('${to}')">${ico('back')} ${i18n[settings.lang][to] || 'Back'}</button>`; }
 
@@ -1226,10 +1239,10 @@
     function acceptVariance(size, expected, physical) {
         const diff = expected - physical;
         if (diff > 0) {
-            breakagesLog.push({ id: Date.now().toString(), date: new Date().toISOString().split('T')[0], size: size, blocks: diff, reason: 'Stock Variance Adjustment' });
+            breakagesLog.push({ id: Date.now().toString(), date: getTodayStr(), size: size, blocks: diff, reason: 'Stock Variance Adjustment' });
             saveData('breakages', breakagesLog);
         } else if (diff < 0) {
-            batches.push({ id: Date.now().toString(), date: new Date().toISOString().split('T')[0], size: size, worker: 'System Adjustment', blocksProduced: Math.abs(diff), breakages: 0, curingLoss: 0, totalCost: 0, costPerBlock: 0, status: 'ready' });
+            batches.push({ id: Date.now().toString(), date: getTodayStr(), size: size, worker: 'System Adjustment', blocksProduced: Math.abs(diff), breakages: 0, curingLoss: 0, totalCost: 0, costPerBlock: 0, status: 'ready' });
             saveData('batches', batches);
         }
         delete stockCounts[size];
@@ -1259,7 +1272,7 @@
     function saveBreakage(size) {
         const qty = parseInt(document.getElementById('break-qty').value) || 0;
         if (qty <= 0) return showToast('Enter valid quantity', 'err');
-        breakagesLog.push({ id: Date.now().toString(), date: new Date().toISOString().split('T')[0], size: size, blocks: qty, reason: document.getElementById('break-reason').value || 'Unknown' });
+        breakagesLog.push({ id: Date.now().toString(), date: getTodayStr(), size: size, blocks: qty, reason: document.getElementById('break-reason').value || 'Unknown' });
         saveData('breakages', breakagesLog);
         closeModal();
         nav('inventory');
@@ -1302,7 +1315,7 @@
         
         purchases.push({ 
             id: Date.now().toString(), 
-            date: new Date().toISOString().split('T')[0], 
+            date: getTodayStr(), 
             supplierName: document.getElementById('pur-supplier').value || 'Unknown', 
             material: document.getElementById('pur-mat').value, 
             qty: qty, 
@@ -1415,7 +1428,7 @@
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url; a.download = `AsadTech_Report_${new Date().toISOString().split('T')[0]}.csv`;
+        a.href = url; a.download = `AsadTech_Report_${getTodayStr()}.csv`;
         a.click();
         showToast('CSV Exported', 'success');
     }
@@ -1474,7 +1487,7 @@
 
     function shareBackupFile() {
         const text = document.getElementById('backup-text').value;
-        const filename = `AsadTech_Backup_${new Date().toISOString().split('T')[0]}.txt`;
+        const filename = `AsadTech_Backup_${getTodayStr()}.txt`;
         const blob = new Blob([text], { type: 'text/plain' });
         const file = new File([blob], filename, { type: 'text/plain' });
 
@@ -1539,7 +1552,7 @@
                 <h3>${ico('plus')} ${t.newSale}</h3>
                 <div class="form-group"><label>${t.customer}</label><input type="text" id="s-customer" list="customer-names" placeholder="Name" oninput="autofillPhone(this.value)"><datalist id="customer-names"></datalist></div>
                 <div class="row">
-                    <div class="form-group"><label>${t.date}</label><input type="date" id="s-date" value="${new Date().toISOString().split('T')[0]}"></div>
+                    <div class="form-group"><label>${t.date}</label><input type="date" id="s-date" value="${getTodayStr()}"></div>
                     <div class="form-group"><label>${t.phone}</label><input type="tel" id="s-phone" placeholder="e.g. 08012345678"></div>
                 </div>
                 <div class="row">
@@ -1648,7 +1661,7 @@
             const price = parseInt(document.getElementById('s-price').value) || 0;
             const delivery = parseInt(document.getElementById('s-delivery').value) || 0;
             const paid = parseInt(document.getElementById('s-paid').value) || 0;
-            const saleDate = document.getElementById('s-date').value || new Date().toISOString().split('T')[0];
+            const saleDate = document.getElementById('s-date').value || getTodayStr();
             const custName = document.getElementById('s-customer').value || 'Walk-in';
             
             if(qty <= 0) return showToast('Enter valid quantity', 'err');
@@ -1690,7 +1703,7 @@
 
             const sale = { 
                 id: Date.now().toString(), 
-                createdAt: new Date().toISOString(), 
+                createdAt: getWATDate().toISOString(), 
                 invoiceNo: nextInv, 
                 date: saleDate, 
                 customerName: custName, 
@@ -1710,7 +1723,7 @@
             
             if (navigator.vibrate) navigator.vibrate(50);
             
-            const todayStr = new Date().toISOString().split('T')[0];
+            const todayStr = getTodayStr();
             const todayTotal = sales.filter(s => s.date === todayStr).reduce((sum, s) => sum + s.totalAmount, 0);
             if (todayTotal > (settings.bestDayAmount || 0)) {
                 settings.bestDayAmount = todayTotal;
@@ -1801,7 +1814,7 @@
             ctx.fillStyle = '#0f172a';
             ctx.font = 'bold 16px Arial';
             ctx.fillText(s.invoiceNo || 'N/A', 160, 210);
-            ctx.fillText(s.date + ' ' + (s.createdAt ? new Date(s.createdAt).toLocaleTimeString() : ''), 160, 240);
+            ctx.fillText(s.date + ' ' + (s.createdAt ? new Date(s.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''), 160, 240);
             ctx.fillText(s.customerName, 160, 270);
 
             // Line
@@ -1898,7 +1911,7 @@
     }
 
     function renderProduction(main) { 
-        const t = i18n[settings.lang]; const today = new Date().toISOString().split('T')[0];
+        const t = i18n[settings.lang]; const today = getTodayStr();
         const uniqueWorkers = [...new Set(batches.map(b => b.worker).filter(w => w && w !== 'Unknown' && w !== 'System Adjustment'))];
         let listHtml = ''; const recent = [...batches].reverse().slice(0, 15);
         recent.forEach(b => {
@@ -1989,7 +2002,7 @@
     function markReady(id) { const b = batches.find(x => x.id === id); if (b) { b.status = 'ready'; saveData('batches', batches); nav('production'); showToast('Batch marked ready', 'success'); } }
 
     function renderExpenses(main) { 
-        const t = i18n[settings.lang]; const today = new Date().toISOString().split('T')[0];
+        const t = i18n[settings.lang]; const today = getTodayStr();
         let listHtml = ''; const recent = [...expenses].reverse().slice(0, 20);
         recent.forEach(e => { listHtml += `<div class="list-item neutral" style="cursor:pointer;" onclick="openExpenseDetails('${e.id}')"><div class="list-header"><span>${t[e.category] || e.category}</span><span class="neg">₦${e.amount.toLocaleString()}</span></div><div class="list-sub">${e.date}${e.note ? ' · ' + e.note : ''}</div></div>`; });
         main.innerHTML = `
@@ -2185,7 +2198,7 @@
 
     function shareStatement(custName, phone, bought, paid, owing) {
         const waPhone = phone.replace(/^0/, '234');
-        const msg = encodeURIComponent(`*🧱 ${settings.businessName.toUpperCase()}*\n📞 ${settings.businessPhone || 'N/A'}\n--------------------------------\n*STATEMENT OF ACCOUNT*\nCustomer: ${custName}\nDate: ${new Date().toISOString().split('T')[0]}\n--------------------------------\n*Total Purchases:* ₦${bought.toLocaleString()}\n*Total Paid:* ₦${paid.toLocaleString()}\n--------------------------------\n*OUTSTANDING BALANCE: ₦${owing.toLocaleString()}*\n--------------------------------\nPlease kindly settle your outstanding balance.\nThank you for your patronage! 🙏`);
+        const msg = encodeURIComponent(`*🧱 ${settings.businessName.toUpperCase()}*\n📞 ${settings.businessPhone || 'N/A'}\n--------------------------------\n*STATEMENT OF ACCOUNT*\nCustomer: ${custName}\nDate: ${getTodayStr()}\n--------------------------------\n*Total Purchases:* ₦${bought.toLocaleString()}\n*Total Paid:* ₦${paid.toLocaleString()}\n--------------------------------\n*OUTSTANDING BALANCE: ₦${owing.toLocaleString()}*\n--------------------------------\nPlease kindly settle your outstanding balance.\nThank you for your patronage! 🙏`);
         
         if (waPhone && waPhone.length > 5) {
             window.open(`https://wa.me/${waPhone}?text=${msg}`, '_blank');
@@ -2264,7 +2277,7 @@
     }
 
     function checkStreak() {
-        const today = new Date().toISOString().split('T')[0];
+        const today = getTodayStr();
         if (!settings.lastOpenDate) {
             settings.lastOpenDate = today;
             settings.streak = 1;
@@ -2328,7 +2341,7 @@
         ctx.fillStyle = '#0f172a';
         ctx.font = 'bold 16px Arial';
         ctx.fillText(s.invoiceNo || 'N/A', 160, 210);
-        ctx.fillText(s.date + ' ' + (s.createdAt ? new Date(s.createdAt).toLocaleTimeString() : ''), 160, 240);
+        ctx.fillText(s.date + ' ' + (s.createdAt ? new Date(s.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : ''), 160, 240);
         ctx.fillText(s.customerName, 160, 270);
 
         // Line
@@ -2428,7 +2441,7 @@
                 ${s.balanceOwing > 0 ? `<span class="tag" style="background:var(--danger-soft); color:var(--danger); margin-top:6px;">Owing ${formatNaira(s.balanceOwing)}</span>` : `<span class="tag green" style="margin-top:6px;">Fully paid</span>`}
             </div>
             <div class="kv"><span>Invoice No.</span><strong>${s.invoiceNo || 'N/A'}</strong></div>
-            <div class="kv"><span>Time</span><strong>${s.createdAt ? new Date(s.createdAt).toLocaleTimeString() : 'N/A'}</strong></div>
+            <div class="kv"><span>Time</span><strong>${s.createdAt ? new Date(s.createdAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</strong></div>
             <div class="kv"><span>Price per Block</span><strong>${formatNaira(s.pricePerBlock)}</strong></div>
             <div class="kv"><span>Delivery Charge</span><strong>${formatNaira(s.deliveryCharge)}</strong></div>
             <div class="kv"><span>Amount Paid</span><strong>${formatNaira(s.amountPaidAtSale)}</strong></div>
@@ -2615,7 +2628,7 @@
         if (qty === 0) return showToast('Enter a non-zero value', 'err');
         stockAdjustments.push({
             id: Date.now().toString(),
-            date: new Date().toISOString().split('T')[0],
+            date: getTodayStr(),
             material: document.getElementById('adj-mat').value,
             qty: qty,
             reason: document.getElementById('adj-reason').value || 'Manual adjustment'
@@ -2776,7 +2789,7 @@
             debtors[s.customerName] = (debtors[s.customerName] || 0) + s.balanceOwing;
         });
 
-        let msg = `*🧱 ${settings.businessName.toUpperCase()}*\n📞 ${settings.businessPhone || 'N/A'}\n--------------------------------\n*DEBT REMINDER LIST*\nDate: ${new Date().toISOString().split('T')[0]}\n--------------------------------\n`;
+        let msg = `*🧱 ${settings.businessName.toUpperCase()}*\n📞 ${settings.businessPhone || 'N/A'}\n--------------------------------\n*DEBT REMINDER LIST*\nDate: ${getTodayStr()}\n--------------------------------\n`;
         let total = 0;
         Object.keys(debtors).sort((a,b) => debtors[b] - debtors[a]).forEach(name => {
             msg += `- ${name}: ₦${debtors[name].toLocaleString()}\n`;
@@ -2891,7 +2904,7 @@
         if (!sale) return;
         sale.balanceOwing -= amount;
         if (sale.balanceOwing < 0) sale.balanceOwing = 0;
-        payments.push({ id: Date.now().toString(), saleId: saleId, amount: amount, date: new Date().toISOString().split('T')[0] });
+        payments.push({ id: Date.now().toString(), saleId: saleId, amount: amount, date: getTodayStr() });
         saveData('sales', sales); saveData('customerPayments', payments); closeModal(); nav('debts');
         showToast('Payment recorded', 'success');
     }

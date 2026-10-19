@@ -1572,6 +1572,10 @@
                     <div class="form-group"><label>${t.price}</label><input type="number" id="s-price" value="0" oninput="calcSale()"></div>
                     <div class="form-group"><label>${t.delivery}</label><input type="number" id="s-delivery" value="0" oninput="calcSale()"></div>
                 </div>
+                <div class="row">
+                    <div class="form-group"><label>Cement Used (Bags)</label><input type="number" id="s-cement-used" placeholder="Auto-calc" style="background:#fff;"></div>
+                    <div class="form-group"><label>Sand Used (Bags)</label><input type="number" id="s-sand-used" placeholder="Auto-calc" style="background:#fff;"></div>
+                </div>
                 <div class="form-group"><label>${t.paid}</label><input type="number" id="s-paid" value="0" oninput="calcSale()"></div>
                 
                 <div class="calc-box">
@@ -1654,7 +1658,7 @@
             `Customer: ${sale.customerName}\n` +
             `--------------------------------\n` +
             `Item: ${sale.quantity} pcs of ${sale.size}" Blocks\n` +
-            `Est. Mix: ${Math.ceil(sale.quantity / (settings.mixCement || 50))} bags cement, ${Math.ceil(sale.quantity / (settings.mixSand || 500))} bags sand\n` +
+            `Materials: ${sale.cementUsed || Math.ceil(sale.quantity / (settings.mixCement || 50))} bags cement, ${sale.sandUsed || Math.ceil(sale.quantity / (settings.mixSand || 500))} bags sand\n` +
             `Price/Block: ₦${sale.pricePerBlock.toLocaleString()}\n` +
             `Delivery: ₦${sale.deliveryCharge.toLocaleString()}\n` +
             `*Total Amount: ₦${sale.totalAmount.toLocaleString()}*\n` +
@@ -1711,6 +1715,9 @@
             });
             const nextInv = 'INV-' + (maxInv + 1).toString().padStart(4, '0');
 
+            const manualCement = parseInt(document.getElementById('s-cement-used').value) || 0;
+            const manualSand = parseInt(document.getElementById('s-sand-used').value) || 0;
+
             const sale = { 
                 id: Date.now().toString(), 
                 createdAt: getWATDate().toISOString(), 
@@ -1725,7 +1732,9 @@
                 totalAmount: total, 
                 amountPaidAtSale: paid, 
                 balanceOwing: balance, 
-                deliveryStatus: 'pending' 
+                deliveryStatus: 'pending',
+                cementUsed: manualCement > 0 ? manualCement : Math.ceil(qty / (settings.mixCement || 50)),
+                sandUsed: manualSand > 0 ? manualSand : Math.ceil(qty / (settings.mixSand || 500))
             };
             
             sales.push(sale); 
@@ -1756,7 +1765,7 @@
                 <div class="kv"><span>Invoice No.</span><strong>${sale.invoiceNo}</strong></div>
                 <div class="kv"><span>Customer</span><strong>${sale.customerName}</strong></div>
                 <div class="kv"><span>Item</span><strong>${sale.quantity} pcs of ${sale.size}" Blocks</strong></div>
-                <div class="kv"><span>Est. Materials Used</span><strong>${Math.ceil(sale.quantity / (settings.mixCement || 50))} bags cement, ${Math.ceil(sale.quantity / (settings.mixSand || 500))} bags sand</strong></div>
+                <div class="kv"><span>Materials Used</span><strong>${sale.cementUsed || Math.ceil(sale.quantity / (settings.mixCement || 50))} bags cement, ${sale.sandUsed || Math.ceil(sale.quantity / (settings.mixSand || 500))} bags sand</strong></div>
                 <div class="kv"><span>Price per Block</span><strong>${formatNaira(sale.pricePerBlock)}</strong></div>
                 <div class="kv"><span>Delivery Charge</span><strong>${formatNaira(sale.deliveryCharge)}</strong></div>
                 
@@ -1853,7 +1862,7 @@
             ctx.textAlign = 'left';
             ctx.fillStyle = '#64748b';
             ctx.font = '14px Arial';
-            ctx.fillText(`Est. Mix: ${Math.ceil(s.quantity / (settings.mixCement || 50))} bags cement, ${Math.ceil(s.quantity / (settings.mixSand || 500))} bags sand`, 40, 440);
+            ctx.fillText(`Materials: ${s.cementUsed || Math.ceil(s.quantity / (settings.mixCement || 50))} bags cement, ${s.sandUsed || Math.ceil(s.quantity / (settings.mixSand || 500))} bags sand`, 40, 440);
 
             // Delivery
             ctx.fillStyle = '#0f172a';

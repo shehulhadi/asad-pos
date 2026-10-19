@@ -363,7 +363,7 @@
             newExpense: "New Expense", category: "Category", note: "Note", saveExpense: "Save Expense",
             wages: "Wages", repairs: "Machine Repairs", generator_fuel: "Generator Fuel", rent: "Rent", transport: "Transport", loaders: "Loaders", phone_data: "Phone/Data", other: "Other",
             newBatch: "Log Production Batch", worker: "Worker Name", blocksProduced: "Blocks Produced",
-            cementBags: "Cement Bags Used", costPerBag: "Cost per Bag (₦)", sandCost: "Sand Cost (₦)", sandQty: "Sand Qty (Trips)",
+            cementBags: "Cement Bags Used", costPerBag: "Cost per Bag (₦)", sandCost: "Sand Cost (₦)", sandQty: "Sand Qty (Bags)",
             fuelCost: "Fuel/Diesel Cost (₦)", fuelQty: "Fuel Qty (Litres)", otherCost: "Water/Other Cost (₦)", breakages: "Breakages (Qty)",
             curingLoss: "Curing Loss (Qty)", totalCost: "Total Batch Cost", costPerBlock: "Cost per Block",
             saveBatch: "Save Batch", markReady: "Mark as Ready", curing: "Curing", ready: "Ready",
@@ -892,7 +892,16 @@
         const cashInHand = cashIn - allExpenses;
         const moneyOwedToOwner = sales.reduce((sum, s) => sum + s.balanceOwing, 0);
         const moneyYouOwe = purchases.reduce((sum, p) => sum + Math.max(0, p.cost - (p.amountPaid || 0)), 0);
-        const unsoldValue = batches.filter(b => b.status === 'ready').reduce((sum, b) => sum + ((b.blocksProduced - b.breakages) * b.costPerBlock), 0);
+        let unsoldValue = 0;
+        ['4', '6', '9'].forEach(sz => {
+            const readyBatches = batches.filter(b => b.size === sz && b.status === 'ready');
+            const produced = readyBatches.reduce((s,b)=>s+(b.blocksProduced - b.breakages),0);
+            const sold = sales.filter(s => s.size === sz).reduce((s,v)=>s+v.quantity,0);
+            const broken = breakagesLog.filter(b => b.size === sz).reduce((s,v)=>s+v.blocks,0);
+            const returned = returns.filter(r => r.size === sz).reduce((s, r) => s + r.quantity, 0);
+            const remaining = Math.max(0, produced - sold - broken + returned);
+            unsoldValue += remaining * getAvgCost(sz);
+        });
 
         // Calculate raw stock for alerts
         const cementPurchased = purchases.filter(p=>p.material==='cement').reduce((s,p)=>s+p.qty,0);
@@ -912,7 +921,7 @@
 
         let lowStockHtml = '';
         if (cementStock <= settings.lowCement) lowStockHtml += `<div class="list-item alert" style="margin-bottom:8px;"><div class="list-header"><span>🪨 Cement</span><span>${cementStock} bags left</span></div><div class="list-sub">LOW STOCK ALERT</div></div>`;
-        if (sandStock <= settings.lowSand) lowStockHtml += `<div class="list-item alert" style="margin-bottom:8px;"><div class="list-header"><span>🏖️ Sand</span><span>${sandStock} trips left</span></div><div class="list-sub">LOW STOCK ALERT</div></div>`;
+        if (sandStock <= settings.lowSand) lowStockHtml += `<div class="list-item alert" style="margin-bottom:8px;"><div class="list-header"><span>🏖️ Sand</span><span>${sandStock} bags left</span></div><div class="list-sub">LOW STOCK ALERT</div></div>`;
         if (fuelStock <= settings.lowFuel) lowStockHtml += `<div class="list-item alert" style="margin-bottom:8px;"><div class="list-header"><span>⛽ Fuel</span><span>${fuelStock} litres left</span></div><div class="list-sub">LOW STOCK ALERT</div></div>`;
 
         let alertWrapper = '';
@@ -1645,6 +1654,7 @@
             `Customer: ${sale.customerName}\n` +
             `--------------------------------\n` +
             `Item: ${sale.quantity} pcs of ${sale.size}" Blocks\n` +
+            `Est. Mix: ${Math.ceil(sale.quantity / (settings.mixCement || 50))} bags cement, ${Math.ceil(sale.quantity / (settings.mixSand || 500))} bags sand\n` +
             `Price/Block: ₦${sale.pricePerBlock.toLocaleString()}\n` +
             `Delivery: ₦${sale.deliveryCharge.toLocaleString()}\n` +
             `*Total Amount: ₦${sale.totalAmount.toLocaleString()}*\n` +
@@ -1746,6 +1756,7 @@
                 <div class="kv"><span>Invoice No.</span><strong>${sale.invoiceNo}</strong></div>
                 <div class="kv"><span>Customer</span><strong>${sale.customerName}</strong></div>
                 <div class="kv"><span>Item</span><strong>${sale.quantity} pcs of ${sale.size}" Blocks</strong></div>
+                <div class="kv"><span>Est. Materials Used</span><strong>${Math.ceil(sale.quantity / (settings.mixCement || 50))} bags cement, ${Math.ceil(sale.quantity / (settings.mixSand || 500))} bags sand</strong></div>
                 <div class="kv"><span>Price per Block</span><strong>${formatNaira(sale.pricePerBlock)}</strong></div>
                 <div class="kv"><span>Delivery Charge</span><strong>${formatNaira(sale.deliveryCharge)}</strong></div>
                 
@@ -1838,45 +1849,53 @@
             ctx.textAlign = 'right';
             ctx.fillText(`₦${(s.quantity * s.pricePerBlock).toLocaleString()}`, 560, 380);
 
+            // Materials Used
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#64748b';
+            ctx.font = '14px Arial';
+            ctx.fillText(`Est. Mix: ${Math.ceil(s.quantity / (settings.mixCement || 50))} bags cement, ${Math.ceil(s.quantity / (settings.mixSand || 500))} bags sand`, 40, 440);
+
             // Delivery
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '16px Arial';
             if (s.deliveryCharge > 0) {
                 ctx.textAlign = 'left';
-                ctx.fillText(`Delivery Charge`, 40, 445);
+                ctx.fillText(`Delivery Charge`, 40, 480);
                 ctx.textAlign = 'right';
-                ctx.fillText(`₦${s.deliveryCharge.toLocaleString()}`, 560, 445);
+                ctx.fillText(`₦${s.deliveryCharge.toLocaleString()}`, 560, 480);
             }
 
             // Line
-            ctx.beginPath(); ctx.moveTo(40, 480); ctx.lineTo(560, 480); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(40, 515); ctx.lineTo(560, 515); ctx.stroke();
 
             // Totals
             ctx.textAlign = 'left';
             ctx.font = 'bold 20px Arial';
-            ctx.fillText('Total Amount:', 40, 520);
+            ctx.fillText('Total Amount:', 40, 555);
             ctx.textAlign = 'right';
             ctx.fillStyle = '#059669';
-            ctx.fillText(`₦${s.totalAmount.toLocaleString()}`, 560, 520);
+            ctx.fillText(`₦${s.totalAmount.toLocaleString()}`, 560, 555);
 
             ctx.fillStyle = '#64748b';
             ctx.font = '16px Arial';
             ctx.textAlign = 'left';
-            ctx.fillText('Amount Paid:', 40, 560);
+            ctx.fillText('Amount Paid:', 40, 595);
             ctx.textAlign = 'right';
             ctx.fillStyle = '#0f172a';
-            ctx.fillText(`₦${s.amountPaidAtSale.toLocaleString()}`, 560, 560);
+            ctx.fillText(`₦${s.amountPaidAtSale.toLocaleString()}`, 560, 595);
 
             ctx.fillStyle = '#64748b';
             ctx.textAlign = 'left';
-            ctx.fillText('Outstanding Balance:', 40, 600);
+            ctx.fillText('Outstanding Balance:', 40, 635);
             ctx.textAlign = 'right';
             ctx.fillStyle = s.balanceOwing > 0 ? '#dc2626' : '#059669';
-            ctx.fillText(`₦${s.balanceOwing.toLocaleString()}`, 560, 600);
+            ctx.fillText(`₦${s.balanceOwing.toLocaleString()}`, 560, 635);
 
             // Footer
             ctx.fillStyle = '#64748b';
             ctx.font = 'italic 16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Thank you for your business!', width / 2, 700);
+            ctx.fillText('Thank you for your business!', width / 2, 720);
             ctx.font = '14px Arial';
             ctx.fillText('Powered by Asad Tech Concepts', width / 2, 730);
 

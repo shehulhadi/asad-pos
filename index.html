@@ -364,7 +364,7 @@
             wages: "Wages", repairs: "Machine Repairs", generator_fuel: "Generator Fuel", rent: "Rent", transport: "Transport", loaders: "Loaders", phone_data: "Phone/Data", other: "Other",
             newBatch: "Log Production Batch", worker: "Worker Name", blocksProduced: "Blocks Produced",
             cementBags: "Cement Bags Used", costPerBag: "Cost per Bag (₦)", sandCost: "Sand Cost (₦)", sandQty: "Sand Qty (Bags)",
-            fuelCost: "Fuel/Diesel Cost (₦)", fuelQty: "Fuel Qty (Litres)", otherCost: "Water/Other Cost (₦)", breakages: "Breakages (Qty)",
+            labourCost: "Labour Cost (₦)", otherCost: "Water/Other Cost (₦)", breakages: "Breakages (Qty)",
             curingLoss: "Curing Loss (Qty)", totalCost: "Total Batch Cost", costPerBlock: "Cost per Block",
             saveBatch: "Save Batch", markReady: "Mark as Ready", curing: "Curing", ready: "Ready",
             settings: "Settings", marginAlert: "Margin Alert (%)", fixedCosts: "Monthly Fixed Costs (₦)",
@@ -372,7 +372,7 @@
             cashInHand: "Cash in Hand", moneyOwed: "Owed to You", stockValue: "Stock Value", moneyYouOwe: "You Owe",
             topCustomers: "Top Customers", bestSizes: "Best Selling Sizes", marginWarning: "MARGIN WARNING: Selling below cost!",
             inventory: "Inventory", reports: "Reports & Backup", rawMaterials: "Raw Materials", finishedBlocks: "Finished Blocks",
-            cement: "Cement", sand: "Sand", fuel: "Fuel", logPurchase: "Log Purchase", supplierName: "Supplier Name",
+            cement: "Cement", sand: "Sand", , logPurchase: "Log Purchase", supplierName: "Supplier Name",
             lowStock: "LOW STOCK", varianceWarning: "VARIANCE WARNING: Expected vs Counted mismatch!",
             expected: "Expected", physicalCount: "Physical Count", stockCheck: "Stock Check",
             plReport: "Profit & Loss Report", month: "Month", revenue: "Revenue", cogs: "Cost of Goods Sold",
@@ -389,10 +389,10 @@
             delivery: "Kudin Jigila (₦)", paid: "Kudin da aka Biya (₦)", save: "Ajiye", receipt: "Rasit", remind: "Tuna a WhatsApp", pay: "Yi Biyan Bashi", 
             amount: "Kudi (₦)", balance: "Sauran Bashi", total: "Jimillar Kudi",
             newExpense: "Sabbin Kashe-kashe", category: "Rukuni", note: "Bayani", saveExpense: "Ajiye Kashewa",
-            wages: "Albashi", repairs: "Gyaran Injin", generator_fuel: "Man Fetur", rent: "Kudin Gida", transport: "Jigila", loaders: "Loda", phone_data: "Waya/Data", other: "Sauran",
+            wages: "Albashi", repairs: "Gyaran Injin", generator_, rent: "Kudin Gida", transport: "Jigila", loaders: "Loda", phone_data: "Waya/Data", other: "Sauran",
             newBatch: "Ajiye Yawan Bulo", worker: "Sunan Ma'aikaci", blocksProduced: "Yawan Bulo",
             cementBags: "Buhun Siminti", costPerBag: "Kudin Buhu (₦)", sandCost: "Kudin Yashi (₦)", sandQty: "Yawan Yashi",
-            fuelCost: "Kudin Man Fetur (₦)", fuelQty: "Yawan Man Fetur", otherCost: "Kudin Ruwa/Sauran (₦)", breakages: "Karye",
+            labourCost: "Kudin Ma'aikata (₦)", otherCost: "Kudin Ruwa/Sauran (₦)", breakages: "Karye",
             curingLoss: "Asarar Jiyya", totalCost: "Jimlar Kudin Batch", costPerBlock: "Kudin Bulo Daya",
             saveBatch: "Ajiye Bulo", markReady: "Sanya a Shirye", curing: "Jiyya", ready: "Shirye",
             settings: "Saituna", marginAlert: "Gargadin Riba (%)", fixedCosts: "Kudin Watan Nan (₦)",
@@ -400,7 +400,7 @@
             cashInHand: "Kudi a Hannu", moneyOwed: "Bashin da ake bin ka", stockValue: "Darajar Kaya", moneyYouOwe: "Bashin da kake bi",
             topCustomers: "Manyan Abokan Ciniki", bestSizes: "Mafi Sayar da Bulo", marginWarning: "GARGAJIYA: Ana sayarwa kasa da kudin da aka kashe!",
             inventory: "Ajiya", reports: "Rahoto & Ajiya", rawMaterials: "Kayan Gini", finishedBlocks: "Bulon da aka gama",
-            cement: "Siminti", sand: "Yashi", fuel: "Man Fetur", logPurchase: "Yi Rikodin Siyan Kaya", supplierName: "Sunan Mai Sayarwa",
+            cement: "Siminti", sand: "Yashi", , logPurchase: "Yi Rikodin Siyan Kaya", supplierName: "Sunan Mai Sayarwa",
             lowStock: "KARANCIN KAYA", varianceWarning: "GARGAJIYA: Bambanci tsakanin lissafi da kidaya!",
             expected: "Wanda ake tsammani", physicalCount: "Kidaya ta Hannu", stockCheck: "Duba Ajiya",
             plReport: "Rahoton Riba da Asara", month: "Wata", revenue: "Kudin Shiga", cogs: "Kudin Kayan Sayarwa",
@@ -620,6 +620,7 @@
                 ${uniqueCustomers[c] ? `<div class="actions" style="margin-top:8px;">
                     <a href="tel:${uniqueCustomers[c]}" style="flex:1; text-decoration:none;"><button class="btn-outline" style="width:100%; padding:6px; font-size:12px;">📞 Call</button></a>
                     <a href="https://wa.me/${uniqueCustomers[c].replace(/^0/, '234')}" target="_blank" style="flex:1; text-decoration:none;"><button class="wa" style="width:100%; padding:6px; font-size:12px; border:none; border-radius:6px;">WhatsApp</button></a>
+                    <button class="btn" style="flex:1; padding:6px; font-size:12px;" onclick="startSaleForCustomer('${c.replace(/'/g, "\'")}', '${uniqueCustomers[c].replace(/'/g, "\'")}')">+ Sale</button>
                 </div>` : ''}
             </div>
         `}).join('');
@@ -914,16 +915,12 @@
         const sandAdj = stockAdjustments.filter(a=>a.material==='sand').reduce((s,a)=>s+a.qty,0);
         const sandStock = sandPurchased - sandUsed + sandAdj;
 
-        const fuelPurchased = purchases.filter(p=>p.material==='fuel').reduce((s,p)=>s+p.qty,0);
-        const fuelUsed = batches.reduce((s,b)=>s+(b.fuelQty||0),0);
-        const fuelAdj = stockAdjustments.filter(a=>a.material==='fuel').reduce((s,a)=>s+a.qty,0);
-        const fuelStock = fuelPurchased - fuelUsed + fuelAdj;
+        
 
         let lowStockHtml = '';
         if (cementStock <= settings.lowCement) lowStockHtml += `<div class="list-item alert" style="margin-bottom:8px;"><div class="list-header"><span>🪨 Cement</span><span>${cementStock} bags left</span></div><div class="list-sub">LOW STOCK ALERT</div></div>`;
         if (sandStock <= settings.lowSand) lowStockHtml += `<div class="list-item alert" style="margin-bottom:8px;"><div class="list-header"><span>🏖️ Sand</span><span>${sandStock} bags left</span></div><div class="list-sub">LOW STOCK ALERT</div></div>`;
-        if (fuelStock <= settings.lowFuel) lowStockHtml += `<div class="list-item alert" style="margin-bottom:8px;"><div class="list-header"><span>⛽ Fuel</span><span>${fuelStock} litres left</span></div><div class="list-sub">LOW STOCK ALERT</div></div>`;
-
+        
         let alertWrapper = '';
         if (lowStockHtml) {
             const isCollapsed = localStorage.getItem('asad:alertsCollapsed') === 'true';
@@ -1140,10 +1137,7 @@
         const sandAdj = stockAdjustments.filter(a=>a.material==='sand').reduce((s,a)=>s+a.qty,0);
         const sandStock = sandPurchased - sandUsed + sandAdj;
 
-        const fuelPurchased = purchases.filter(p=>p.material==='fuel').reduce((s,p)=>s+p.qty,0);
-        const fuelUsed = batches.reduce((s,b)=>s+(b.fuelQty||0),0);
-        const fuelAdj = stockAdjustments.filter(a=>a.material==='fuel').reduce((s,a)=>s+a.qty,0);
-        const fuelStock = fuelPurchased - fuelUsed + fuelAdj;
+        
 
         const sizes = ['4','6','9'];
         let blockHtml = '';
@@ -1204,7 +1198,7 @@
             <!-- Raw Materials Card -->
             <div class="card">
                 <h3>${ico('box')} ${t.rawMaterials}</h3>
-                <div class="stock-grid">
+                <div class="stock-grid" style="grid-template-columns: 1fr 1fr;">
                     ${tile(t.cement, cementStock, settings.lowCement)}
                     ${tile(t.sand, sandStock, settings.lowSand)}
                     ${tile(t.fuel, fuelStock, settings.lowFuel)}
@@ -1298,7 +1292,7 @@
             </div>
             <div class="form-group">
                 <label>Material</label>
-                <select id="pur-mat"><option value="cement">${t.cement}</option><option value="sand">${t.sand}</option><option value="fuel">${t.fuel}</option></select>
+                <select id="pur-mat"><option value="cement">${t.cement}</option><option value="sand">${t.sand}</option></select>
             </div>
             <div class="row">
                 <div class="form-group"><label>Qty</label><input type="number" id="pur-qty" value="0"></div>
@@ -1972,12 +1966,11 @@
                     <div class="form-group"><label>${t.sandQty}</label><input type="number" id="p-sand-qty" value="0"></div>
                 </div>
                 <div class="row">
-                    <div class="form-group"><label>${t.fuelCost}</label><input type="number" id="p-fuel-cost" value="0" oninput="calcBatchCost()"></div>
-                    <div class="form-group"><label>${t.fuelQty}</label><input type="number" id="p-fuel-qty" value="0"></div>
-                </div>
-                <div class="row">
+                    <div class="form-group"><label>${t.labourCost}</label><input type="number" id="p-labour-cost" value="0" oninput="calcBatchCost()"></div>
                     <div class="form-group"><label>${t.otherCost}</label><input type="number" id="p-other-cost" value="0" oninput="calcBatchCost()"></div>
-                    <div class="form-group"><label>${t.breakages}</label><input type="number" id="p-breakages" value="0"></div>
+                </div>
+                <div class="form-group">
+                    <label>${t.breakages}</label><input type="number" id="p-breakages" value="0">
                 </div>
                 <div class="form-group"><label>${t.curingLoss}</label><input type="number" id="p-curing-loss" value="0"></div>
                 <div class="calc-box">
@@ -2007,9 +2000,9 @@
     function calcBatchCost() {
         const cb = (parseFloat(document.getElementById('p-cement-bags').value) || 0) * (parseFloat(document.getElementById('p-cement-cost').value) || 0);
         const sc = parseFloat(document.getElementById('p-sand-cost').value) || 0;
-        const fc = parseFloat(document.getElementById('p-fuel-cost').value) || 0;
+        const lc = parseFloat(document.getElementById('p-labour-cost').value) || 0;
         const oc = parseFloat(document.getElementById('p-other-cost').value) || 0;
-        const total = cb + sc + fc + oc;
+        const total = cb + sc + lc + oc;
         const blocks = parseFloat(document.getElementById('p-blocks').value) || 0;
         const cpb = blocks > 0 ? (total / blocks) : 0;
         document.getElementById('p-total-display').textContent = total.toLocaleString();
@@ -2020,10 +2013,10 @@
         if (blocks <= 0) return showToast('Enter valid number of blocks', 'err');
         const cb = (parseFloat(document.getElementById('p-cement-bags').value) || 0) * (parseFloat(document.getElementById('p-cement-cost').value) || 0);
         const sc = parseFloat(document.getElementById('p-sand-cost').value) || 0;
-        const fc = parseFloat(document.getElementById('p-fuel-cost').value) || 0;
+        const lc = parseFloat(document.getElementById('p-labour-cost').value) || 0;
         const oc = parseFloat(document.getElementById('p-other-cost').value) || 0;
-        const totalCost = cb + sc + fc + oc;
-        const batch = { id: Date.now().toString(), date: document.getElementById('p-date').value, size: document.getElementById('p-size').value, worker: document.getElementById('p-worker').value || 'Unknown', blocksProduced: blocks, breakages: parseInt(document.getElementById('p-breakages').value) || 0, curingLoss: parseInt(document.getElementById('p-curing-loss').value) || 0, cementBags: parseFloat(document.getElementById('p-cement-bags').value) || 0, sandQty: parseFloat(document.getElementById('p-sand-qty').value) || 0, fuelQty: parseFloat(document.getElementById('p-fuel-qty').value) || 0, totalCost: totalCost, costPerBlock: totalCost / blocks, status: 'curing' };
+        const totalCost = cb + sc + lc + oc;
+        const batch = { id: Date.now().toString(), date: document.getElementById('p-date').value, size: document.getElementById('p-size').value, worker: document.getElementById('p-worker').value || 'Unknown', blocksProduced: blocks, breakages: parseInt(document.getElementById('p-breakages').value) || 0, curingLoss: parseInt(document.getElementById('p-curing-loss').value) || 0, cementBags: parseFloat(document.getElementById('p-cement-bags').value) || 0, sandQty: parseFloat(document.getElementById('p-sand-qty').value) || 0, labourCost: lc, totalCost: totalCost, costPerBlock: totalCost / blocks, status: 'curing' };
         batches.push(batch); saveData('batches', batches); nav('production');
         showToast('Production batch saved', 'success');
     }
@@ -2635,7 +2628,7 @@
             <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Use negative numbers for spoilage/loss, positive for extra stock found.</p>
             <div class="form-group">
                 <label>Material</label>
-                <select id="adj-mat"><option value="cement">Cement</option><option value="sand">Sand</option><option value="fuel">Fuel</option></select>
+                <select id="adj-mat"><option value="cement">Cement</option><option value="sand">Sand</option></select>
             </div>
             <div class="form-group">
                 <label>Adjustment Qty</label>
@@ -2849,7 +2842,21 @@
         }
     }
 
+    
+    function startSaleForCustomer(name, phone) {
+        closeModal();
+        nav('sales');
+        setTimeout(() => {
+            if(document.getElementById('s-customer')) {
+                document.getElementById('s-customer').value = name;
+                document.getElementById('s-phone').value = phone || '';
+                updateDefaultPrice(); // Trigger calc
+            }
+        }, 100);
+    }
+    
     // --- Debts Module ---
+
 
 
 

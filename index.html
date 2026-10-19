@@ -2503,6 +2503,10 @@
                 <div class="form-group"><label>Delivery</label><input type="number" id="edit-s-delivery" value="${s.deliveryCharge}" oninput="calcEditSale()"></div>
             </div>
             <div class="form-group"><label>Paid</label><input type="number" id="edit-s-paid" value="${s.amountPaidAtSale}" oninput="calcEditSale()"></div>
+            <div class="row">
+                <div class="form-group"><label>Cement Used (Bags)</label><input type="number" id="edit-s-cement-used" value="${s.cementUsed || ''}" placeholder="Auto-calc"></div>
+                <div class="form-group"><label>Sand Used (Bags)</label><input type="number" id="edit-s-sand-used" value="${s.sandUsed || ''}" placeholder="Auto-calc"></div>
+            </div>
             <div class="calc-box">
                 <div class="line"><span>Total</span> <span>₦<span id="edit-s-total">0</span></span></div>
                 <div class="line" style="color:var(--danger);"><span>Balance</span> <span>₦<span id="edit-s-balance">0</span></span></div>
@@ -2536,6 +2540,12 @@
         s.pricePerBlock = parseInt(document.getElementById('edit-s-price').value) || 0;
         s.deliveryCharge = parseInt(document.getElementById('edit-s-delivery').value) || 0;
         s.amountPaidAtSale = parseInt(document.getElementById('edit-s-paid').value) || 0;
+        
+        const manCement = parseInt(document.getElementById('edit-s-cement-used').value) || 0;
+        const manSand = parseInt(document.getElementById('edit-s-sand-used').value) || 0;
+        s.cementUsed = manCement > 0 ? manCement : Math.ceil(s.quantity / (settings.mixCement || 50));
+        s.sandUsed = manSand > 0 ? manSand : Math.ceil(s.quantity / (settings.mixSand || 500));
+
         s.totalAmount = (s.quantity * s.pricePerBlock) + s.deliveryCharge;
         s.balanceOwing = s.totalAmount - s.amountPaidAtSale;
         

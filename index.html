@@ -585,19 +585,24 @@
         document.getElementById('login-view').classList.remove('active');
         document.getElementById('app-view').classList.add('active');
         document.getElementById('role-badge').textContent = currentUser === 'owner' ? 'Owner' : 'Staff';
+        
         document.getElementById('ib-update').innerHTML = ico('refresh');
         document.getElementById('ib-backup').innerHTML = ico('update');
         document.getElementById('ib-logout').innerHTML = ico('logout');
         document.getElementById('btn-settings').innerHTML = ico('settings');
+        
         const owner = currentUser === 'owner';
         document.getElementById('btn-settings').classList.toggle('show', owner);
         document.getElementById('pin-input').value = '';
+        
         const bizName = settings.businessName || 'My Business';
         document.title = bizName;
         document.getElementById('app-title').textContent = bizName;
+        
         buildNav();
-        nav('dashboard');
+        nav('dashboard'); // Always start on stock dashboard
     }
+
     function logout() {
         currentUser = null;
         sessionStorage.removeItem('asad:auth');

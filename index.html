@@ -324,7 +324,7 @@
 
     const i18n = {
         en: { 
-            home: "Home", sales: "Sales", debts: "Debts", expenses: "Expenses", production: "Production", dashboard: "Dashboard",
+            home: "Home", dashboard: "Stock", analytics: "Analytics", sales: "Sales", debts: "Debts", expenses: "Expenses", production: "Production", dashboard: "Dashboard",
             newSale: "New Sale", customer: "Customer Name", date: "Date", phone: "Phone Number", size: "Block Size", qty: "Quantity", price: "Price per Block (₦)", 
             delivery: "Delivery Charge (₦)", paid: "Amount Paid (₦)", save: "Save Sale", receipt: "Receipt", remind: "Remind on WhatsApp", pay: "Record Payment", 
             amount: "Amount (₦)", balance: "Balance Owing", total: "Total Amount", labourCost: "Labour Cost (₦)",
@@ -352,7 +352,7 @@
             daysAgo: "days ago", acceptCount: "Accept Count & Update System", language: "Language"
         },
         ha: { 
-            home: "Gida", sales: "Tallace", debts: "Bashi", expenses: "Kashe-kashe", production: "Samarwa", dashboard: "Dashboard",
+            home: "Gida", dashboard: "Kaya", analytics: "Analytics", sales: "Tallace", debts: "Bashi", expenses: "Kashe-kashe", production: "Samarwa", dashboard: "Dashboard",
             newSale: "Sabuwar Sayarwa", customer: "Sunan Abokin Ciniki", date: "Kwanan Wata", phone: "Lambar Waya", size: "Girman Bulo", qty: "Yawa", price: "Farashin Bulo (₦)", 
             delivery: "Kudin Jigila (₦)", paid: "Kudin da aka Biya (₦)", save: "Ajiye", receipt: "Rasit", remind: "Tuna a WhatsApp", pay: "Yi Biyan Bashi", 
             amount: "Kudi (₦)", balance: "Sauran Bashi", total: "Jimillar Kudi", labourCost: "Kudin Ma'aikata (₦)",
@@ -596,7 +596,7 @@
         document.title = bizName;
         document.getElementById('app-title').textContent = bizName;
         buildNav();
-        nav(owner ? 'dashboard' : 'home');
+        nav('dashboard');
     }
     function logout() {
         currentUser = null;
@@ -607,102 +607,32 @@
     function buildNav() {
         const navEl = document.getElementById('bottom-nav');
         const t = i18n[settings.lang];
-        const item = (v, icon) => `<button class="nav-btn" data-view="${v}" onclick="nav('${v}')"><span class="pill">${ico(icon)}</span>${t[v]}</button>`;
-        let html = currentUser === 'owner' ? item('dashboard', 'dashboard') : item('home', 'home');
-        html += item('sales', 'sales') + item('production', 'production') + item('expenses', 'expenses') + item('debts', 'debts');
+        const item = (v, icon) => `<button class="nav-btn" data-view="${v}" onclick="nav('${v}')"><span class="pill">${ico(icon)}</span>${t[v] || v}</button>`;
+        let html = item('dashboard', 'box'); 
+        html += item('sales', 'sales') + item('production', 'production') + item('expenses', 'expenses');
+        if (currentUser === 'owner') {
+            html += item('analytics', 'dashboard');
+        } else {
+            html += item('debts', 'debts');
+        }
         navEl.innerHTML = html;
     }
-    function nav(view) {
+        if (view === 'inventory') view = 'dashboard';
         currentView = view;
-        const tabFor = { inventory: currentUser === 'owner' ? 'dashboard' : 'home', reports: 'dashboard' };
+        const tabFor = { reports: 'analytics' };
         const activeTab = tabFor[view] || view;
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === activeTab));
         const main = document.getElementById('main-content');
         main.innerHTML = '';
         main.scrollTop = 0;
-        if (view === 'home') renderHome(main);
-        else if (view === 'dashboard') renderDashboard(main);
+        
+        if (view === 'dashboard') renderDashboard(main);
+        else if (view === 'analytics') renderAnalytics(main);
         else if (view === 'sales') renderSales(main);
         else if (view === 'production') renderProduction(main);
         else if (view === 'expenses') renderExpenses(main);
         else if (view === 'debts') renderDebts(main);
-        else if (view === 'inventory') renderInventory(main);
-        else if (view === 'reports') renderReports(main);
-    }
-
-    function openSettings() {
-        const t = i18n[settings.lang];
-        document.getElementById('modal-body').innerHTML = `
-            <h3>${t.settings}</h3>
-            <div class="form-group">
-                <label>${t.language} / Harshe</label>
-                <select id="set-lang">
-                    <option value="en" ${settings.lang === 'en' ? 'selected' : ''}>English</option>
-                    <option value="ha" ${settings.lang === 'ha' ? 'selected' : ''}>Hausa</option>
-                </select>
-            </div>
-            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:12px; border-radius:8px;">
-                <label style="margin:0; font-size:14px; font-weight:700;">Dark Mode</label>
-                <input type="checkbox" id="set-dark-mode" style="width:20px; height:20px;" ${settings.darkMode ? 'checked' : ''}>
-            </div>
-            <div class="eyebrow">Default Selling Prices (₦)</div>
-            <div class="row">
-                <div class="form-group"><label>4" Block</label><input type="number" id="set-price-4" value="${settings.defaultPrices['4'] || 0}"></div>
-                <div class="form-group"><label>6" Block</label><input type="number" id="set-price-6" value="${settings.defaultPrices['6'] || 0}"></div>
-                <div class="form-group"><label>9" Block</label><input type="number" id="set-price-9" value="${settings.defaultPrices['9'] || 0}"></div>
-            </div>
-            <div class="eyebrow">Standard Mix Ratios</div>
-            <div class="row">
-                <div class="form-group"><label>Blocks per Cement Bag</label><input type="number" id="set-mix-cement" value="${settings.mixCement}"></div>
-                <div class="form-group"><label>Blocks per Sand Bag</label><input type="number" id="set-mix-sand" value="${settings.mixSand}"></div>
-            </div>
-            <div class="form-group" style="margin-top:16px;">
-                <label>Sales Reminder</label>
-                <select id="set-reminder">
-                    <option value="0" ${settings.reminderInterval == 0 ? 'selected' : ''}>Off</option>
-                    <option value="1" ${settings.reminderInterval == 1 ? 'selected' : ''}>Every 1 Hour</option>
-                    <option value="2" ${settings.reminderInterval == 2 ? 'selected' : ''}>Every 2 Hours</option>
-                    <option value="4" ${settings.reminderInterval == 4 ? 'selected' : ''}>Every 4 Hours</option>
-                </select>
-            </div>
-            <div class="row">
-                <div class="form-group"><label>${t.marginAlert}</label><input type="number" id="set-margin" value="${settings.marginAlertPct}"></div>
-                <div class="form-group"><label>${t.fixedCosts}</label><input type="number" id="set-fixed" value="${settings.fixedCostsMonthly}"></div>
-            </div>
-            <div class="eyebrow">Low Stock Thresholds</div>
-            <div class="row">
-                <div class="form-group"><label>${t.cement}</label><input type="number" id="set-low-cement" value="${settings.lowCement}"></div>
-                <div class="form-group"><label>${t.sand}</label><input type="number" id="set-low-sand" value="${settings.lowSand}"></div>
-            </div>
-            <div class="eyebrow">Custom Expense Categories</div>
-            <div class="row">
-                <div class="form-group" style="flex:2;"><input type="text" id="set-new-expense" placeholder="e.g. Truck Hire"></div>
-                <div class="form-group" style="flex:1;"><button class="btn btn-outline" style="margin-top:0;" onclick="addExpenseCategory()">Add</button></div>
-            </div>
-            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
-                <label style="margin:0; font-size:14px; font-weight:700;">Security PINs</label>
-            </div>
-            <div class="row">
-                <div class="form-group"><label>Owner PIN</label><input type="password" id="set-owner-pin" maxlength="4" value="${settings.ownerPin}"></div>
-                <div class="form-group"><label>Staff PIN</label><input type="password" id="set-staff-pin" maxlength="4" value="${settings.staffPin}"></div>
-            </div>
-            <button class="btn" onclick="saveSettings()">${t.saveSettings}</button>
-            <button class="btn btn-outline" style="margin-top:10px;" onclick="openDirectory()">📂 Customer & Supplier Directory</button>
-            <button class="btn btn-outline" style="margin-top:10px;" onclick="closeModal()">Cancel</button>
-            <button class="btn btn-danger" style="margin-top:22px;" onclick="clearAllData()">${t.clearData}</button>
-        `;
-        document.getElementById('modal').classList.add('active');
-    }
-
-    function addExpenseCategory() {
-        const val = document.getElementById('set-new-expense').value.trim();
-        if (!val) return;
-        if (!settings.customExpenses.includes(val)) {
-            settings.customExpenses.push(val);
-            saveData('settings', settings);
-            showToast('Category added', 'success');
-            document.getElementById('set-new-expense').value = '';
-        } else {
+        else if (view === 'reports') renderReports(main); else {
             showToast('Category already exists', 'err');
         }
     }
@@ -779,8 +709,8 @@
         return totalBlocks > 0 ? (totalCost / totalBlocks) : 0;
     }
 
-    function renderDashboard(main) {
-        if (currentUser !== 'owner') return nav('home');
+    function renderAnalytics(main) {
+        if (currentUser !== 'owner') return nav('dashboard');
         const t = i18n[settings.lang];
         const today = getWATDate();
         const todayStr = getTodayStr();
@@ -924,8 +854,8 @@
 
         main.innerHTML = `
             <div class="quick">
-                <button onclick="nav('inventory')">${ico('box')} ${t.inventory}</button>
-                <button onclick="nav('reports')">${ico('report')} ${t.reports}</button>
+                <button onclick="nav('dashboard')">${ico('box')} Stock</button>
+                <button onclick="nav('reports')">${ico('report')} Reports</button>
                 <button onclick="openDailyClosing()" style="color:var(--brand); border-color:var(--brand);">📊 Close Day</button>
             </div>
             ${alertWrapper}
@@ -985,7 +915,7 @@
         else { container.style.display = 'none'; icon.textContent = '▼'; localStorage.setItem('asad:alertsCollapsed', 'true'); }
     }
 
-    function renderInventory(main) {
+    function renderDashboard(main) {
         const t = i18n[settings.lang];
         const cementPurchased = purchases.filter(p=>p.material==='cement').reduce((s,p)=>s+p.qty,0);
         const cementUsed = batches.reduce((s,b)=>s+(b.cementBags||0),0);
@@ -1023,8 +953,12 @@
         const isBlocksCollapsed = localStorage.getItem('asad:blocksCollapsed') === 'true';
 
         main.innerHTML = `
-            ${backBtn(currentUser === 'owner' ? 'dashboard' : 'home')}
-            <div class="page-title">${t.inventory}</div>
+            <div class="quick" style="margin-bottom: 20px;">
+                <button onclick="nav('debts')">${ico('debts')} Debts</button>
+                ${currentUser === 'owner' ? `<button onclick="nav('reports')">${ico('report')} Reports</button>` : ''}
+                <button onclick="openDailyClosing()" style="color:var(--brand); border-color:var(--brand);">📊 Close Day</button>
+            </div>
+            <div class="page-title">Stock & Inventory</div>
             <div class="page-sub">Raw materials and finished blocks</div>
             <div class="card">
                 <h3>${ico('box')} ${t.rawMaterials}</h3>
@@ -1187,7 +1121,7 @@
         const t = i18n[settings.lang];
         const currentMonth = getTodayStr().slice(0, 7);
         main.innerHTML = `
-            ${backBtn('dashboard')}
+            ${backBtn('analytics')}
             <div class="page-title">${t.reports}</div>
             <div class="page-sub">Monthly performance and data backup</div>
             <div class="card">

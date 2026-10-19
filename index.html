@@ -1726,7 +1726,11 @@
             const waPhone = (sale.customerPhone || '').replace(/^0/, '234');
             const waLink = `https://wa.me/${waPhone}?text=${waText}`;
 
-            const matString = `${sale.cementQty > 0 ? sale.cementQty + ' bags cement (₦' + sale.cementPrice + ')' : Math.ceil(sale.quantity / (settings.mixCement || 50)) + ' bags cement (est)'}${sale.sandQty > 0 ? ', ' + sale.sandQty + ' bags sand (₦' + sale.sandPrice + ')' : ', ' + Math.ceil(sale.quantity / (settings.mixSand || 500)) + ' bags sand (est)'}`;
+            let matString = "";
+            if (sale.cementQty > 0) { matString += sale.cementQty + " bags cement (₦" + sale.cementPrice + ")"; } 
+            else { matString += Math.ceil(sale.quantity / (settings.mixCement || 50)) + " bags cement (est)"; }
+            if (sale.sandQty > 0) { matString += ", " + sale.sandQty + " bags sand (₦" + sale.sandPrice + ")"; } 
+            else { matString += ", " + Math.ceil(sale.quantity / (settings.mixSand || 500)) + " bags sand (est)"; }
 
             document.getElementById('modal-body').innerHTML = `
                 <div style="text-align:center; margin-bottom:20px;">
@@ -1768,7 +1772,11 @@
     function openSaleDetails(saleId) {
         const s = sales.find(x => x.id === saleId);
         if (!s) return;
-        const matString = `${s.cementQty > 0 ? s.cementQty + ' bags cement (₦' + s.cementPrice + ')' : Math.ceil(s.quantity / (settings.mixCement || 50)) + ' bags cement (est)'}${s.sandQty > 0 ? ', ' + s.sandQty + ' bags sand (₦' + s.sandPrice + ')' : ', ' + Math.ceil(s.quantity / (settings.mixSand || 500)) + ' bags sand (est)'}`;
+        let matString = "";
+        if (s.cementQty > 0) { matString += s.cementQty + " bags cement (₦" + s.cementPrice + ")"; } 
+        else { matString += Math.ceil(s.quantity / (settings.mixCement || 50)) + " bags cement (est)"; }
+        if (s.sandQty > 0) { matString += ", " + s.sandQty + " bags sand (₦" + s.sandPrice + ")"; } 
+        else { matString += ", " + Math.ceil(s.quantity / (settings.mixSand || 500)) + " bags sand (est)"; }
         
         document.getElementById('modal-body').innerHTML = `
             <h3>Receipt · ${s.customerName}</h3>
@@ -1920,26 +1928,30 @@
     }
     
     function buildWhatsAppReceipt(sale) {
-        const matString = `${sale.cementQty > 0 ? sale.cementQty + ' bags cement (₦' + sale.cementPrice + ')' : Math.ceil(sale.quantity / (settings.mixCement || 50)) + ' bags cement (est)'}${sale.sandQty > 0 ? ', ' + sale.sandQty + ' bags sand (₦' + sale.sandPrice + ')' : ', ' + Math.ceil(sale.quantity / (settings.mixSand || 500)) + ' bags sand (est)'}`;
-        return encodeURIComponent(
-            `*🧱 ${settings.businessName.toUpperCase()}*\n` +
-            `📞 ${settings.businessPhone || 'N/A'}\n` +
-            `--------------------------------\n` +
-            `*INVOICE / RECEIPT*\n` +
-            `Invoice No: ${sale.invoiceNo || 'N/A'}\n` +
-            `Date: ${sale.date} ${sale.createdAt ? new Date(sale.createdAt).toLocaleTimeString() : ''}\n` +
-            `Customer: ${sale.customerName}\n` +
-            `--------------------------------\n` +
-            `Item: ${sale.quantity} pcs of ${sale.size}" Blocks\n` +
-            `Materials: ${matString}\n` +
-            `Price/Block: ₦${sale.pricePerBlock.toLocaleString()}\n` +
-            `Delivery: ₦${sale.deliveryCharge.toLocaleString()}\n` +
-            `*Total Amount: ₦${sale.totalAmount.toLocaleString()}*\n` +
-            `Amount Paid: ₦${sale.amountPaidAtSale.toLocaleString()}\n` +
-            `*Outstanding Balance: ₦${sale.balanceOwing.toLocaleString()}*\n` +
-            `--------------------------------\n` +
-            `Thank you for your patronage! 🙏`
-        );
+        let matString = "";
+        if (sale.cementQty > 0) { matString += sale.cementQty + " bags cement (₦" + sale.cementPrice + ")"; } 
+        else { matString += Math.ceil(sale.quantity / (settings.mixCement || 50)) + " bags cement (est)"; }
+        if (sale.sandQty > 0) { matString += ", " + sale.sandQty + " bags sand (₦" + sale.sandPrice + ")"; } 
+        else { matString += ", " + Math.ceil(sale.quantity / (settings.mixSand || 500)) + " bags sand (est)"; }
+
+        const text = "*🧱 " + settings.businessName.toUpperCase() + "*\n" +
+            "📞 " + (settings.businessPhone || 'N/A') + "\n" +
+            "--------------------------------\n" +
+            "*INVOICE / RECEIPT*\n" +
+            "Invoice No: " + (sale.invoiceNo || 'N/A') + "\n" +
+            "Date: " + sale.date + " " + (sale.createdAt ? new Date(sale.createdAt).toLocaleTimeString() : '') + "\n" +
+            "Customer: " + sale.customerName + "\n" +
+            "--------------------------------\n" +
+            "Item: " + sale.quantity + ' pcs of ' + sale.size + '" Blocks\n' +
+            "Materials: " + matString + "\n" +
+            "Price/Block: ₦" + sale.pricePerBlock.toLocaleString() + "\n" +
+            "Delivery: ₦" + sale.deliveryCharge.toLocaleString() + "\n" +
+            "*Total Amount: ₦" + sale.totalAmount.toLocaleString() + "*\n" +
+            "Amount Paid: ₦" + sale.amountPaidAtSale.toLocaleString() + "\n" +
+            "*Outstanding Balance: ₦" + sale.balanceOwing.toLocaleString() + "*\n" +
+            "--------------------------------\n" +
+            "Thank you for your patronage! 🙏";
+        return encodeURIComponent(text);
     }
 
     function shareReceiptImage(saleId) {
@@ -2001,7 +2013,12 @@
             ctx.textAlign = 'right';
             ctx.fillText(`₦${(s.quantity * s.pricePerBlock).toLocaleString()}`, 560, 380);
 
-            const matString = `${s.cementQty > 0 ? s.cementQty + ' bags cement (₦' + s.cementPrice + ')' : Math.ceil(s.quantity / (settings.mixCement || 50)) + ' bags cement (est)'}${s.sandQty > 0 ? ', ' + s.sandQty + ' bags sand (₦' + s.sandPrice + ')' : ', ' + Math.ceil(s.quantity / (settings.mixSand || 500)) + ' bags sand (est)'}`;
+            let matString = "";
+            if (s.cementQty > 0) { matString += s.cementQty + " bags cement (₦" + s.cementPrice + ")"; } 
+            else { matString += Math.ceil(s.quantity / (settings.mixCement || 50)) + " bags cement (est)"; }
+            if (s.sandQty > 0) { matString += ", " + s.sandQty + " bags sand (₦" + s.sandPrice + ")"; } 
+            else { matString += ", " + Math.ceil(s.quantity / (settings.mixSand || 500)) + " bags sand (est)"; }
+
             ctx.textAlign = 'left';
             ctx.fillStyle = '#64748b';
             ctx.font = '14px Arial';

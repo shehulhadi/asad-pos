@@ -1531,7 +1531,6 @@
 
     function renderSales(main) { 
         const t = i18n[settings.lang];
-        
         let historyHtml = '';
         const recentSales = [...sales].reverse().slice(0, 15);
         recentSales.forEach(s => {
@@ -1566,14 +1565,17 @@
                     <div class="form-group"><label>${t.price}</label><input type="number" id="s-price" value="0" oninput="calcSale()"></div>
                     <div class="form-group"><label>${t.delivery}</label><input type="number" id="s-delivery" value="0" oninput="calcSale()"></div>
                 </div>
+                
+                <div class="eyebrow">Materials Used (Optional)</div>
                 <div class="row">
-                    <div class="form-group"><label>Cement Qty (Bags)</label><input type="number" id="s-cement-qty" placeholder="0" style="background:#fff;"></div>
-                    <div class="form-group"><label>Cement Price (₦)</label><input type="number" id="s-cement-price" placeholder="0" style="background:#fff;"></div>
+                    <div class="form-group"><label>Cement Qty (Bags)</label><input type="number" id="s-cement-qty" placeholder="0"></div>
+                    <div class="form-group"><label>Cement Price (₦)</label><input type="number" id="s-cement-price" placeholder="0"></div>
                 </div>
                 <div class="row">
-                    <div class="form-group"><label>Sand Qty (Bags)</label><input type="number" id="s-sand-qty" placeholder="0" style="background:#fff;"></div>
-                    <div class="form-group"><label>Sand Price (₦)</label><input type="number" id="s-sand-price" placeholder="0" style="background:#fff;"></div>
+                    <div class="form-group"><label>Sand Qty (Bags)</label><input type="number" id="s-sand-qty" placeholder="0"></div>
+                    <div class="form-group"><label>Sand Price (₦)</label><input type="number" id="s-sand-price" placeholder="0"></div>
                 </div>
+
                 <div class="form-group"><label>${t.paid}</label><input type="number" id="s-paid" value="0" oninput="calcSale()"></div>
                 
                 <div class="calc-box">
@@ -1594,40 +1596,11 @@
             <div id="sales-history-list">
                 ${historyHtml || `<div class="empty">${t.noSalesYet}</div>`}
             </div>
-            
-            <div class="section-title">${ico('back')} ${t.recentReturns || 'Recent Returns'}</div>
-            ${returns.length > 0 ? [...returns].reverse().slice(0, 10).map(r => `
-                <div class="list-item neutral" style="border-left-color:var(--warning);">
-                    <div class="list-header"><span>${r.customerName}</span><span class="neg">-${formatNaira(r.refundAmount)}</span></div>
-                    <div class="list-sub">${r.date} · ${r.size}" × ${r.quantity} · ${r.reason}</div>
-                </div>
-            `).join('') : '<div class="empty">No returns logged yet.</div>'}
         `;
+        
         const uniqueCustomers = {};
         sales.forEach(s => { if(s.customerName && s.customerPhone) uniqueCustomers[s.customerName] = s.customerPhone; });
         document.getElementById('customer-names').innerHTML = Object.keys(uniqueCustomers).map(name => `<option value="${name}"></option>`).join('');
-
-        calcSale();
-    }
-
-    function autofillPhone(name) {
-        const match = sales.slice().reverse().find(s => s.customerName.toLowerCase() === name.toLowerCase());
-        if (match && match.customerPhone) {
-            document.getElementById('s-phone').value = match.customerPhone;
-        }
-    }
-
-    function quickAdd(id, amount, calcFn) {
-        const el = document.getElementById(id);
-        el.value = (parseInt(el.value) || 0) + amount;
-        if (typeof window[calcFn] === 'function') window[calcFn]();
-    }
-
-
-    function updateDefaultPrice() {
-        const size = document.getElementById('s-size').value;
-        const price = settings.defaultPrices[size] || 0;
-        document.getElementById('s-price').value = price;
         calcSale();
     }
 
@@ -1646,6 +1619,7 @@
 
 
     function buildWhatsAppReceipt(sale) {
+        const matString = `${sale.cementQty > 0 ? sale.cementQty + ' bags cement (₦' + sale.cementPrice + ')' : Math.ceil(sale.quantity / (settings.mixCement || 50)) + ' bags cement (est)'}${sale.sandQty > 0 ? ', ' + sale.sandQty + ' bags sand (₦' + sale.sandPrice + ')' : ', ' + Math.ceil(sale.quantity / (settings.mixSand || 500)) + ' bags sand (est)'}`;
         return encodeURIComponent(
             `*🧱 ${settings.businessName.toUpperCase()}*\n` +
             `📞 ${settings.businessPhone || 'N/A'}\n` +
@@ -1656,7 +1630,7 @@
             `Customer: ${sale.customerName}\n` +
             `--------------------------------\n` +
             `Item: ${sale.quantity} pcs of ${sale.size}" Blocks\n` +
-            `Materials: ${sale.cementQty > 0 ? sale.cementQty + ' bags cement (₦' + sale.cementPrice + ')' : Math.ceil(sale.quantity / (settings.mixCement || 50)) + ' bags cement (est)'}${sale.sandQty > 0 ? ', ' + sale.sandQty + ' bags sand (₦' + sale.sandPrice + ')' : ', ' + Math.ceil(sale.quantity / (settings.mixSand || 500)) + ' bags sand (est)'}\n` +
+            `Materials: ${matString}\n` +
             `Price/Block: ₦${sale.pricePerBlock.toLocaleString()}\n` +
             `Delivery: ₦${sale.deliveryCharge.toLocaleString()}\n` +
             `*Total Amount: ₦${sale.totalAmount.toLocaleString()}*\n` +
@@ -1861,10 +1835,11 @@
             ctx.fillText(`₦${(s.quantity * s.pricePerBlock).toLocaleString()}`, 560, 380);
 
             // Materials Used
+            const matString = `${s.cementQty > 0 ? s.cementQty + ' bags cement (₦' + s.cementPrice + ')' : Math.ceil(s.quantity / (settings.mixCement || 50)) + ' bags cement (est)'}${s.sandQty > 0 ? ', ' + s.sandQty + ' bags sand (₦' + s.sandPrice + ')' : ', ' + Math.ceil(s.quantity / (settings.mixSand || 500)) + ' bags sand (est)'}`;
             ctx.textAlign = 'left';
             ctx.fillStyle = '#64748b';
             ctx.font = '14px Arial';
-            ctx.fillText(`Materials: ${s.cementQty > 0 ? s.cementQty + ' bags cement (₦' + s.cementPrice + ')' : Math.ceil(s.quantity / (settings.mixCement || 50)) + ' bags cement (est)'}${s.sandQty > 0 ? ', ' + s.sandQty + ' bags sand (₦' + s.sandPrice + ')' : ', ' + Math.ceil(s.quantity / (settings.mixSand || 500)) + ' bags sand (est)'}`, 40, 440);
+            ctx.fillText(`Materials: ${matString}`, 40, 440);
 
             // Delivery
             ctx.fillStyle = '#0f172a';
@@ -2511,6 +2486,8 @@
                 <div class="form-group"><label>Delivery</label><input type="number" id="edit-s-delivery" value="${s.deliveryCharge}" oninput="calcEditSale()"></div>
             </div>
             <div class="form-group"><label>Paid</label><input type="number" id="edit-s-paid" value="${s.amountPaidAtSale}" oninput="calcEditSale()"></div>
+            
+            <div class="eyebrow">Materials Used</div>
             <div class="row">
                 <div class="form-group"><label>Cement Qty (Bags)</label><input type="number" id="edit-s-cement-qty" value="${s.cementQty || ''}" placeholder="0"></div>
                 <div class="form-group"><label>Cement Price (₦)</label><input type="number" id="edit-s-cement-price" value="${s.cementPrice || ''}" placeholder="0"></div>
@@ -2519,6 +2496,7 @@
                 <div class="form-group"><label>Sand Qty (Bags)</label><input type="number" id="edit-s-sand-qty" value="${s.sandQty || ''}" placeholder="0"></div>
                 <div class="form-group"><label>Sand Price (₦)</label><input type="number" id="edit-s-sand-price" value="${s.sandPrice || ''}" placeholder="0"></div>
             </div>
+
             <div class="calc-box">
                 <div class="line"><span>Total</span> <span>₦<span id="edit-s-total">0</span></span></div>
                 <div class="line" style="color:var(--danger);"><span>Balance</span> <span>₦<span id="edit-s-balance">0</span></span></div>
@@ -2529,17 +2507,6 @@
             </div>
         `;
         calcEditSale();
-    }
-
-    function calcEditSale() {
-        const qty = parseFloat(document.getElementById('edit-s-qty').value) || 0;
-        const price = parseFloat(document.getElementById('edit-s-price').value) || 0;
-        const delivery = parseFloat(document.getElementById('edit-s-delivery').value) || 0;
-        const paid = parseFloat(document.getElementById('edit-s-paid').value) || 0;
-        const total = (qty * price) + delivery;
-        const balance = total - paid;
-        document.getElementById('edit-s-total').textContent = total.toLocaleString();
-        document.getElementById('edit-s-balance').textContent = balance.toLocaleString();
     }
 
     function saveEditedSale(saleId) {

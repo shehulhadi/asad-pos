@@ -1567,8 +1567,12 @@
                     <div class="form-group"><label>${t.delivery}</label><input type="number" id="s-delivery" value="0" oninput="calcSale()"></div>
                 </div>
                 <div class="row">
-                    <div class="form-group"><label>Cement Used (Bags)</label><input type="number" id="s-cement-used" placeholder="Auto-calc" style="background:#fff;"></div>
-                    <div class="form-group"><label>Sand Used (Bags)</label><input type="number" id="s-sand-used" placeholder="Auto-calc" style="background:#fff;"></div>
+                    <div class="form-group"><label>Cement Qty (Bags)</label><input type="number" id="s-cement-qty" placeholder="0" style="background:#fff;"></div>
+                    <div class="form-group"><label>Cement Price (₦)</label><input type="number" id="s-cement-price" placeholder="0" style="background:#fff;"></div>
+                </div>
+                <div class="row">
+                    <div class="form-group"><label>Sand Qty (Bags)</label><input type="number" id="s-sand-qty" placeholder="0" style="background:#fff;"></div>
+                    <div class="form-group"><label>Sand Price (₦)</label><input type="number" id="s-sand-price" placeholder="0" style="background:#fff;"></div>
                 </div>
                 <div class="form-group"><label>${t.paid}</label><input type="number" id="s-paid" value="0" oninput="calcSale()"></div>
                 
@@ -1652,7 +1656,7 @@
             `Customer: ${sale.customerName}\n` +
             `--------------------------------\n` +
             `Item: ${sale.quantity} pcs of ${sale.size}" Blocks\n` +
-            `Materials: ${sale.cementUsed || Math.ceil(sale.quantity / (settings.mixCement || 50))} bags cement, ${sale.sandUsed || Math.ceil(sale.quantity / (settings.mixSand || 500))} bags sand\n` +
+            `Materials: ${sale.cementQty > 0 ? sale.cementQty + ' bags cement (₦' + sale.cementPrice + ')' : Math.ceil(sale.quantity / (settings.mixCement || 50)) + ' bags cement (est)'}${sale.sandQty > 0 ? ', ' + sale.sandQty + ' bags sand (₦' + sale.sandPrice + ')' : ', ' + Math.ceil(sale.quantity / (settings.mixSand || 500)) + ' bags sand (est)'}\n` +
             `Price/Block: ₦${sale.pricePerBlock.toLocaleString()}\n` +
             `Delivery: ₦${sale.deliveryCharge.toLocaleString()}\n` +
             `*Total Amount: ₦${sale.totalAmount.toLocaleString()}*\n` +
@@ -1709,8 +1713,10 @@
             });
             const nextInv = 'INV-' + (maxInv + 1).toString().padStart(4, '0');
 
-            const manualCement = parseInt(document.getElementById('s-cement-used').value) || 0;
-            const manualSand = parseInt(document.getElementById('s-sand-used').value) || 0;
+            const manCementQty = parseInt(document.getElementById('s-cement-qty').value) || 0;
+            const manCementPrice = parseFloat(document.getElementById('s-cement-price').value) || 0;
+            const manSandQty = parseInt(document.getElementById('s-sand-qty').value) || 0;
+            const manSandPrice = parseFloat(document.getElementById('s-sand-price').value) || 0;
 
             const sale = { 
                 id: Date.now().toString(), 
@@ -1727,8 +1733,10 @@
                 amountPaidAtSale: paid, 
                 balanceOwing: balance, 
                 deliveryStatus: 'pending',
-                cementUsed: manualCement > 0 ? manualCement : Math.ceil(qty / (settings.mixCement || 50)),
-                sandUsed: manualSand > 0 ? manualSand : Math.ceil(qty / (settings.mixSand || 500))
+                cementQty: manCementQty,
+                cementPrice: manCementPrice,
+                sandQty: manSandQty,
+                sandPrice: manSandPrice
             };
             
             sales.push(sale); 
@@ -1759,7 +1767,7 @@
                 <div class="kv"><span>Invoice No.</span><strong>${sale.invoiceNo}</strong></div>
                 <div class="kv"><span>Customer</span><strong>${sale.customerName}</strong></div>
                 <div class="kv"><span>Item</span><strong>${sale.quantity} pcs of ${sale.size}" Blocks</strong></div>
-                <div class="kv"><span>Materials Used</span><strong>${sale.cementUsed || Math.ceil(sale.quantity / (settings.mixCement || 50))} bags cement, ${sale.sandUsed || Math.ceil(sale.quantity / (settings.mixSand || 500))} bags sand</strong></div>
+                <div class="kv"><span>Materials</span><strong>${sale.cementQty > 0 ? sale.cementQty + ' bags cement (₦' + sale.cementPrice + ')' : Math.ceil(sale.quantity / (settings.mixCement || 50)) + ' bags cement (est)'}${sale.sandQty > 0 ? ', ' + sale.sandQty + ' bags sand (₦' + sale.sandPrice + ')' : ', ' + Math.ceil(sale.quantity / (settings.mixSand || 500)) + ' bags sand (est)'}</strong></div>
                 <div class="kv"><span>Price per Block</span><strong>${formatNaira(sale.pricePerBlock)}</strong></div>
                 <div class="kv"><span>Delivery Charge</span><strong>${formatNaira(sale.deliveryCharge)}</strong></div>
                 
@@ -1856,7 +1864,7 @@
             ctx.textAlign = 'left';
             ctx.fillStyle = '#64748b';
             ctx.font = '14px Arial';
-            ctx.fillText(`Materials: ${s.cementUsed || Math.ceil(s.quantity / (settings.mixCement || 50))} bags cement, ${s.sandUsed || Math.ceil(s.quantity / (settings.mixSand || 500))} bags sand`, 40, 440);
+            ctx.fillText(`Materials: ${s.cementQty > 0 ? s.cementQty + ' bags cement (₦' + s.cementPrice + ')' : Math.ceil(s.quantity / (settings.mixCement || 50)) + ' bags cement (est)'}${s.sandQty > 0 ? ', ' + s.sandQty + ' bags sand (₦' + s.sandPrice + ')' : ', ' + Math.ceil(s.quantity / (settings.mixSand || 500)) + ' bags sand (est)'}`, 40, 440);
 
             // Delivery
             ctx.fillStyle = '#0f172a';
@@ -2504,8 +2512,12 @@
             </div>
             <div class="form-group"><label>Paid</label><input type="number" id="edit-s-paid" value="${s.amountPaidAtSale}" oninput="calcEditSale()"></div>
             <div class="row">
-                <div class="form-group"><label>Cement Used (Bags)</label><input type="number" id="edit-s-cement-used" value="${s.cementUsed || ''}" placeholder="Auto-calc"></div>
-                <div class="form-group"><label>Sand Used (Bags)</label><input type="number" id="edit-s-sand-used" value="${s.sandUsed || ''}" placeholder="Auto-calc"></div>
+                <div class="form-group"><label>Cement Qty (Bags)</label><input type="number" id="edit-s-cement-qty" value="${s.cementQty || ''}" placeholder="0"></div>
+                <div class="form-group"><label>Cement Price (₦)</label><input type="number" id="edit-s-cement-price" value="${s.cementPrice || ''}" placeholder="0"></div>
+            </div>
+            <div class="row">
+                <div class="form-group"><label>Sand Qty (Bags)</label><input type="number" id="edit-s-sand-qty" value="${s.sandQty || ''}" placeholder="0"></div>
+                <div class="form-group"><label>Sand Price (₦)</label><input type="number" id="edit-s-sand-price" value="${s.sandPrice || ''}" placeholder="0"></div>
             </div>
             <div class="calc-box">
                 <div class="line"><span>Total</span> <span>₦<span id="edit-s-total">0</span></span></div>
@@ -2541,10 +2553,10 @@
         s.deliveryCharge = parseInt(document.getElementById('edit-s-delivery').value) || 0;
         s.amountPaidAtSale = parseInt(document.getElementById('edit-s-paid').value) || 0;
         
-        const manCement = parseInt(document.getElementById('edit-s-cement-used').value) || 0;
-        const manSand = parseInt(document.getElementById('edit-s-sand-used').value) || 0;
-        s.cementUsed = manCement > 0 ? manCement : Math.ceil(s.quantity / (settings.mixCement || 50));
-        s.sandUsed = manSand > 0 ? manSand : Math.ceil(s.quantity / (settings.mixSand || 500));
+        s.cementQty = parseInt(document.getElementById('edit-s-cement-qty').value) || 0;
+        s.cementPrice = parseFloat(document.getElementById('edit-s-cement-price').value) || 0;
+        s.sandQty = parseInt(document.getElementById('edit-s-sand-qty').value) || 0;
+        s.sandPrice = parseFloat(document.getElementById('edit-s-sand-price').value) || 0;
 
         s.totalAmount = (s.quantity * s.pricePerBlock) + s.deliveryCharge;
         s.balanceOwing = s.totalAmount - s.amountPaidAtSale;

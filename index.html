@@ -324,7 +324,7 @@
 
     const i18n = {
         en: { 
-            home: "Home", dashboard: "Stock", analytics: "Analytics", sales: "Sales", debts: "Debts", expenses: "Expenses", production: "Production", dashboard: "Dashboard",
+            home: "Home", dashboard: "Stock", analytics: "Analytics", sales: "Sales", debts: "Debts", expenses: "Expenses", production: "Production",
             newSale: "New Sale", customer: "Customer Name", date: "Date", phone: "Phone Number", size: "Block Size", qty: "Quantity", price: "Price per Block (₦)", 
             delivery: "Delivery Charge (₦)", paid: "Amount Paid (₦)", save: "Save Sale", receipt: "Receipt", remind: "Remind on WhatsApp", pay: "Record Payment", 
             amount: "Amount (₦)", balance: "Balance Owing", total: "Total Amount", labourCost: "Labour Cost (₦)",
@@ -352,7 +352,7 @@
             daysAgo: "days ago", acceptCount: "Accept Count & Update System", language: "Language"
         },
         ha: { 
-            home: "Gida", dashboard: "Kaya", analytics: "Analytics", sales: "Tallace", debts: "Bashi", expenses: "Kashe-kashe", production: "Samarwa", dashboard: "Dashboard",
+            home: "Gida", dashboard: "Kaya", analytics: "Analytics", sales: "Tallace", debts: "Bashi", expenses: "Kashe-kashe", production: "Samarwa",
             newSale: "Sabuwar Sayarwa", customer: "Sunan Abokin Ciniki", date: "Kwanan Wata", phone: "Lambar Waya", size: "Girman Bulo", qty: "Yawa", price: "Farashin Bulo (₦)", 
             delivery: "Kudin Jigila (₦)", paid: "Kudin da aka Biya (₦)", save: "Ajiye", receipt: "Rasit", remind: "Tuna a WhatsApp", pay: "Yi Biyan Bashi", 
             amount: "Kudi (₦)", balance: "Sauran Bashi", total: "Jimillar Kudi", labourCost: "Kudin Ma'aikata (₦)",
@@ -406,7 +406,7 @@
     let stockAdjustments = JSON.parse(localStorage.getItem('asad:stockAdjustments')) || [];
     
     let currentUser = null; 
-    let currentView = 'home';
+    let currentView = 'dashboard';
     let currentDebtTab = 'customer'; 
     let currentRating = 0;
 
@@ -602,7 +602,6 @@
         buildNav();
         nav('dashboard'); // Always start on stock dashboard
     }
-
     function logout() {
         currentUser = null;
         sessionStorage.removeItem('asad:auth');
@@ -615,18 +614,13 @@
         const item = (v, icon) => `<button class="nav-btn" data-view="${v}" onclick="nav('${v}')"><span class="pill">${ico(icon)}</span>${t[v] || v}</button>`;
         let html = item('dashboard', 'box'); 
         html += item('sales', 'sales') + item('production', 'production') + item('expenses', 'expenses');
-        if (currentUser === 'owner') {
-            html += item('analytics', 'dashboard');
-        } else {
-            html += item('debts', 'debts');
-        }
+        if (currentUser === 'owner') { html += item('analytics', 'dashboard'); } 
+        else { html += item('debts', 'debts'); }
         navEl.innerHTML = html;
     }
-        if (view === 'inventory') view = 'dashboard';
+    function nav(view) {
         currentView = view;
-        const tabFor = { reports: 'analytics' };
-        const activeTab = tabFor[view] || view;
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === activeTab));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
         const main = document.getElementById('main-content');
         main.innerHTML = '';
         main.scrollTop = 0;
@@ -637,7 +631,82 @@
         else if (view === 'production') renderProduction(main);
         else if (view === 'expenses') renderExpenses(main);
         else if (view === 'debts') renderDebts(main);
-        else if (view === 'reports') renderReports(main); else {
+        else if (view === 'reports') renderReports(main);
+    }
+
+    function openSettings() {
+        const t = i18n[settings.lang];
+        document.getElementById('modal-body').innerHTML = `
+            <h3>${t.settings}</h3>
+            <div class="form-group">
+                <label>${t.language} / Harshe</label>
+                <select id="set-lang">
+                    <option value="en" ${settings.lang === 'en' ? 'selected' : ''}>English</option>
+                    <option value="ha" ${settings.lang === 'ha' ? 'selected' : ''}>Hausa</option>
+                </select>
+            </div>
+            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:12px; border-radius:8px;">
+                <label style="margin:0; font-size:14px; font-weight:700;">Dark Mode</label>
+                <input type="checkbox" id="set-dark-mode" style="width:20px; height:20px;" ${settings.darkMode ? 'checked' : ''}>
+            </div>
+            <div class="eyebrow">Default Selling Prices (₦)</div>
+            <div class="row">
+                <div class="form-group"><label>4" Block</label><input type="number" id="set-price-4" value="${settings.defaultPrices['4'] || 0}"></div>
+                <div class="form-group"><label>6" Block</label><input type="number" id="set-price-6" value="${settings.defaultPrices['6'] || 0}"></div>
+                <div class="form-group"><label>9" Block</label><input type="number" id="set-price-9" value="${settings.defaultPrices['9'] || 0}"></div>
+            </div>
+            <div class="eyebrow">Standard Mix Ratios</div>
+            <div class="row">
+                <div class="form-group"><label>Blocks per Cement Bag</label><input type="number" id="set-mix-cement" value="${settings.mixCement}"></div>
+                <div class="form-group"><label>Blocks per Sand Bag</label><input type="number" id="set-mix-sand" value="${settings.mixSand}"></div>
+            </div>
+            <div class="form-group" style="margin-top:16px;">
+                <label>Sales Reminder</label>
+                <select id="set-reminder">
+                    <option value="0" ${settings.reminderInterval == 0 ? 'selected' : ''}>Off</option>
+                    <option value="1" ${settings.reminderInterval == 1 ? 'selected' : ''}>Every 1 Hour</option>
+                    <option value="2" ${settings.reminderInterval == 2 ? 'selected' : ''}>Every 2 Hours</option>
+                    <option value="4" ${settings.reminderInterval == 4 ? 'selected' : ''}>Every 4 Hours</option>
+                </select>
+            </div>
+            <div class="row">
+                <div class="form-group"><label>${t.marginAlert}</label><input type="number" id="set-margin" value="${settings.marginAlertPct}"></div>
+                <div class="form-group"><label>${t.fixedCosts}</label><input type="number" id="set-fixed" value="${settings.fixedCostsMonthly}"></div>
+            </div>
+            <div class="eyebrow">Low Stock Thresholds</div>
+            <div class="row">
+                <div class="form-group"><label>${t.cement}</label><input type="number" id="set-low-cement" value="${settings.lowCement}"></div>
+                <div class="form-group"><label>${t.sand}</label><input type="number" id="set-low-sand" value="${settings.lowSand}"></div>
+            </div>
+            <div class="eyebrow">Custom Expense Categories</div>
+            <div class="row">
+                <div class="form-group" style="flex:2;"><input type="text" id="set-new-expense" placeholder="e.g. Truck Hire"></div>
+                <div class="form-group" style="flex:1;"><button class="btn btn-outline" style="margin-top:0;" onclick="addExpenseCategory()">Add</button></div>
+            </div>
+            <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
+                <label style="margin:0; font-size:14px; font-weight:700;">Security PINs</label>
+            </div>
+            <div class="row">
+                <div class="form-group"><label>Owner PIN</label><input type="password" id="set-owner-pin" maxlength="4" value="${settings.ownerPin}"></div>
+                <div class="form-group"><label>Staff PIN</label><input type="password" id="set-staff-pin" maxlength="4" value="${settings.staffPin}"></div>
+            </div>
+            <button class="btn" onclick="saveSettings()">${t.saveSettings}</button>
+            <button class="btn btn-outline" style="margin-top:10px;" onclick="openDirectory()">📂 Customer & Supplier Directory</button>
+            <button class="btn btn-outline" style="margin-top:10px;" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-danger" style="margin-top:22px;" onclick="clearAllData()">${t.clearData}</button>
+        `;
+        document.getElementById('modal').classList.add('active');
+    }
+
+    function addExpenseCategory() {
+        const val = document.getElementById('set-new-expense').value.trim();
+        if (!val) return;
+        if (!settings.customExpenses.includes(val)) {
+            settings.customExpenses.push(val);
+            saveData('settings', settings);
+            showToast('Category added', 'success');
+            document.getElementById('set-new-expense').value = '';
+        } else {
             showToast('Category already exists', 'err');
         }
     }
@@ -691,27 +760,80 @@
         }, true);
     }
 
-    function renderHome(main) {
+    function renderDashboard(main) {
         const t = i18n[settings.lang];
+        const cementPurchased = purchases.filter(p=>p.material==='cement').reduce((s,p)=>s+p.qty,0);
+        const cementUsed = batches.reduce((s,b)=>s+(b.cementBags||0),0);
+        const cementAdj = stockAdjustments.filter(a=>a.material==='cement').reduce((s,a)=>s+a.qty,0);
+        const cementStock = cementPurchased - cementUsed + cementAdj;
+
+        const sandPurchased = purchases.filter(p=>p.material==='sand').reduce((s,p)=>s+p.qty,0);
+        const sandUsed = batches.reduce((s,b)=>s+(b.sandQty||0),0);
+        const sandAdj = stockAdjustments.filter(a=>a.material==='sand').reduce((s,a)=>s+a.qty,0);
+        const sandStock = sandPurchased - sandUsed + sandAdj;
+
+        const sizes = ['4','6','9'];
+        let blockHtml = '';
+        sizes.forEach(sz => {
+            const readyBatches = batches.filter(b => b.size === sz && b.status === 'ready');
+            const curingBatches = batches.filter(b => b.size === sz && b.status === 'curing');
+            const produced = readyBatches.reduce((s,b)=>s+(b.blocksProduced - b.breakages),0);
+            const curing = curingBatches.reduce((s,b)=>s+b.blocksProduced,0);
+            const sold = sales.filter(s => s.size === sz).reduce((s,v)=>s+v.quantity,0);
+            const broken = breakagesLog.filter(b => b.size === sz).reduce((s,v)=>s+v.blocks,0);
+            const returned = returns.filter(r => r.size === sz).reduce((s, r) => s + r.quantity, 0);
+            const expectedReady = produced - sold - broken + returned;
+            const physical = stockCounts[sz];
+            let varianceHtml = '';
+            if (physical !== undefined && physical !== expectedReady) {
+                const diff = physical - expectedReady;
+                varianceHtml = `<div class="variance"><div style="color: var(--danger); font-weight: 700; font-size: 13px;">${t.varianceWarning}</div><div style="font-size: 13px; margin-top: 4px;">Expected: ${expectedReady} | Counted: ${physical} (Diff: ${diff > 0 ? '+' : ''}${diff})</div><button onclick="acceptVariance('${sz}', ${expectedReady}, ${physical})" style="margin-top: 10px; padding: 11px; font-size: 13px; background: var(--danger); color: white; border: none; border-radius: 8px; width: 100%; font-weight: 700; cursor: pointer;">${t.acceptCount}</button></div>`;
+            }
+            blockHtml += `<div class="list-item" style="padding: 14px 16px; margin-bottom: 8px;"><div class="list-header"><span>${sz}" Blocks</span><span class="pos">${expectedReady} Ready</span></div><div class="list-sub" style="margin-bottom: 8px;">Curing: ${curing} pcs · Sold: ${sold} pcs · ${t.broken}: ${broken} pcs</div><div class="actions" style="margin-top: 0;"><button onclick="openStockCheck('${sz}', ${expectedReady})">${t.stockCheck}</button><button onclick="openBreakage('${sz}')" style="background:var(--accent-soft); color:#92400e; border-color:#fde68a;">${t.logBreakage}</button></div>${varianceHtml}</div>`;
+        });
+
+        const tile = (label, stock, low) => `<div class="stock-tile ${stock <= low ? 'low' : ''}"><div class="k">${label}</div><div class="n">${stock}</div>${stock <= low ? `<div class="w">${t.lowStock}</div>` : ''}</div>`;
+
+        const isPurchasesCollapsed = localStorage.getItem('asad:purchasesCollapsed') === 'true';
+        const isBlocksCollapsed = localStorage.getItem('asad:blocksCollapsed') === 'true';
+
         main.innerHTML = `
-            <div class="page-title">${t.home}</div>
-            <div class="page-sub">Welcome back to ${settings.businessName}</div>
+            <div class="quick" style="margin-bottom: 20px;">
+                <button onclick="nav('debts')">${ico('debts')} Debts</button>
+                ${currentUser === 'owner' ? `<button onclick="nav('reports')">${ico('report')} Reports</button>` : ''}
+                <button onclick="openDailyClosing()" style="color:var(--brand); border-color:var(--brand);">📊 Close Day</button>
+            </div>
+            <div class="page-title">Stock & Inventory</div>
+            <div class="page-sub">Raw materials and finished blocks</div>
             <div class="card">
-                <div class="row">
-                    <button class="btn" style="margin-top:0;" onclick="nav('sales')">+ ${t.newSale}</button>
-                    <button class="btn btn-blue" style="margin-top:0;" onclick="nav('production')">+ ${t.newBatch}</button>
+                <h3>${ico('box')} ${t.rawMaterials}</h3>
+                <div class="stock-grid">
+                    ${tile(t.cement, cementStock, settings.lowCement)}
+                    ${tile(t.sand, sandStock, settings.lowSand)}
                 </div>
-                <button class="btn btn-dark" onclick="nav('inventory')">${t.inventory}</button>
+                <div class="row" style="margin-top:16px;">
+                    <button class="btn btn-dark" style="margin-top:0;" onclick="openPurchase()">+ ${t.logPurchase}</button>
+                    <button class="btn btn-outline" style="margin-top:0;" onclick="openAdjustStock()">Adjust Stock</button>
+                </div>
+            </div>
+            <div class="section-title" onclick="toggleSection('blocks-list')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><span>${ico('production')} ${t.finishedBlocks}</span><span id="blocks-list-icon" style="font-size:12px; color:var(--muted);">${isBlocksCollapsed ? '▼' : '▲'}</span></div>
+            <div id="blocks-list" style="display: ${isBlocksCollapsed ? 'none' : 'block'};">${blockHtml}</div>
+            <div class="section-title" onclick="toggleSection('purchases-section')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><span>${ico('report')} Recent Purchases</span><span id="purchases-section-icon" style="font-size:12px; color:var(--muted);">${isPurchasesCollapsed ? '▼' : '▲'}</span></div>
+            <div id="purchases-section" style="display: ${isPurchasesCollapsed ? 'none' : 'block'};">
+                <div class="form-group" style="margin-bottom:12px;"><input type="text" id="search-purchases" placeholder="Search supplier..." oninput="filterPurchases(this.value)" style="padding:10px 14px; font-size:14px; border-radius:20px;"></div>
+                <div id="purchases-inner-list">${purchases.length > 0 ? [...purchases].reverse().slice(0,5).map(p => `<div class="list-item neutral" style="padding: 12px; margin-bottom: 8px; cursor:pointer;" onclick="openPurchaseDetails('${p.id}')"><div class="list-header"><span>${p.supplierName}</span><span>${p.material.toUpperCase()}</span></div><div class="list-sub">${p.qty} units · ₦${p.cost.toLocaleString()} ${p.amountPaid < p.cost ? '· <span style="color:var(--danger)">Owing</span>' : ''}</div></div>`).join('') : '<p style="font-size:13px; color:var(--muted); text-align:center;">No purchases logged yet.</p>'}</div>
             </div>
         `;
     }
 
-    function getAvgCost(size) {
-        const sizeBatches = batches.filter(b => b.size === size);
-        if (sizeBatches.length === 0) return 0;
-        const totalCost = sizeBatches.reduce((sum, b) => sum + b.totalCost, 0);
-        const totalBlocks = sizeBatches.reduce((sum, b) => sum + b.blocksProduced, 0);
-        return totalBlocks > 0 ? (totalCost / totalBlocks) : 0;
+    function toggleSection(id) {
+        const container = document.getElementById(id);
+        const icon = document.getElementById(id + '-icon');
+        if (!container) return;
+        const isNowHidden = container.style.display === 'none';
+        container.style.display = isNowHidden ? 'block' : 'none';
+        if (icon) icon.textContent = isNowHidden ? '▲' : '▼';
+        localStorage.setItem('asad:' + id + 'Collapsed', isNowHidden ? 'false' : 'true');
     }
 
     function renderAnalytics(main) {
@@ -910,309 +1032,6 @@
                 <div style="font-size:24px; font-weight:800; margin-top:8px; color:#34d399; letter-spacing:-.5px;">${breakEvenText}</div>
             </div>
         `;
-    }
-
-    function toggleAlerts() {
-        const container = document.getElementById('alert-list-container');
-        const icon = document.getElementById('alert-toggle-icon');
-        if (!container) return;
-        if (container.style.display === 'none') { container.style.display = 'block'; icon.textContent = '▲'; localStorage.setItem('asad:alertsCollapsed', 'false'); }
-        else { container.style.display = 'none'; icon.textContent = '▼'; localStorage.setItem('asad:alertsCollapsed', 'true'); }
-    }
-
-    function renderDashboard(main) {
-        const t = i18n[settings.lang];
-        const cementPurchased = purchases.filter(p=>p.material==='cement').reduce((s,p)=>s+p.qty,0);
-        const cementUsed = batches.reduce((s,b)=>s+(b.cementBags||0),0);
-        const cementAdj = stockAdjustments.filter(a=>a.material==='cement').reduce((s,a)=>s+a.qty,0);
-        const cementStock = cementPurchased - cementUsed + cementAdj;
-
-        const sandPurchased = purchases.filter(p=>p.material==='sand').reduce((s,p)=>s+p.qty,0);
-        const sandUsed = batches.reduce((s,b)=>s+(b.sandQty||0),0);
-        const sandAdj = stockAdjustments.filter(a=>a.material==='sand').reduce((s,a)=>s+a.qty,0);
-        const sandStock = sandPurchased - sandUsed + sandAdj;
-
-        const sizes = ['4','6','9'];
-        let blockHtml = '';
-        sizes.forEach(sz => {
-            const readyBatches = batches.filter(b => b.size === sz && b.status === 'ready');
-            const curingBatches = batches.filter(b => b.size === sz && b.status === 'curing');
-            const produced = readyBatches.reduce((s,b)=>s+(b.blocksProduced - b.breakages),0);
-            const curing = curingBatches.reduce((s,b)=>s+b.blocksProduced,0);
-            const sold = sales.filter(s => s.size === sz).reduce((s,v)=>s+v.quantity,0);
-            const broken = breakagesLog.filter(b => b.size === sz).reduce((s,v)=>s+v.blocks,0);
-            const returned = returns.filter(r => r.size === sz).reduce((s, r) => s + r.quantity, 0);
-            const expectedReady = produced - sold - broken + returned;
-            const physical = stockCounts[sz];
-            let varianceHtml = '';
-            if (physical !== undefined && physical !== expectedReady) {
-                const diff = physical - expectedReady;
-                varianceHtml = `<div class="variance"><div style="color: var(--danger); font-weight: 700; font-size: 13px;">${t.varianceWarning}</div><div style="font-size: 13px; margin-top: 4px;">Expected: ${expectedReady} | Counted: ${physical} (Diff: ${diff > 0 ? '+' : ''}${diff})</div><button onclick="acceptVariance('${sz}', ${expectedReady}, ${physical})" style="margin-top: 10px; padding: 11px; font-size: 13px; background: var(--danger); color: white; border: none; border-radius: 8px; width: 100%; font-weight: 700; cursor: pointer;">${t.acceptCount}</button></div>`;
-            }
-            blockHtml += `<div class="list-item" style="padding: 14px 16px; margin-bottom: 8px;"><div class="list-header"><span>${sz}" Blocks</span><span class="pos">${expectedReady} Ready</span></div><div class="list-sub" style="margin-bottom: 8px;">Curing: ${curing} pcs · Sold: ${sold} pcs · ${t.broken}: ${broken} pcs</div><div class="actions" style="margin-top: 0;"><button onclick="openStockCheck('${sz}', ${expectedReady})">${t.stockCheck}</button><button onclick="openBreakage('${sz}')" style="background:var(--accent-soft); color:#92400e; border-color:#fde68a;">${t.logBreakage}</button></div>${varianceHtml}</div>`;
-        });
-
-        const tile = (label, stock, low) => `<div class="stock-tile ${stock <= low ? 'low' : ''}"><div class="k">${label}</div><div class="n">${stock}</div>${stock <= low ? `<div class="w">${t.lowStock}</div>` : ''}</div>`;
-
-        const isPurchasesCollapsed = localStorage.getItem('asad:purchasesCollapsed') === 'true';
-        const isBlocksCollapsed = localStorage.getItem('asad:blocksCollapsed') === 'true';
-
-        main.innerHTML = `
-            <div class="quick" style="margin-bottom: 20px;">
-                <button onclick="nav('debts')">${ico('debts')} Debts</button>
-                ${currentUser === 'owner' ? `<button onclick="nav('reports')">${ico('report')} Reports</button>` : ''}
-                <button onclick="openDailyClosing()" style="color:var(--brand); border-color:var(--brand);">📊 Close Day</button>
-            </div>
-            <div class="page-title">Stock & Inventory</div>
-            <div class="page-sub">Raw materials and finished blocks</div>
-            <div class="card">
-                <h3>${ico('box')} ${t.rawMaterials}</h3>
-                <div class="stock-grid">
-                    ${tile(t.cement, cementStock, settings.lowCement)}
-                    ${tile(t.sand, sandStock, settings.lowSand)}
-                </div>
-                <div class="row" style="margin-top:16px;">
-                    <button class="btn btn-dark" style="margin-top:0;" onclick="openPurchase()">+ ${t.logPurchase}</button>
-                    <button class="btn btn-outline" style="margin-top:0;" onclick="openAdjustStock()">Adjust Stock</button>
-                </div>
-            </div>
-            <div class="section-title" onclick="toggleSection('blocks-list')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><span>${ico('production')} ${t.finishedBlocks}</span><span id="blocks-list-icon" style="font-size:12px; color:var(--muted);">${isBlocksCollapsed ? '▼' : '▲'}</span></div>
-            <div id="blocks-list" style="display: ${isBlocksCollapsed ? 'none' : 'block'};">${blockHtml}</div>
-            <div class="section-title" onclick="toggleSection('purchases-section')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><span>${ico('report')} Recent Purchases</span><span id="purchases-section-icon" style="font-size:12px; color:var(--muted);">${isPurchasesCollapsed ? '▼' : '▲'}</span></div>
-            <div id="purchases-section" style="display: ${isPurchasesCollapsed ? 'none' : 'block'};">
-                <div class="form-group" style="margin-bottom:12px;"><input type="text" id="search-purchases" placeholder="Search supplier..." oninput="filterPurchases(this.value)" style="padding:10px 14px; font-size:14px; border-radius:20px;"></div>
-                <div id="purchases-inner-list">${purchases.length > 0 ? [...purchases].reverse().slice(0,5).map(p => `<div class="list-item neutral" style="padding: 12px; margin-bottom: 8px; cursor:pointer;" onclick="openPurchaseDetails('${p.id}')"><div class="list-header"><span>${p.supplierName}</span><span>${p.material.toUpperCase()}</span></div><div class="list-sub">${p.qty} units · ₦${p.cost.toLocaleString()} ${p.amountPaid < p.cost ? '· <span style="color:var(--danger)">Owing</span>' : ''}</div></div>`).join('') : '<p style="font-size:13px; color:var(--muted); text-align:center;">No purchases logged yet.</p>'}</div>
-            </div>
-        `;
-    }
-
-    function toggleSection(id) {
-        const container = document.getElementById(id);
-        const icon = document.getElementById(id + '-icon');
-        if (!container) return;
-        const isNowHidden = container.style.display === 'none';
-        container.style.display = isNowHidden ? 'block' : 'none';
-        if (icon) icon.textContent = isNowHidden ? '▲' : '▼';
-        localStorage.setItem('asad:' + id + 'Collapsed', isNowHidden ? 'false' : 'true');
-    }
-
-    function acceptVariance(size, expected, physical) {
-        const diff = expected - physical;
-        if (diff > 0) { breakagesLog.push({ id: Date.now().toString(), date: getTodayStr(), size: size, blocks: diff, reason: 'Stock Variance Adjustment' }); saveData('breakages', breakagesLog); }
-        else if (diff < 0) { batches.push({ id: Date.now().toString(), date: getTodayStr(), size: size, worker: 'System Adjustment', blocksProduced: Math.abs(diff), breakages: 0, curingLoss: 0, totalCost: 0, costPerBlock: 0, status: 'ready' }); saveData('batches', batches); }
-        delete stockCounts[size]; saveData('stockCounts', stockCounts); nav('inventory'); showToast('System adjusted to match physical count', 'success');
-    }
-
-    function openBreakage(size) {
-        const t = i18n[settings.lang];
-        document.getElementById('modal-body').innerHTML = `
-            <h3>${t.logBreakage} · ${size}"</h3>
-            <div class="form-group"><label>${t.qty}</label><input type="number" id="break-qty" value="1" min="1"></div>
-            <div class="form-group"><label>${t.breakageReason}</label><input type="text" id="break-reason" placeholder="e.g. Transport, Storage"></div>
-            <button class="btn" onclick="saveBreakage('${size}')">Save</button>
-            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-        `;
-        document.getElementById('modal').classList.add('active');
-    }
-    function saveBreakage(size) {
-        const qty = parseInt(document.getElementById('break-qty').value) || 0;
-        if (qty <= 0) return showToast('Enter valid quantity', 'err');
-        breakagesLog.push({ id: Date.now().toString(), date: getTodayStr(), size: size, blocks: qty, reason: document.getElementById('break-reason').value || 'Unknown' });
-        saveData('breakages', breakagesLog); closeModal(); nav('inventory'); showToast('Breakage logged', 'success');
-    }
-
-    function openPurchase() {
-        const t = i18n[settings.lang];
-        document.getElementById('modal-body').innerHTML = `
-            <h3>${t.logPurchase}</h3>
-            <div class="form-group"><label>${t.supplierName}</label><input type="text" id="pur-supplier" list="supplier-names" placeholder="e.g. Dangote"><datalist id="supplier-names"></datalist></div>
-            <div class="form-group"><label>Material</label><select id="pur-mat"><option value="cement">${t.cement}</option><option value="sand">${t.sand}</option></select></div>
-            <div class="row">
-                <div class="form-group"><label>Qty</label><input type="number" id="pur-qty" value="0"></div>
-                <div class="form-group"><label>Total Cost (₦)</label><input type="number" id="pur-cost" value="0"></div>
-            </div>
-            <div class="form-group"><label>${t.paid}</label><input type="number" id="pur-paid" value="0"></div>
-            <button class="btn" onclick="savePurchase()">Save</button>
-            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-        `;
-        const uniqueSuppliers = [...new Set(purchases.map(p => p.supplierName).filter(n => n && n !== 'Unknown'))];
-        document.getElementById('supplier-names').innerHTML = uniqueSuppliers.map(name => `<option value="${name}"></option>`).join('');
-        document.getElementById('modal').classList.add('active');
-    }
-    function savePurchase() {
-        const qty = parseFloat(document.getElementById('pur-qty').value) || 0;
-        const cost = parseFloat(document.getElementById('pur-cost').value) || 0;
-        const paid = parseFloat(document.getElementById('pur-paid').value) || 0;
-        if (qty <= 0) return showToast('Enter valid quantity', 'err');
-        purchases.push({ id: Date.now().toString(), date: getTodayStr(), supplierName: document.getElementById('pur-supplier').value || 'Unknown', material: document.getElementById('pur-mat').value, qty: qty, cost: cost, amountPaid: paid });
-        saveData('purchases', purchases); closeModal();
-        if (currentView === 'debts') { currentDebtTab = 'supplier'; nav('debts'); } else { nav('inventory'); }
-        showToast('Purchase logged', 'success');
-    }
-    function openAdjustStock() {
-        document.getElementById('modal-body').innerHTML = `
-            <h3>Adjust Raw Material</h3>
-            <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Use negative numbers for spoilage/loss, positive for extra stock found.</p>
-            <div class="form-group"><label>Material</label><select id="adj-mat"><option value="cement">Cement</option><option value="sand">Sand</option></select></div>
-            <div class="form-group"><label>Adjustment Qty</label><input type="number" id="adj-qty" value="0" placeholder="e.g. -5"></div>
-            <div class="form-group"><label>Reason</label><input type="text" id="adj-reason" placeholder="e.g. Spoiled"></div>
-            <button class="btn" onclick="saveAdjustStock()">Save Adjustment</button>
-            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-        `;
-        document.getElementById('modal').classList.add('active');
-    }
-    function saveAdjustStock() {
-        const qty = parseFloat(document.getElementById('adj-qty').value) || 0;
-        if (qty === 0) return showToast('Enter a non-zero value', 'err');
-        stockAdjustments.push({ id: Date.now().toString(), date: getTodayStr(), material: document.getElementById('adj-mat').value, qty: qty, reason: document.getElementById('adj-reason').value || 'Manual adjustment' });
-        saveData('stockAdjustments', stockAdjustments); closeModal(); nav('inventory'); showToast('Stock adjusted', 'success');
-    }
-    function openPurchaseDetails(id) {
-        const p = purchases.find(x => x.id === id);
-        if (!p) return;
-        document.getElementById('modal-body').innerHTML = `
-            <h3>Purchase Details</h3>
-            <div class="kv"><span>Supplier</span><strong>${p.supplierName}</strong></div>
-            <div class="kv"><span>Material</span><strong>${p.material.toUpperCase()}</strong></div>
-            <div class="kv"><span>Quantity</span><strong>${p.qty}</strong></div>
-            <div class="kv"><span>Total Cost</span><strong>₦${p.cost.toLocaleString()}</strong></div>
-            <div class="kv"><span>Amount Paid</span><strong>₦${(p.amountPaid || 0).toLocaleString()}</strong></div>
-            <div class="row" style="margin-top:24px;"><button class="btn btn-outline" onclick="closeModal()">Close</button><button class="btn" onclick="editPurchase('${p.id}')">Edit Purchase</button></div>
-        `;
-        document.getElementById('modal').classList.add('active');
-    }
-    function editPurchase(id) {
-        const p = purchases.find(x => x.id === id);
-        document.getElementById('modal-body').innerHTML = `
-            <h3>Edit Purchase</h3>
-            <div class="form-group"><label>Supplier Name</label><input type="text" id="edit-p-supplier" value="${p.supplierName}"></div>
-            <div class="form-group"><label>Material</label><select id="edit-p-mat"><option value="cement" ${p.material==='cement'?'selected':''}>Cement</option><option value="sand" ${p.material==='sand'?'selected':''}>Sand</option></select></div>
-            <div class="row">
-                <div class="form-group"><label>Quantity</label><input type="number" id="edit-p-qty" value="${p.qty}"></div>
-                <div class="form-group"><label>Total Cost</label><input type="number" id="edit-p-cost" value="${p.cost}"></div>
-            </div>
-            <div class="form-group"><label>Amount Paid</label><input type="number" id="edit-p-paid" value="${p.amountPaid || 0}"></div>
-            <div class="row"><button class="btn btn-outline" onclick="openPurchaseDetails('${p.id}')">Back</button><button class="btn" onclick="saveEditedPurchase('${p.id}')">Save Changes</button></div>
-        `;
-    }
-    function saveEditedPurchase(id) {
-        const p = purchases.find(x => x.id === id);
-        p.supplierName = document.getElementById('edit-p-supplier').value || 'Unknown';
-        p.material = document.getElementById('edit-p-mat').value;
-        p.qty = parseFloat(document.getElementById('edit-p-qty').value) || 0;
-        p.cost = parseFloat(document.getElementById('edit-p-cost').value) || 0;
-        p.amountPaid = parseFloat(document.getElementById('edit-p-paid').value) || 0;
-        saveData('purchases', purchases); closeModal(); nav('inventory'); showToast('Purchase updated', 'success');
-    }
-    function openStockCheck(size, expected) {
-        const t = i18n[settings.lang];
-        document.getElementById('modal-body').innerHTML = `
-            <h3>${t.stockCheck} · ${size}"</h3>
-            <div class="calc-box"><div class="line"><span>${t.expected}</span><span>${expected} pcs</span></div></div>
-            <div class="form-group"><label>${t.physicalCount}</label><input type="number" id="check-count" value="${expected}"></div>
-            <button class="btn" onclick="verifyStock('${size}', ${expected})">Verify</button>
-            <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
-        `;
-        document.getElementById('modal').classList.add('active');
-    }
-    function verifyStock(size, expected) {
-        const counted = parseInt(document.getElementById('check-count').value) || 0;
-        if (counted === expected) { showToast('Stock matches perfectly!', 'success'); delete stockCounts[size]; saveData('stockCounts', stockCounts); }
-        else { stockCounts[size] = counted; saveData('stockCounts', stockCounts); }
-        closeModal(); nav('inventory');
-    }
-
-    function renderReports(main) {
-        const t = i18n[settings.lang];
-        const currentMonth = getTodayStr().slice(0, 7);
-        main.innerHTML = `
-            ${backBtn('analytics')}
-            <div class="page-title">${t.reports}</div>
-            <div class="page-sub">Monthly performance and data backup</div>
-            <div class="card">
-                <h3>${ico('report')} ${t.plReport}</h3>
-                <div class="form-group"><label>${t.month}</label><input type="month" id="rep-month" value="${currentMonth}" onchange="calcPL()"></div>
-                <div id="pl-results"></div>
-                <button class="btn btn-dark" onclick="exportCSV()" style="margin-top:0;">${t.exportCSV}</button>
-                <button class="btn btn-outline" onclick="printDocument()">Print / PDF</button>
-            </div>
-            <div class="card">
-                <h3>${ico('update')} Backup & Restore</h3>
-                <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">Save your data to a file or restore from a previous backup.<br><br><strong style="color:var(--warning);">Recommendation:</strong> Always save your backup to Google Drive, WhatsApp, or email. If you lose this phone, this file is the <strong>only</strong> way to recover your data.</p>
-                <button class="btn btn-blue" style="margin-top:0;" onclick="exportJSON()">📤 Share Backup File</button>
-                <input type="file" id="import-file" accept=".json,.txt" style="display:none;" onchange="importJSON(event)">
-                <button class="btn btn-outline" onclick="document.getElementById('import-file').click()">${t.importJSON}</button>
-            </div>
-        `;
-        calcPL();
-    }
-    function calcPL() {
-        const t = i18n[settings.lang];
-        const month = document.getElementById('rep-month').value;
-        if(!month) return;
-        const mSales = sales.filter(s => s.date.startsWith(month));
-        const mExp = expenses.filter(e => e.date.startsWith(month));
-        const rev = mSales.reduce((s,v)=>s+v.totalAmount, 0);
-        const cogs = mSales.reduce((s,v)=>s+(v.quantity * getAvgCost(v.size)), 0);
-        const exp = mExp.reduce((s,v)=>s+v.amount, 0);
-        const net = rev - cogs - exp;
-        document.getElementById('pl-results').innerHTML = `<div style="margin-bottom:16px; font-size:14px; background:#f8fafc; border:1px solid var(--line); padding:6px 16px; border-radius:12px;"><div class="kv"><span>${t.revenue}</span> <strong>${formatNaira(rev)}</strong></div><div class="kv"><span>${t.cogs}</span> <strong>-${formatNaira(cogs)}</strong></div><div class="kv"><span>${t.grossProfit}</span> <strong>${formatNaira(rev-cogs)}</strong></div><div class="kv"><span>${t.expenses}</span> <strong>-${formatNaira(exp)}</strong></div><div class="kv" style="font-size:16px; font-weight:800;"><span>${t.netProfit}</span> <span class="${net>=0?'pos':'neg'}">${formatNaira(net)}</span></div></div>`;
-    }
-    function exportCSV() {
-        let csv = "Type,Date,Description,Amount(NGN)\n";
-        sales.forEach(s => { csv += `Sale,${s.date},${s.customerName} - ${s.size}" x${s.quantity},${s.totalAmount}\n`; });
-        expenses.forEach(e => { csv += `Expense,${e.date},${e.category},${e.amount}\n`; });
-        batches.forEach(b => { csv += `Production,${b.date},${b.size}" Blocks - ${b.blocksProduced} pcs,${b.totalCost}\n`; });
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = `AsadTech_Report_${getTodayStr()}.csv`; a.click(); showToast('CSV Exported', 'success');
-    }
-    async function exportJSON() {
-        const data = {};
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key.startsWith('asad:')) { try { data[key] = JSON.parse(localStorage.getItem(key)); } catch(e) { data[key] = localStorage.getItem(key); } }
-        }
-        const jsonStr = JSON.stringify(data, null, 2);
-        const safeName = (settings.businessName || 'Business').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
-        const now = new Date(); const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-        const filename = `${safeName}_Backup_${getTodayStr()}_${timeStr}.txt`;
-        const blob = new Blob([jsonStr], { type: 'application/json' });
-        const file = new File([blob], filename, { type: 'application/json' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            try { await navigator.share({ files: [file], title: 'Business Backup' }); showToast('Backup shared', 'success'); return; } 
-            catch (e) { if (e.name === 'AbortError') return; }
-        }
-        document.getElementById('modal-body').innerHTML = `
-            <h3>Save Backup File</h3>
-            <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Tap Download to save to your phone, or Copy to paste it into Google Keep/Notes.</p>
-            <textarea id="backup-text" style="width:100%; height:150px; font-family:monospace; font-size:12px; padding:10px; border-radius:8px; border:1px solid var(--line); margin-bottom:12px;" readonly>${jsonStr}</textarea>
-            <div class="row">
-                <button class="btn btn-outline" onclick="navigator.clipboard.writeText(document.getElementById('backup-text').value).then(()=>showToast('Copied to clipboard!','success'))">📋 Copy</button>
-                <button class="btn" onclick="downloadBackup('${filename}', document.getElementById('backup-text').value)">📥 Download</button>
-            </div>
-        `;
-        document.getElementById('modal').classList.add('active');
-    }
-    function downloadBackup(filename, content) {
-        const blob = new Blob([content], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = filename;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); showToast('File downloaded', 'success');
-    }
-    function importJSON(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = JSON.parse(e.target.result);
-                if (!data['asad:settings']) throw new Error('Invalid backup file');
-                Object.keys(data).forEach(key => { localStorage.setItem(key, JSON.stringify(data[key])); });
-                showToast('Data restored successfully! Reloading...', 'success'); setTimeout(() => location.reload(), 1500);
-            } catch (err) { showToast('Invalid JSON file: ' + err.message, 'err'); }
-        };
-        reader.readAsText(file);
     }
 
     function renderSales(main) { 
@@ -1810,7 +1629,7 @@
         document.getElementById('modal-body').innerHTML = `
             <h3>Bulk Reminder</h3><p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Copy this list to send in a WhatsApp group, or share it directly.</p>
             <textarea id="bulk-reminder-text" style="width:100%; height:220px; font-family:monospace; font-size:13px; padding:12px; border-radius:8px; border:1.5px solid var(--line); margin-bottom:16px; background:#f8fafc;" readonly>${msg}</textarea>
-            <div class="row"><button class="btn btn-outline" onclick="navigator.clipboard.writeText(document.getElementById('bulk-reminder-text').value).then(()=>showToast('Copied to clipboard!','success'))">📋 Copy</button><button class="btn" style="background:#25D366; color:#fff;" onclick="shareBulkReminder()">📤 Share</button></div>
+            <div class="row"><button class="btn btn-outline" onclick="navigator.clipboard.writeText(document.getElementById('bulk-reminder-text').value).then(()=>showToast('Copied!','success'))">📋 Copy</button><button class="btn" style="background:#25D366; color:#fff;" onclick="shareBulkReminder()">📤 Share</button></div>
             <button class="btn btn-outline" style="margin-top:8px;" onclick="closeModal()">Close</button>
         `;
         document.getElementById('modal').classList.add('active');
@@ -1818,7 +1637,7 @@
     function shareBulkReminder() {
         const text = document.getElementById('bulk-reminder-text').value;
         if (navigator.share) navigator.share({ title: 'Debt Reminders', text: text }).then(() => showToast('Shared', 'success')).catch(e => console.log(e));
-        else navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!', 'success'));
+        else navigator.clipboard.writeText(text).then(() => showToast('Copied!', 'success'));
     }
     function writeOffDebt(saleId) {
         showDialog("Write Off Debt?", "Are you sure? This will clear the debt from your dashboard. This action cannot be undone.", () => {

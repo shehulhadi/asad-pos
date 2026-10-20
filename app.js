@@ -503,10 +503,10 @@ function renderDashboard(main) {
 
     main.innerHTML = `
         <div class="quick" style="margin-bottom: 20px; flex-wrap: wrap;">
-            <button onclick="nav('production')" style="flex: 1 1 45%;">${ico('production')} Production</button>
-            <button onclick="nav('debts')" style="flex: 1 1 45%;">${ico('debts')} Debts</button>
-            ${currentUser === 'owner' ? `<button onclick="nav('reports')" style="flex: 1 1 45%;">${ico('report')} Reports</button>` : ''}
-            <button onclick="openDailyClosing()" style="color:var(--brand); border-color:var(--brand); flex: 1 1 45%;">📊 Close Day</button>
+            ${currentUser === 'owner' ? `<button onclick="nav('reports')" style="flex: 1 1 30%;">${ico('report')} Reports</button>` : ''}
+            <button onclick="nav('debts')" style="flex: 1 1 30%;">${ico('debts')} Debts</button>
+            <button onclick="nav('production')" style="flex: 1 1 30%;">${ico('production')} Prod</button>
+            <button onclick="openDailyClosing()" style="color:var(--brand); border-color:var(--brand); flex: 1 1 100%; margin-top: 8px;">📊 Close Day</button>
         </div>
         <div class="page-title">Stock & Inventory</div>
         <div class="page-sub">Tap any item to manage stock and view history</div>

@@ -1170,6 +1170,10 @@ function renderSales(main) {
                 <div class="form-group"><label>Sand Qty (Bags)</label><input type="number" id="s-sand-qty" value="" placeholder="0" oninput="calcSale()"></div>
                 <div class="form-group"><label>Sand Price (₦)</label><input type="number" id="s-sand-price" value="" placeholder="0" oninput="calcSale()"></div>
             </div>
+            <div class="row">
+                <div class="form-group"><label>Empty Bags Qty</label><input type="number" id="s-empty-bag-qty" value="" placeholder="0" oninput="calcSale()"></div>
+                <div class="form-group"><label>Empty Bag Price (₦)</label><input type="number" id="s-empty-bag-price" value="" placeholder="0" oninput="calcSale()"></div>
+            </div>
 
             <div class="eyebrow">Payment</div>
             <div class="row">
@@ -1189,7 +1193,8 @@ function renderSales(main) {
     `;
     const uniqueCustomers = {};
     sales.forEach(s => { if(s.customerName && s.customerPhone) uniqueCustomers[s.customerName] = s.customerPhone; });
-    document.getElementById('customer-names').innerHTML = Object.keys(uniqueCustomers).map(name => `<option value="${name}"></option>`).join('');
+    const custData = document.getElementById('customer-names');
+    if(custData) custData.innerHTML = Object.keys(uniqueCustomers).map(name => `<option value="${name}"></option>`).join('');
     calcSale();
 }
 
@@ -1197,22 +1202,24 @@ function updateDefaultPrice() { const size = document.getElementById('s-size').v
 function autofillPhone(name) { const match = sales.slice().reverse().find(s => s.customerName.toLowerCase() === name.toLowerCase()); if (match && match.customerPhone) document.getElementById('s-phone').value = match.customerPhone; }
 function quickAdd(id, amount, calcFn) { const el = document.getElementById(id); el.value = (parseInt(el.value) || 0) + amount; if (typeof window[calcFn] === 'function') window[calcFn](); }
 function calcSale() {
-    const bQty = parseFloat(document.getElementById('s-qty').value) || 0;
-    const bPrice = parseFloat(document.getElementById('s-price').value) || 0;
-    const cQty = parseFloat(document.getElementById('s-cement-qty').value) || 0;
-    const cPrice = parseFloat(document.getElementById('s-cement-price').value) || 0;
-    const sQty = parseFloat(document.getElementById('s-sand-qty').value) || 0;
-    const eQty = parseFloat(document.getElementById('s-empty-bag-qty').value) || 0;
-    const ePrice = parseFloat(document.getElementById('s-empty-bag-price').value) || 0;
-    const sPrice = parseFloat(document.getElementById('s-sand-price').value) || 0;
-    const delivery = parseFloat(document.getElementById('s-delivery').value) || 0;
-    const paid = parseFloat(document.getElementById('s-paid').value) || 0;
+    const bQty = parseFloat(document.getElementById('s-qty')?.value) || 0;
+    const bPrice = parseFloat(document.getElementById('s-price')?.value) || 0;
+    const cQty = parseFloat(document.getElementById('s-cement-qty')?.value) || 0;
+    const cPrice = parseFloat(document.getElementById('s-cement-price')?.value) || 0;
+    const sQty = parseFloat(document.getElementById('s-sand-qty')?.value) || 0;
+    const sPrice = parseFloat(document.getElementById('s-sand-price')?.value) || 0;
+    const eQty = parseFloat(document.getElementById('s-empty-bag-qty')?.value) || 0;
+    const ePrice = parseFloat(document.getElementById('s-empty-bag-price')?.value) || 0;
+    const delivery = parseFloat(document.getElementById('s-delivery')?.value) || 0;
+    const paid = parseFloat(document.getElementById('s-paid')?.value) || 0;
     
     const total = (bQty * bPrice) + (cQty * cPrice) + (sQty * sPrice) + (eQty * ePrice) + delivery;
     const balance = total - paid;
     
-    document.getElementById('s-total-display').textContent = total.toLocaleString();
-    document.getElementById('s-balance-display').textContent = balance.toLocaleString();
+    const td = document.getElementById('s-total-display');
+    if(td) td.textContent = total.toLocaleString();
+    const bd = document.getElementById('s-balance-display');
+    if(bd) bd.textContent = balance.toLocaleString();
 }
 
 function saveSale() {
@@ -1239,12 +1246,12 @@ function saveSale() {
 }
 function executeSaveSale(qty, price, delivery, paid, saleDate, custName) {
     try {
-        const cQty = parseInt(document.getElementById('s-cement-qty').value) || 0;
-        const cPrice = parseFloat(document.getElementById('s-cement-price').value) || 0;
-        const sQty = parseInt(document.getElementById('s-sand-qty').value) || 0;
-        const eQty = parseInt(document.getElementById('s-empty-bag-qty').value) || 0;
-        const ePrice = parseFloat(document.getElementById('s-empty-bag-price').value) || 0;
-        const sPrice = parseFloat(document.getElementById('s-sand-price').value) || 0;
+        const cQty = parseInt(document.getElementById('s-cement-qty')?.value) || 0;
+        const cPrice = parseFloat(document.getElementById('s-cement-price')?.value) || 0;
+        const sQty = parseInt(document.getElementById('s-sand-qty')?.value) || 0;
+        const sPrice = parseFloat(document.getElementById('s-sand-price')?.value) || 0;
+        const eQty = parseInt(document.getElementById('s-empty-bag-qty')?.value) || 0;
+        const ePrice = parseFloat(document.getElementById('s-empty-bag-price')?.value) || 0;
         
         const total = (qty * price) + (cQty * cPrice) + (sQty * sPrice) + (eQty * ePrice) + delivery;
         const balance = total - paid;
@@ -1259,8 +1266,8 @@ function executeSaveSale(qty, price, delivery, paid, saleDate, custName) {
             invoiceNo: nextInv, 
             date: saleDate, 
             customerName: custName, 
-            customerPhone: document.getElementById('s-phone').value || '', 
-            size: document.getElementById('s-size').value, 
+            customerPhone: document.getElementById('s-phone')?.value || '', 
+            size: document.getElementById('s-size')?.value || '6', 
             quantity: qty, 
             pricePerBlock: price, 
             cementQty: cQty,
@@ -1375,18 +1382,18 @@ function editSale(saleId) {
         <h3>Edit Sale</h3>
         
         <div class="eyebrow">Customer Info</div>
-        <div class="form-group"><label>Customer</label><input type="text" id="edit-s-customer" value="${s.customerName}"></div>
+        <div class="form-group"><label>Customer Name</label><input type="text" id="edit-s-customer" value="${s.customerName}"></div>
         <div class="row">
+            <div class="form-group"><label>Phone</label><input type="tel" id="edit-s-phone" value="${s.customerPhone || ''}" placeholder="Phone"></div>
             <div class="form-group"><label>Date</label><input type="date" id="edit-s-date" value="${s.date}"></div>
-            <div class="form-group"><label>Phone</label><input type="tel" id="edit-s-phone" value="${s.customerPhone || ''}"></div>
         </div>
 
         <div class="eyebrow">Items Bought</div>
         <div style="background:var(--bg); padding:12px; border-radius:8px; margin-bottom:12px;">
             <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Blocks</div>
             <div class="row">
-                <div class="form-group" style="flex:1.5;"><label>Size</label><select id="edit-s-size"><option value="6">6"</option></select></div>
-                <div class="form-group" style="flex:1;"><label>Qty</label><input type="number" id="edit-s-qty" value="${s.quantity || ''}" placeholder="0" oninput="calcEditSale()"></div>
+                <div class="form-group" style="flex:1.5;"><label>Block Size</label><select id="edit-s-size"><option value="6">6"</option></select></div>
+                <div class="form-group" style="flex:1;"><label>Qty</label><input type="number" id="edit-s-qty" value="${s.quantity || ''}" placeholder="0" oninput="calcEditSale()"><div style="display:flex; gap:6px; margin-top:6px;"><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('edit-s-qty', 50, 'calcEditSale')">+50</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('edit-s-qty', 100, 'calcEditSale')">+100</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('edit-s-qty', 500, 'calcEditSale')">+500</button></div></div>
                 <div class="form-group" style="flex:1.5;"><label>Price (₦)</label><input type="number" id="edit-s-price" value="${s.pricePerBlock || ''}" placeholder="0" oninput="calcEditSale()"></div>
             </div>
         </div>
@@ -1415,51 +1422,51 @@ function editSale(saleId) {
             <div class="line" style="color:var(--danger);"><span>Balance Owing</span> <span>₦<span id="edit-s-balance">0</span></span></div>
         </div>
         
-        <div class="row">
-            <button class="btn btn-outline" onclick="openSaleDetails('${s.id}')">Back</button>
-            <button class="btn" onclick="saveEditedSale('${s.id}')">Save Changes</button>
-        </div>
+        <button class="btn" style="margin-top:0; margin-bottom:10px;" onclick="saveEditedSale('${s.id}')">Save Changes</button>
+        <button class="btn btn-outline" onclick="openSaleDetails('${s.id}')">Cancel</button>
     `;
     calcEditSale();
 }
 
 function calcEditSale() {
-    const bQty = parseFloat(document.getElementById('edit-s-qty').value) || 0;
-    const bPrice = parseFloat(document.getElementById('edit-s-price').value) || 0;
-    const cQty = parseFloat(document.getElementById('edit-s-cement-qty').value) || 0;
-    const cPrice = parseFloat(document.getElementById('edit-s-cement-price').value) || 0;
-    const sQty = parseFloat(document.getElementById('edit-s-sand-qty').value) || 0;
-    const eQty = parseFloat(document.getElementById('edit-s-empty-bag-qty').value) || 0;
-    const ePrice = parseFloat(document.getElementById('edit-s-empty-bag-price').value) || 0;
-    const sPrice = parseFloat(document.getElementById('edit-s-sand-price').value) || 0;
-    const delivery = parseFloat(document.getElementById('edit-s-delivery').value) || 0;
-    const paid = parseFloat(document.getElementById('edit-s-paid').value) || 0;
+    const bQty = parseFloat(document.getElementById('edit-s-qty')?.value) || 0;
+    const bPrice = parseFloat(document.getElementById('edit-s-price')?.value) || 0;
+    const cQty = parseFloat(document.getElementById('edit-s-cement-qty')?.value) || 0;
+    const cPrice = parseFloat(document.getElementById('edit-s-cement-price')?.value) || 0;
+    const sQty = parseFloat(document.getElementById('edit-s-sand-qty')?.value) || 0;
+    const sPrice = parseFloat(document.getElementById('edit-s-sand-price')?.value) || 0;
+    const eQty = parseFloat(document.getElementById('edit-s-empty-bag-qty')?.value) || 0;
+    const ePrice = parseFloat(document.getElementById('edit-s-empty-bag-price')?.value) || 0;
+    const delivery = parseFloat(document.getElementById('edit-s-delivery')?.value) || 0;
+    const paid = parseFloat(document.getElementById('edit-s-paid')?.value) || 0;
     
     const total = (bQty * bPrice) + (cQty * cPrice) + (sQty * sPrice) + (eQty * ePrice) + delivery;
     const balance = total - paid;
     
-    document.getElementById('edit-s-total').textContent = total.toLocaleString();
-    document.getElementById('edit-s-balance').textContent = balance.toLocaleString();
+    const td = document.getElementById('edit-s-total');
+    if(td) td.textContent = total.toLocaleString();
+    const bd = document.getElementById('edit-s-balance');
+    if(bd) bd.textContent = balance.toLocaleString();
 }
 
 function saveEditedSale(saleId) {
     const s = sales.find(x => x.id === saleId);
-    s.customerName = document.getElementById('edit-s-customer').value || 'Walk-in';
-    s.date = document.getElementById('edit-s-date').value;
-    s.customerPhone = document.getElementById('edit-s-phone').value;
-    s.size = document.getElementById('edit-s-size').value;
+    s.customerName = document.getElementById('edit-s-customer')?.value || 'Walk-in';
+    s.date = document.getElementById('edit-s-date')?.value;
+    s.customerPhone = document.getElementById('edit-s-phone')?.value;
+    s.size = document.getElementById('edit-s-size')?.value;
     
-    s.quantity = parseInt(document.getElementById('edit-s-qty').value) || 0;
-    s.pricePerBlock = parseInt(document.getElementById('edit-s-price').value) || 0;
-    s.cementQty = parseInt(document.getElementById('edit-s-cement-qty').value) || 0;
-    s.cementPrice = parseFloat(document.getElementById('edit-s-cement-price').value) || 0;
-    s.sandQty = parseInt(document.getElementById('edit-s-sand-qty').value) || 0;
-    s.sandPrice = parseFloat(document.getElementById('edit-s-sand-price').value) || 0;
-    s.emptyBagQty = parseInt(document.getElementById('edit-s-empty-bag-qty').value) || 0;
-    s.emptyBagPrice = parseFloat(document.getElementById('edit-s-empty-bag-price').value) || 0;
+    s.quantity = parseInt(document.getElementById('edit-s-qty')?.value) || 0;
+    s.pricePerBlock = parseInt(document.getElementById('edit-s-price')?.value) || 0;
+    s.cementQty = parseInt(document.getElementById('edit-s-cement-qty')?.value) || 0;
+    s.cementPrice = parseFloat(document.getElementById('edit-s-cement-price')?.value) || 0;
+    s.sandQty = parseInt(document.getElementById('edit-s-sand-qty')?.value) || 0;
+    s.sandPrice = parseFloat(document.getElementById('edit-s-sand-price')?.value) || 0;
+    s.emptyBagQty = parseInt(document.getElementById('edit-s-empty-bag-qty')?.value) || 0;
+    s.emptyBagPrice = parseFloat(document.getElementById('edit-s-empty-bag-price')?.value) || 0;
     
-    s.deliveryCharge = parseInt(document.getElementById('edit-s-delivery').value) || 0;
-    s.amountPaidAtSale = parseInt(document.getElementById('edit-s-paid').value) || 0;
+    s.deliveryCharge = parseInt(document.getElementById('edit-s-delivery')?.value) || 0;
+    s.amountPaidAtSale = parseInt(document.getElementById('edit-s-paid')?.value) || 0;
     
     s.totalAmount = (s.quantity * s.pricePerBlock) + (s.cementQty * s.cementPrice) + (s.sandQty * s.sandPrice) + (s.emptyBagQty * s.emptyBagPrice) + s.deliveryCharge;
     s.balanceOwing = s.totalAmount - s.amountPaidAtSale;

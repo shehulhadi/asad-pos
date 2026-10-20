@@ -298,14 +298,19 @@ function buildNav() {
     const t = i18n[settings.lang];
     const item = (v, icon, isLarge = false) => `<button class="nav-btn ${isLarge ? 'nav-btn-large' : ''}" data-view="${v}" onclick="nav('${v}')"><span class="pill">${ico(icon)}</span>${t[v] || v}</button>`;
     
-    let html = item('dashboard', 'box'); 
-    html += item('sales', 'sales', true); // Large middle button
-    html += item('expenses', 'expenses');
+    let html = '';
+    html += item('dashboard', 'box');       // 1. Stock
+    html += item('expenses', 'expenses');   // 2. Expenses
     
-    if (currentUser === 'owner') { html += item('analytics', 'dashboard'); } 
-    else { html += item('debts', 'debts'); }
+    html += item('sales', 'sales', true);   // 3. Sales (Large Middle)
     
-    // Add Settings to bottom nav (opens modal)
+    if (currentUser === 'owner') { 
+        html += item('analytics', 'dashboard'); // 4. Analytics
+    } else { 
+        html += item('debts', 'debts');         // 4. Debts
+    }
+    
+    // 5. Settings
     html += `<button class="nav-btn" onclick="openSettings()"><span class="pill">${ico('settings')}</span>${t.settings || 'Settings'}</button>`;
     
     navEl.innerHTML = html;

@@ -333,32 +333,32 @@ function openSettings() {
         </div>
         <div class="eyebrow">Default Selling Prices (₦)</div>
         <div class="row">
-            <div class="form-group"><label>4" Block</label><input type="number" id="set-price-4" value="${settings.defaultPrices['4'] || 0}"></div>
-            <div class="form-group"><label>6" Block</label><input type="number" id="set-price-6" value="${settings.defaultPrices['6'] || 0}"></div>
-            <div class="form-group"><label>9" Block</label><input type="number" id="set-price-9" value="${settings.defaultPrices['9'] || 0}"></div>
+            <div class="form-group"><label>4" Block</label><input type="number" id="set-price-4" value="${settings.defaultPrices['4'] || ''}" placeholder="0"></div>
+            <div class="form-group"><label>6" Block</label><input type="number" id="set-price-6" value="${settings.defaultPrices['6'] || ''}" placeholder="0"></div>
+            <div class="form-group"><label>9" Block</label><input type="number" id="set-price-9" value="${settings.defaultPrices['9'] || ''}" placeholder="0"></div>
         </div>
         <div class="eyebrow">Standard Mix Ratios</div>
         <div class="row">
-            <div class="form-group"><label>Blocks per Cement Bag</label><input type="number" id="set-mix-cement" value="${settings.mixCement}"></div>
-            <div class="form-group"><label>Blocks per Sand Bag</label><input type="number" id="set-mix-sand" value="${settings.mixSand}"></div>
+            <div class="form-group"><label>Blocks per Cement Bag</label><input type="number" id="set-mix-cement" value="${settings.mixCement || ''}" placeholder="0"></div>
+            <div class="form-group"><label>Blocks per Sand Bag</label><input type="number" id="set-mix-sand" value="${settings.mixSand || ''}" placeholder="0"></div>
         </div>
         <div class="form-group" style="margin-top:16px;">
             <label>Sales Reminder</label>
             <select id="set-reminder">
-                <option value="0" ${settings.reminderInterval == 0 ? 'selected' : ''}>Off</option>
+                <option value="" placeholder="0" ${settings.reminderInterval == 0 ? 'selected' : ''}>Off</option>
                 <option value="1" ${settings.reminderInterval == 1 ? 'selected' : ''}>Every 1 Hour</option>
                 <option value="2" ${settings.reminderInterval == 2 ? 'selected' : ''}>Every 2 Hours</option>
                 <option value="4" ${settings.reminderInterval == 4 ? 'selected' : ''}>Every 4 Hours</option>
             </select>
         </div>
         <div class="row">
-            <div class="form-group"><label>${t.marginAlert}</label><input type="number" id="set-margin" value="${settings.marginAlertPct}"></div>
-            <div class="form-group"><label>${t.fixedCosts}</label><input type="number" id="set-fixed" value="${settings.fixedCostsMonthly}"></div>
+            <div class="form-group"><label>${t.marginAlert}</label><input type="number" id="set-margin" value="${settings.marginAlertPct || ''}" placeholder="0"></div>
+            <div class="form-group"><label>${t.fixedCosts}</label><input type="number" id="set-fixed" value="${settings.fixedCostsMonthly || ''}" placeholder="0"></div>
         </div>
         <div class="eyebrow">Low Stock Thresholds</div>
         <div class="row">
-            <div class="form-group"><label>${t.cement}</label><input type="number" id="set-low-cement" value="${settings.lowCement}"></div>
-            <div class="form-group"><label>${t.sand}</label><input type="number" id="set-low-sand" value="${settings.lowSand}"></div>
+            <div class="form-group"><label>${t.cement}</label><input type="number" id="set-low-cement" value="${settings.lowCement || ''}" placeholder="0"></div>
+            <div class="form-group"><label>${t.sand}</label><input type="number" id="set-low-sand" value="${settings.lowSand || ''}" placeholder="0"></div>
         </div>
         <div class="eyebrow">Custom Expense Categories</div>
         <div class="row">
@@ -765,10 +765,10 @@ function openPurchase() {
         <div class="form-group"><label>${t.supplierName}</label><input type="text" id="pur-supplier" list="supplier-names" placeholder="e.g. Dangote"><datalist id="supplier-names"></datalist></div>
         <div class="form-group"><label>Material</label><select id="pur-mat"><option value="cement">${t.cement}</option><option value="sand">${t.sand}</option></select></div>
         <div class="row">
-            <div class="form-group"><label>Qty</label><input type="number" id="pur-qty" value="0"></div>
-            <div class="form-group"><label>Total Cost (₦)</label><input type="number" id="pur-cost" value="0"></div>
+            <div class="form-group"><label>Qty</label><input type="number" id="pur-qty" value="" placeholder="0"></div>
+            <div class="form-group"><label>Total Cost (₦)</label><input type="number" id="pur-cost" value="" placeholder="0"></div>
         </div>
-        <div class="form-group"><label>${t.paid}</label><input type="number" id="pur-paid" value="0"></div>
+        <div class="form-group"><label>${t.paid}</label><input type="number" id="pur-paid" value="" placeholder="0"></div>
         <button class="btn" onclick="savePurchase()">Save</button>
         <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
     `;
@@ -791,7 +791,7 @@ function openAdjustStock() {
         <h3>Adjust Raw Material</h3>
         <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Use negative numbers for spoilage/loss, positive for extra stock found.</p>
         <div class="form-group"><label>Material</label><select id="adj-mat"><option value="cement">Cement</option><option value="sand">Sand</option></select></div>
-        <div class="form-group"><label>Adjustment Qty</label><input type="number" id="adj-qty" value="0" placeholder="e.g. -5"></div>
+        <div class="form-group"><label>Adjustment Qty</label><input type="number" id="adj-qty" value="" placeholder="0" placeholder="e.g. -5"></div>
         <div class="form-group"><label>Reason</label><input type="text" id="adj-reason" placeholder="e.g. Spoiled"></div>
         <button class="btn" onclick="saveAdjustStock()">Save Adjustment</button>
         <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
@@ -825,10 +825,10 @@ function editPurchase(id) {
         <div class="form-group"><label>Supplier Name</label><input type="text" id="edit-p-supplier" value="${p.supplierName}"></div>
         <div class="form-group"><label>Material</label><select id="edit-p-mat"><option value="cement" ${p.material==='cement'?'selected':''}>Cement</option><option value="sand" ${p.material==='sand'?'selected':''}>Sand</option></select></div>
         <div class="row">
-            <div class="form-group"><label>Quantity</label><input type="number" id="edit-p-qty" value="${p.qty}"></div>
-            <div class="form-group"><label>Total Cost</label><input type="number" id="edit-p-cost" value="${p.cost}"></div>
+            <div class="form-group"><label>Quantity</label><input type="number" id="edit-p-qty" value="${p.qty || ''}" placeholder="0"></div>
+            <div class="form-group"><label>Total Cost</label><input type="number" id="edit-p-cost" value="${p.cost || ''}" placeholder="0"></div>
         </div>
-        <div class="form-group"><label>Amount Paid</label><input type="number" id="edit-p-paid" value="${p.amountPaid || 0}"></div>
+        <div class="form-group"><label>Amount Paid</label><input type="number" id="edit-p-paid" value="${p.amountPaid || ''}" placeholder="0"></div>
         <div class="row"><button class="btn btn-outline" onclick="openPurchaseDetails('${p.id}')">Back</button><button class="btn" onclick="saveEditedPurchase('${p.id}')">Save Changes</button></div>
     `;
 }
@@ -970,11 +970,11 @@ function renderSales(main) {
             </div>
             <div class="row">
                 <div class="form-group"><label>${t.size}</label><select id="s-size" onchange="updateDefaultPrice()"><option value="4">4"</option><option value="6">6"</option><option value="9">9"</option></select></div>
-                <div class="form-group"><label>${t.qty}</label><input type="number" id="s-qty" value="1" min="1" oninput="calcSale()"><div style="display:flex; gap:6px; margin-top:6px;"><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('s-qty', 50, 'calcSale')">+50</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('s-qty', 100, 'calcSale')">+100</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('s-qty', 500, 'calcSale')">+500</button></div></div>
+                <div class="form-group"><label>${t.qty}</label><input type="number" id="s-qty" value="" min="1" placeholder="1" oninput="calcSale()"><div style="display:flex; gap:6px; margin-top:6px;"><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('s-qty', 50, 'calcSale')">+50</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('s-qty', 100, 'calcSale')">+100</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('s-qty', 500, 'calcSale')">+500</button></div></div>
             </div>
             <div class="row">
-                <div class="form-group"><label>${t.price}</label><input type="number" id="s-price" value="0" oninput="calcSale()"></div>
-                <div class="form-group"><label>${t.delivery}</label><input type="number" id="s-delivery" value="0" oninput="calcSale()"></div>
+                <div class="form-group"><label>${t.price}</label><input type="number" id="s-price" value="" placeholder="0" oninput="calcSale()"></div>
+                <div class="form-group"><label>${t.delivery}</label><input type="number" id="s-delivery" value="" placeholder="0" oninput="calcSale()"></div>
             </div>
             <div class="eyebrow">Materials Used (Optional)</div>
             <div class="row">
@@ -985,7 +985,7 @@ function renderSales(main) {
                 <div class="form-group"><label>Sand Qty (Bags)</label><input type="number" id="s-sand-qty" placeholder="0"></div>
                 <div class="form-group"><label>Sand Price (₦)</label><input type="number" id="s-sand-price" placeholder="0"></div>
             </div>
-            <div class="form-group"><label>${t.paid}</label><input type="number" id="s-paid" value="0" oninput="calcSale()"></div>
+            <div class="form-group"><label>${t.paid}</label><input type="number" id="s-paid" value="" placeholder="0" oninput="calcSale()"></div>
             <div class="calc-box">
                 <div class="line"><span>${t.total}</span> <span>₦<span id="s-total-display">0</span></span></div>
                 <div class="line" style="color:var(--danger);"><span>${t.balance}</span> <span>₦<span id="s-balance-display">0</span></span></div>
@@ -1111,9 +1111,9 @@ function editSale(saleId) {
         <h3>Edit Sale</h3>
         <div class="form-group"><label>Customer</label><input type="text" id="edit-s-customer" value="${s.customerName}"></div>
         <div class="row"><div class="form-group"><label>Date</label><input type="date" id="edit-s-date" value="${s.date}"></div><div class="form-group"><label>Phone</label><input type="tel" id="edit-s-phone" value="${s.customerPhone || ''}"></div></div>
-        <div class="row"><div class="form-group"><label>Size</label><select id="edit-s-size"><option value="4" ${s.size==='4'?'selected':''}>4"</option><option value="6" ${s.size==='6'?'selected':''}>6"</option><option value="9" ${s.size==='9'?'selected':''}>9"</option></select></div><div class="form-group"><label>Qty</label><input type="number" id="edit-s-qty" value="${s.quantity}" oninput="calcEditSale()"></div></div>
-        <div class="row"><div class="form-group"><label>Price</label><input type="number" id="edit-s-price" value="${s.pricePerBlock}" oninput="calcEditSale()"></div><div class="form-group"><label>Delivery</label><input type="number" id="edit-s-delivery" value="${s.deliveryCharge}" oninput="calcEditSale()"></div></div>
-        <div class="form-group"><label>Paid</label><input type="number" id="edit-s-paid" value="${s.amountPaidAtSale}" oninput="calcEditSale()"></div>
+        <div class="row"><div class="form-group"><label>Size</label><select id="edit-s-size"><option value="4" ${s.size==='4'?'selected':''}>4"</option><option value="6" ${s.size==='6'?'selected':''}>6"</option><option value="9" ${s.size==='9'?'selected':''}>9"</option></select></div><div class="form-group"><label>Qty</label><input type="number" id="edit-s-qty" value="${s.quantity || ''}" placeholder="0" oninput="calcEditSale()"></div></div>
+        <div class="row"><div class="form-group"><label>Price</label><input type="number" id="edit-s-price" value="${s.pricePerBlock || ''}" placeholder="0" oninput="calcEditSale()"></div><div class="form-group"><label>Delivery</label><input type="number" id="edit-s-delivery" value="${s.deliveryCharge || ''}" placeholder="0" oninput="calcEditSale()"></div></div>
+        <div class="form-group"><label>Paid</label><input type="number" id="edit-s-paid" value="${s.amountPaidAtSale || ''}" placeholder="0" oninput="calcEditSale()"></div>
         <div class="eyebrow">Materials Used</div>
         <div class="row"><div class="form-group"><label>Cement Qty (Bags)</label><input type="number" id="edit-s-cement-qty" value="${s.cementQty || ''}" placeholder="0"></div><div class="form-group"><label>Cement Price (₦)</label><input type="number" id="edit-s-cement-price" value="${s.cementPrice || ''}" placeholder="0"></div></div>
         <div class="row"><div class="form-group"><label>Sand Qty (Bags)</label><input type="number" id="edit-s-sand-qty" value="${s.sandQty || ''}" placeholder="0"></div><div class="form-group"><label>Sand Price (₦)</label><input type="number" id="edit-s-sand-price" value="${s.sandPrice || ''}" placeholder="0"></div></div>
@@ -1167,7 +1167,7 @@ function openReturn() {
         <h3>${t.logReturn || 'Log Return'}</h3>
         <div class="form-group"><label>${t.customer}</label><input type="text" id="r-customer" placeholder="Name"></div>
         <div class="row"><div class="form-group"><label>${t.date}</label><input type="date" id="r-date" value="${getTodayStr()}"></div><div class="form-group"><label>${t.size}</label><select id="r-size"><option value="4">4"</option><option value="6">6"</option><option value="9">9"</option></select></div></div>
-        <div class="row"><div class="form-group"><label>${t.qtyReturned || 'Qty Returned'}</label><input type="number" id="r-qty" value="1" min="1"></div><div class="form-group"><label>${t.refundAmt || 'Refund Amount (₦)'}</label><input type="number" id="r-refund" value="0"></div></div>
+        <div class="row"><div class="form-group"><label>${t.qtyReturned || 'Qty Returned'}</label><input type="number" id="r-qty" value="" min="1" placeholder="1"></div><div class="form-group"><label>${t.refundAmt || 'Refund Amount (₦)'}</label><input type="number" id="r-refund" value="" placeholder="0"></div></div>
         <div class="form-group"><label>${t.reason || 'Reason'}</label><input type="text" id="r-reason" placeholder="e.g. Broken"></div>
         <button class="btn" onclick="saveReturn()">Save Return</button>
         <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
@@ -1273,13 +1273,13 @@ function renderProduction(main) {
         <div class="card">
             <h3>${ico('production')} ${t.newBatch}</h3>
             <div class="row"><div class="form-group"><label>Date</label><input type="date" id="p-date" value="${today}"></div><div class="form-group"><label>${t.size}</label><select id="p-size"><option value="4">4"</option><option value="6">6"</option><option value="9">9"</option></select></div></div>
-            <div class="row"><div class="form-group"><label>${t.worker}</label><input type="text" id="p-worker" list="worker-names" placeholder="Worker name"><datalist id="worker-names"></datalist></div><div class="form-group"><label>${t.blocksProduced}</label><input type="number" id="p-blocks" value="0" oninput="calcBatchCost()"><div style="display:flex; gap:6px; margin-top:6px;"><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 100, 'calcBatchCost')">+100</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 500, 'calcBatchCost')">+500</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 1000, 'calcBatchCost')">+1000</button><button type="button" class="btn" style="padding:6px; font-size:12px; margin:0; background:var(--accent); color:#fff; border:none;" onclick="autoFillMaterials()">⚡ Auto-Fill Mix</button></div></div></div>
+            <div class="row"><div class="form-group"><label>${t.worker}</label><input type="text" id="p-worker" list="worker-names" placeholder="Worker name"><datalist id="worker-names"></datalist></div><div class="form-group"><label>${t.blocksProduced}</label><input type="number" id="p-blocks" value="" placeholder="0" oninput="calcBatchCost()"><div style="display:flex; gap:6px; margin-top:6px;"><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 100, 'calcBatchCost')">+100</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 500, 'calcBatchCost')">+500</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 1000, 'calcBatchCost')">+1000</button><button type="button" class="btn" style="padding:6px; font-size:12px; margin:0; background:var(--accent); color:#fff; border:none;" onclick="autoFillMaterials()">⚡ Auto-Fill Mix</button></div></div></div>
             <div class="eyebrow">Materials Used</div>
-            <div class="row"><div class="form-group"><label>${t.cementBags}</label><input type="number" id="p-cement-bags" value="0" oninput="calcBatchCost()"></div><div class="form-group"><label>${t.costPerBag}</label><input type="number" id="p-cement-cost" value="0" oninput="calcBatchCost()"></div></div>
-            <div class="row"><div class="form-group"><label>${t.sandCost}</label><input type="number" id="p-sand-cost" value="0" oninput="calcBatchCost()"></div><div class="form-group"><label>${t.sandQty}</label><input type="number" id="p-sand-qty" value="0"></div></div>
-            <div class="row"><div class="form-group"><label>${t.labourCost}</label><input type="number" id="p-labour-cost" value="0" oninput="calcBatchCost()"></div><div class="form-group"><label>${t.otherCost}</label><input type="number" id="p-other-cost" value="0" oninput="calcBatchCost()"></div></div>
-            <div class="form-group"><label>${t.breakages}</label><input type="number" id="p-breakages" value="0"></div>
-            <div class="form-group"><label>${t.curingLoss}</label><input type="number" id="p-curing-loss" value="0"></div>
+            <div class="row"><div class="form-group"><label>${t.cementBags}</label><input type="number" id="p-cement-bags" value="" placeholder="0" oninput="calcBatchCost()"></div><div class="form-group"><label>${t.costPerBag}</label><input type="number" id="p-cement-cost" value="" placeholder="0" oninput="calcBatchCost()"></div></div>
+            <div class="row"><div class="form-group"><label>${t.sandCost}</label><input type="number" id="p-sand-cost" value="" placeholder="0" oninput="calcBatchCost()"></div><div class="form-group"><label>${t.sandQty}</label><input type="number" id="p-sand-qty" value="" placeholder="0"></div></div>
+            <div class="row"><div class="form-group"><label>${t.labourCost}</label><input type="number" id="p-labour-cost" value="" placeholder="0" oninput="calcBatchCost()"></div><div class="form-group"><label>${t.otherCost}</label><input type="number" id="p-other-cost" value="" placeholder="0" oninput="calcBatchCost()"></div></div>
+            <div class="form-group"><label>${t.breakages}</label><input type="number" id="p-breakages" value="" placeholder="0"></div>
+            <div class="form-group"><label>${t.curingLoss}</label><input type="number" id="p-curing-loss" value="" placeholder="0"></div>
             <div class="calc-box"><div class="line"><span>${t.totalCost}</span> <span>₦<span id="p-total-display">0</span></span></div><div class="line pos"><span>${t.costPerBlock}</span> <span>₦<span id="p-cpb-display">0.00</span></span></div></div>
             <button class="btn btn-blue" style="margin-top:0;" onclick="saveBatch()">${t.saveBatch}</button>
         </div>
@@ -1340,9 +1340,9 @@ function editBatch(batchId) {
     document.getElementById('modal-body').innerHTML = `
         <h3>Edit Batch</h3>
         <div class="row"><div class="form-group"><label>Date</label><input type="date" id="edit-b-date" value="${b.date}"></div><div class="form-group"><label>Size</label><select id="edit-b-size"><option value="4" ${b.size==='4'?'selected':''}>4"</option><option value="6" ${b.size==='6'?'selected':''}>6"</option><option value="9" ${b.size==='9'?'selected':''}>9"</option></select></div></div>
-        <div class="row"><div class="form-group"><label>Worker</label><input type="text" id="edit-b-worker" value="${b.worker}"></div><div class="form-group"><label>Blocks Produced</label><input type="number" id="edit-b-blocks" value="${b.blocksProduced}" oninput="calcEditBatch()"></div></div>
-        <div class="row"><div class="form-group"><label>Total Cost (₦)</label><input type="number" id="edit-b-totalcost" value="${b.totalCost}" oninput="calcEditBatch()"></div><div class="form-group"><label>Breakages</label><input type="number" id="edit-b-breakages" value="${b.breakages}"></div></div>
-        <div class="form-group"><label>Curing Loss</label><input type="number" id="edit-b-curing-loss" value="${b.curingLoss}"></div>
+        <div class="row"><div class="form-group"><label>Worker</label><input type="text" id="edit-b-worker" value="${b.worker}"></div><div class="form-group"><label>Blocks Produced</label><input type="number" id="edit-b-blocks" value="${b.blocksProduced || ''}" placeholder="0" oninput="calcEditBatch()"></div></div>
+        <div class="row"><div class="form-group"><label>Total Cost (₦)</label><input type="number" id="edit-b-totalcost" value="${b.totalCost || ''}" placeholder="0" oninput="calcEditBatch()"></div><div class="form-group"><label>Breakages</label><input type="number" id="edit-b-breakages" value="${b.breakages || ''}" placeholder="0"></div></div>
+        <div class="form-group"><label>Curing Loss</label><input type="number" id="edit-b-curing-loss" value="${b.curingLoss || ''}" placeholder="0"></div>
         <div class="calc-box"><div class="line pos"><span>Cost per Block</span> <span>₦<span id="edit-b-cpb">0.00</span></span></div></div>
         <div class="row"><button class="btn btn-outline" onclick="openBatchDetails('${b.id}')">Back</button><button class="btn" onclick="saveEditedBatch('${b.id}')">Save Changes</button></div>
     `;
@@ -1376,7 +1376,7 @@ function renderExpenses(main) {
         <div class="card">
             <h3>${ico('expenses')} ${t.newExpense}</h3>
             <div class="row"><div class="form-group"><label>Date</label><input type="date" id="e-date" value="${today}"></div><div class="form-group"><label>${t.category}</label><select id="e-category">${['wages','repairs','generator_fuel','rent','transport','loaders','phone_data','other',...settings.customExpenses].map(c=>`<option value="${c}">${t[c]||c}</option>`).join('')}</select></div></div>
-            <div class="form-group"><label>${t.amount}</label><input type="number" id="e-amount" value="0"></div>
+            <div class="form-group"><label>${t.amount}</label><input type="number" id="e-amount" value="" placeholder="0"></div>
             <div class="form-group"><label>${t.note}</label><input type="text" id="e-note" placeholder="Optional"></div>
             <button class="btn" style="margin-top:0;" onclick="saveExpense()">${t.saveExpense}</button>
         </div>
@@ -1408,7 +1408,7 @@ function editExpense(id) {
     document.getElementById('modal-body').innerHTML = `
         <h3>Edit Expense</h3>
         <div class="row"><div class="form-group"><label>Date</label><input type="date" id="edit-e-date" value="${e.date}"></div><div class="form-group"><label>Category</label><select id="edit-e-category">${cats.map(c => `<option value="${c}" ${e.category === c ? 'selected' : ''}>${t[c] || c}</option>`).join('')}</select></div></div>
-        <div class="form-group"><label>Amount (₦)</label><input type="number" id="edit-e-amount" value="${e.amount}"></div>
+        <div class="form-group"><label>Amount (₦)</label><input type="number" id="edit-e-amount" value="${e.amount || ''}" placeholder="0"></div>
         <div class="form-group"><label>Note</label><input type="text" id="edit-e-note" value="${e.note || ''}"></div>
         <div class="row"><button class="btn btn-outline" onclick="openExpenseDetails('${e.id}')">Back</button><button class="btn" onclick="saveEditedExpense('${e.id}')">Save Changes</button></div>
     `;
@@ -1479,7 +1479,7 @@ function filterDebts(query) {
 }
 function openPayment(saleId) {
     const t = i18n[settings.lang];
-    document.getElementById('modal-body').innerHTML = `<h3>${t.pay}</h3><div class="form-group"><label>${t.amount}</label><input type="number" id="pay-amount" value="0"></div><button class="btn" onclick="recordPayment('${saleId}')">Save</button><button class="btn btn-outline" onclick="closeModal()">Cancel</button>`;
+    document.getElementById('modal-body').innerHTML = `<h3>${t.pay}</h3><div class="form-group"><label>${t.amount}</label><input type="number" id="pay-amount" value="" placeholder="0"></div><button class="btn" onclick="recordPayment('${saleId}')">Save</button><button class="btn btn-outline" onclick="closeModal()">Cancel</button>`;
     document.getElementById('modal').classList.add('active');
 }
 function recordPayment(saleId) {
@@ -1492,7 +1492,7 @@ function recordPayment(saleId) {
 }
 function openSupplierPayment(purchaseId) {
     const t = i18n[settings.lang];
-    document.getElementById('modal-body').innerHTML = `<h3>${t.paySupplier}</h3><div class="form-group"><label>${t.amount}</label><input type="number" id="pay-supp-amount" value="0"></div><button class="btn" onclick="recordSupplierPayment('${purchaseId}')">Save</button><button class="btn btn-outline" onclick="closeModal()">Cancel</button>`;
+    document.getElementById('modal-body').innerHTML = `<h3>${t.paySupplier}</h3><div class="form-group"><label>${t.amount}</label><input type="number" id="pay-supp-amount" value="" placeholder="0"></div><button class="btn" onclick="recordSupplierPayment('${purchaseId}')">Save</button><button class="btn btn-outline" onclick="closeModal()">Cancel</button>`;
     document.getElementById('modal').classList.add('active');
 }
 function recordSupplierPayment(purchaseId) {

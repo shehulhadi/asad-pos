@@ -1,6 +1,6 @@
 const ICONS = {
     dashboard: '<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>', home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
-    sales: '<path d="M7 5v14M17 5v14M5 10h14M5 14h14M9 19l6-14"/>',
+    sales: '<path d="M8 5v14M16 5v14M8 5l8 14M5 9h14M5 14h14"/>',
     production: '<path d="M12 3l9 5v8l-9 5-9-5V8z"/><path d="M3 8l9 5 9-5M12 13v8"/>', expenses: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M16 15h2"/>',
     debts: '<path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h11"/>', settings: '<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
     refresh: '<path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/>', update: '<path d="M12 3v12m0 0l-4-4m4 4l4-4M4 20h16"/>', logout: '<path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/>',

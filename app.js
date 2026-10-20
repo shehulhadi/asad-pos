@@ -296,12 +296,14 @@ function buildNav() {
     const item = (v, icon, isLarge = false) => `<button class="nav-btn ${isLarge ? 'nav-btn-large' : ''}" data-view="${v}" onclick="nav('${v}')"><span class="pill">${ico(icon)}</span>${t[v] || v}</button>`;
     
     let html = item('dashboard', 'box'); 
-    html += item('production', 'production');
     html += item('sales', 'sales', true); // Large middle button
     html += item('expenses', 'expenses');
     
     if (currentUser === 'owner') { html += item('analytics', 'dashboard'); } 
     else { html += item('debts', 'debts'); }
+    
+    // Add Settings to bottom nav (opens modal)
+    html += `<button class="nav-btn" onclick="openSettings()"><span class="pill">${ico('settings')}</span>${t.settings || 'Settings'}</button>`;
     
     navEl.innerHTML = html;
 }
@@ -479,10 +481,11 @@ function renderDashboard(main) {
     `;
 
     main.innerHTML = `
-        <div class="quick" style="margin-bottom: 20px;">
-            <button onclick="nav('debts')">${ico('debts')} Debts</button>
-            ${currentUser === 'owner' ? `<button onclick="nav('reports')">${ico('report')} Reports</button>` : ''}
-            <button onclick="openDailyClosing()" style="color:var(--brand); border-color:var(--brand);">📊 Close Day</button>
+        <div class="quick" style="margin-bottom: 20px; flex-wrap: wrap;">
+            <button onclick="nav('production')" style="flex: 1 1 45%;">${ico('production')} Production</button>
+            <button onclick="nav('debts')" style="flex: 1 1 45%;">${ico('debts')} Debts</button>
+            ${currentUser === 'owner' ? `<button onclick="nav('reports')" style="flex: 1 1 45%;">${ico('report')} Reports</button>` : ''}
+            <button onclick="openDailyClosing()" style="color:var(--brand); border-color:var(--brand); flex: 1 1 45%;">📊 Close Day</button>
         </div>
         <div class="page-title">Stock & Inventory</div>
         <div class="page-sub">Tap any item to manage stock and view history</div>

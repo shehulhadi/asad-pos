@@ -1126,7 +1126,7 @@ async function exportJSON() {
         if (key.startsWith('asad:')) { try { data[key] = JSON.parse(localStorage.getItem(key)); } catch(e) { data[key] = localStorage.getItem(key); } }
     }
     const jsonStr = JSON.stringify(data, null, 2);
-    const safeName = (settings.businessName || 'Business').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+    const safeName = (settings.businessName || 'Business').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_₦/g, '');
     const now = new Date(); const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
     const filename = `${safeName}_Backup_${getTodayStr()}_${timeStr}.txt`;
     const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -2074,7 +2074,7 @@ function handleDailyMaintenance() {
             const jsonStr = JSON.stringify(data, null, 2);
             const blob = new Blob([jsonStr], { type: 'application/json' });
             const url = window.URL.createObjectURL(blob); const a = document.createElement('a');
-            const safeName = (settings.businessName || 'Business').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+            const safeName = (settings.businessName || 'Business').replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_₦/g, '');
             const nowStr = new Date(); const timeStr = nowStr.toTimeString().split(' ')[0].replace(/:/g, '-');
             a.href = url; a.download = `${safeName}_AutoBackup_${getTodayStr()}_${timeStr}.json`;
             document.body.appendChild(a); a.click(); document.body.removeChild(a); window.URL.revokeObjectURL(url);

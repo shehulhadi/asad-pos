@@ -957,13 +957,9 @@ function setAdjType(type) {
 }
 
 function openAdjustStock() {
-    currentAdjType = 'add';
     document.getElementById('modal-body').innerHTML = `
-        <h3>Adjust Stock</h3>
-        <div class="segmented" style="margin-bottom:16px;">
-            <button id="adj-btn-add" class="on" onclick="setAdjType('add')">+ Add Stock</button>
-            <button id="adj-btn-sub" onclick="setAdjType('subtract')">- Subtract Stock</button>
-        </div>
+        <h3>Subtract Stock / Log Loss</h3>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Use this to subtract stock due to spoilage, damage, or manual correction.</p>
         <div class="form-group">
             <label>Material</label>
             <select id="adj-mat">
@@ -973,38 +969,35 @@ function openAdjustStock() {
             </select>
         </div>
         <div class="form-group">
-            <label>Quantity</label>
-            <input type="number" id="adj-qty" value="" placeholder="0" min="0">
+            <label>Quantity to Subtract</label>
+            <input type="number" id="adj-qty" value="" placeholder="0" min="1">
         </div>
         <div class="form-group">
             <label>Reason</label>
-            <input type="text" id="adj-reason" placeholder="e.g. Spoiled, Extra found">
+            <input type="text" id="adj-reason" placeholder="e.g. Spoiled, Damaged">
         </div>
-        <button class="btn" onclick="saveAdjustStock()">Save Adjustment</button>
+        <button class="btn btn-danger" onclick="saveAdjustStock()">Subtract Stock</button>
         <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
     `;
     document.getElementById('modal').classList.add('active');
 }
 
 function saveAdjustStock() {
-    let qty = parseFloat(document.getElementById('adj-qty')?.value) || 0;
-    if (qty === 0) return showToast('Enter a valid quantity', 'err');
-    
-    // Apply the toggle
-    if (currentAdjType === 'subtract') qty = -qty;
+    const qty = parseFloat(document.getElementById('adj-qty')?.value) || 0;
+    if (qty <= 0) return showToast('Enter a valid quantity', 'err');
 
     stockAdjustments.push({ 
         id: Date.now().toString(), 
         date: getTodayStr(), 
         material: document.getElementById('adj-mat')?.value || 'cement', 
-        qty: qty, 
+        qty: -Math.abs(qty), // Force negative
         reason: document.getElementById('adj-reason')?.value || 'Manual adjustment' 
     });
     
     saveData('stockAdjustments', stockAdjustments); 
     closeModal(); 
     nav('dashboard'); 
-    showToast(currentAdjType === 'add' ? 'Stock added' : 'Stock subtracted', 'success');
+    showToast('Stock subtracted', 'success');
 }
 
 function openPurchaseDetails(id) {

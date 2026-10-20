@@ -32,7 +32,7 @@ const i18n = {
         cashInHand: "Cash in Hand", moneyOwed: "Owed to You", stockValue: "Stock Value", moneyYouOwe: "You Owe",
         topCustomers: "Top Customers", bestSizes: "Best Selling Sizes", marginWarning: "MARGIN WARNING: Selling below cost!",
         inventory: "Inventory", reports: "Reports & Backup", rawMaterials: "Raw Materials", finishedBlocks: "Finished Blocks",
-        cement: "Cement", sand: "Sand", logPurchase: "Log Purchase", supplierName: "Supplier Name",
+        cement: "Cement", sand: "Sand", empty_bag: "Empty Bags", logPurchase: "Log Purchase", supplierName: "Supplier Name",
         lowStock: "LOW STOCK", varianceWarning: "VARIANCE WARNING: Expected vs Counted mismatch!",
         expected: "Expected", physicalCount: "Physical Count", stockCheck: "Stock Check",
         plReport: "Profit & Loss Report", month: "Month", revenue: "Revenue", cogs: "Cost of Goods Sold",
@@ -60,7 +60,7 @@ const i18n = {
         cashInHand: "Kudi a Hannu", moneyOwed: "Bashin da ake bin ka", stockValue: "Darajar Kaya", moneyYouOwe: "Bashin da kake bi",
         topCustomers: "Manyan Abokan Ciniki", bestSizes: "Mafi Sayar da Bulo", marginWarning: "GARGAJIYA: Ana sayarwa kasa da kudin da aka kashe!",
         inventory: "Ajiya", reports: "Rahoto & Ajiya", rawMaterials: "Kayan Gini", finishedBlocks: "Bulon da aka gama",
-        cement: "Siminti", sand: "Yashi", logPurchase: "Yi Rikodin Siyan Kaya", supplierName: "Sunan Mai Sayarwa",
+        cement: "Siminti", sand: "Yashi", empty_bag: "Buhu Wofi", logPurchase: "Yi Rikodin Siyan Kaya", supplierName: "Sunan Mai Sayarwa",
         lowStock: "KARANCIN KAYA", varianceWarning: "GARGAJIYA: Bambanci tsakanin lissafi da kidaya!",
         expected: "Wanda ake tsammani", physicalCount: "Kidaya ta Hannu", stockCheck: "Duba Ajiya",
         plReport: "Rahoton Riba da Asara", month: "Wata", revenue: "Kudin Shiga", cogs: "Kudin Kayan Sayarwa",
@@ -458,22 +458,23 @@ function renderDashboard(main) {
     const sandAdj = stockAdjustments.filter(a=>a.material==='sand').reduce((s,a)=>s+a.qty,0);
     const sandStock = sandPurchased - sandUsed + sandAdj;
 
-    const sizes = ['4','6','9'];
-    let blockStocks = {};
-    sizes.forEach(sz => {
-        const readyBatches = batches.filter(b => b.size === sz && b.status === 'ready');
-        const produced = readyBatches.reduce((s,b)=>s+(b.blocksProduced - b.breakages),0);
-        const sold = sales.filter(s => s.size === sz).reduce((s,v)=>s+v.quantity,0);
-        const broken = breakagesLog.filter(b => b.size === sz).reduce((s,v)=>s+v.blocks,0);
-        const returned = returns.filter(r => r.size === sz).reduce((s, r) => s + r.quantity, 0);
-        blockStocks[sz] = produced - sold - broken + returned;
-    });
+    const emptyBagsProduced = batches.reduce((s,b)=>s+(b.cementBags||0),0);
+    const emptyBagsSold = sales.reduce((s,v)=>s+(v.emptyBagQty||0),0);
+    const emptyBagsAdj = stockAdjustments.filter(a=>a.material==='empty_bag').reduce((s,a)=>s+a.qty,0);
+    const emptyBagsStock = emptyBagsProduced - emptyBagsSold + emptyBagsAdj;
+
+    const readyBatches = batches.filter(b => b.size === '6' && b.status === 'ready');
+    const produced = readyBatches.reduce((s,b)=>s+(b.blocksProduced - b.breakages),0);
+    const sold = sales.filter(s => s.size === '6').reduce((s,v)=>s+v.quantity,0);
+    const broken = breakagesLog.filter(b => b.size === '6').reduce((s,v)=>s+v.blocks,0);
+    const returned = returns.filter(r => r.size === '6').reduce((s, r) => s + r.quantity, 0);
+    const blockStock = produced - sold - broken + returned;
 
     const tile = (title, stock, type, size) => `
         <div class="stock-tile" style="cursor:pointer; padding: 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s;" onclick="openStockItem('${type}', '${size}')">
-            <div class="k" style="font-size: 12px; font-weight:700;">${title}</div>
-            <div class="n" style="font-size: 28px; margin: 8px 0;">${stock}</div>
-            <div style="font-size: 11px; color: var(--brand); font-weight: 700;">View Details ›</div>
+            <div class="k" style="font-size: 11px; font-weight:700; text-align:center;">${title}</div>
+            <div class="n" style="font-size: 24px; margin: 8px 0;">${stock}</div>
+            <div style="font-size: 10px; color: var(--brand); font-weight: 700;">View Details ›</div>
         </div>
     `;
 
@@ -488,18 +489,17 @@ function renderDashboard(main) {
 
         <div class="card">
             <h3>${ico('box')} Raw Materials</h3>
-            <div class="stock-grid">
-                ${tile('Cement (Bags)', cementStock, 'cement', '')}
-                ${tile('Sand (Bags)', sandStock, 'sand', '')}
+            <div class="stock-grid" style="grid-template-columns: repeat(3, 1fr);">
+                ${tile('Cement', cementStock, 'cement', '')}
+                ${tile('Sand', sandStock, 'sand', '')}
+                ${tile('Empty Bags', emptyBagsStock, 'empty_bag', '')}
             </div>
         </div>
 
         <div class="card">
             <h3>${ico('production')} Finished Blocks</h3>
             <div class="stock-grid">
-                ${tile('4" Blocks', blockStocks['4'], 'block', '4')}
-                ${tile('6" Blocks', blockStocks['6'], 'block', '6')}
-                ${tile('9" Blocks', blockStocks['9'], 'block', '9')}
+                ${tile('6" Blocks', blockStock, 'block', '6')}
             </div>
         </div>
     `;
@@ -511,39 +511,49 @@ function openStockItem(type, size) {
     let historyHtml = '';
     let hist = [];
 
-    if (type === 'cement' || type === 'sand') {
-        title = type === 'cement' ? 'Cement' : 'Sand';
+    if (type === 'cement' || type === 'sand' || type === 'empty_bag') {
+        title = type === 'cement' ? 'Cement' : (type === 'sand' ? 'Sand' : 'Empty Bags');
         if (type === 'cement') {
             const purchased = purchases.filter(p=>p.material==='cement').reduce((s,p)=>s+p.qty,0);
             const used = batches.reduce((s,b)=>s+(b.cementBags||0),0);
             const adj = stockAdjustments.filter(a=>a.material==='cement').reduce((s,a)=>s+a.qty,0);
             currentStock = purchased - used + adj;
-        } else {
+        } else if (type === 'sand') {
             const purchased = purchases.filter(p=>p.material==='sand').reduce((s,p)=>s+p.qty,0);
             const used = batches.reduce((s,b)=>s+(b.sandQty||0),0);
             const adj = stockAdjustments.filter(a=>a.material==='sand').reduce((s,a)=>s+a.qty,0);
             currentStock = purchased - used + adj;
+        } else {
+            const produced = batches.reduce((s,b)=>s+(b.cementBags||0),0);
+            const sold = sales.reduce((s,v)=>s+(v.emptyBagQty||0),0);
+            const adj = stockAdjustments.filter(a=>a.material==='empty_bag').reduce((s,a)=>s+a.qty,0);
+            currentStock = produced - sold + adj;
         }
 
         purchases.filter(p=>p.material===type).forEach(p => hist.push({ id: p.id, clickType: 'pur', date: p.date, desc: `Purchase from ${p.supplierName}`, qty: `+${p.qty}`, color: 'var(--brand)' }));
         stockAdjustments.filter(a=>a.material===type).forEach(a => hist.push({ date: a.date, desc: `Adjustment: ${a.reason}`, qty: a.qty > 0 ? `+${a.qty}` : `${a.qty}`, color: a.qty > 0 ? 'var(--brand)' : 'var(--danger)' }));
-        batches.forEach(b => {
-            if(type === 'cement' && b.cementBags > 0) hist.push({ date: b.date, desc: `Used in ${b.size}" batch`, qty: `-${b.cementBags}`, color: 'var(--danger)' });
-            if(type === 'sand' && b.sandQty > 0) hist.push({ date: b.date, desc: `Used in ${b.size}" batch`, qty: `-${b.sandQty}`, color: 'var(--danger)' });
-        });
-
+        
+        if(type === 'empty_bag') {
+            batches.forEach(b => { if(b.cementBags > 0) hist.push({ date: b.date, desc: `Generated from cement usage`, qty: `+${b.cementBags}`, color: 'var(--brand)' }); });
+            sales.forEach(s => { if(s.emptyBagQty > 0) hist.push({ id: s.id, clickType: 'sale', date: s.date, desc: `Sold to ${s.customerName}`, qty: `-${s.emptyBagQty}`, color: 'var(--danger)' }); });
+        } else {
+            batches.forEach(b => {
+                if(type === 'cement' && b.cementBags > 0) hist.push({ date: b.date, desc: `Used in 6" batch`, qty: `-${b.cementBags}`, color: 'var(--danger)' });
+                if(type === 'sand' && b.sandQty > 0) hist.push({ date: b.date, desc: `Used in 6" batch`, qty: `-${b.sandQty}`, color: 'var(--danger)' });
+            });
+        }
     } else {
-        title = size + '" Blocks';
-        const readyBatches = batches.filter(b => b.size === size && b.status === 'ready');
+        title = '6" Blocks';
+        const readyBatches = batches.filter(b => b.size === '6' && b.status === 'ready');
         const produced = readyBatches.reduce((s,b)=>s+(b.blocksProduced - b.breakages),0);
-        const sold = sales.filter(s => s.size === size).reduce((s,v)=>s+v.quantity,0);
-        const broken = breakagesLog.filter(b => b.size === size).reduce((s,v)=>s+v.blocks,0);
-        const returned = returns.filter(r => r.size === size).reduce((s, r) => s + r.quantity, 0);
+        const sold = sales.filter(s => s.size === '6').reduce((s,v)=>s+v.quantity,0);
+        const broken = breakagesLog.filter(b => b.size === '6').reduce((s,v)=>s+v.blocks,0);
+        const returned = returns.filter(r => r.size === '6').reduce((s, r) => s + r.quantity, 0);
         currentStock = produced - sold - broken + returned;
 
         readyBatches.forEach(b => hist.push({ date: b.date, desc: `Produced (${b.worker})`, qty: `+${b.blocksProduced}`, color: 'var(--brand)' }));
-        sales.filter(s=>s.size===size).forEach(s => hist.push({ id: s.id, clickType: 'sale', date: s.date, desc: `Sold to ${s.customerName}`, qty: `-${s.quantity}`, color: 'var(--danger)' }));
-        breakagesLog.filter(b=>b.size===size).forEach(b => hist.push({ date: b.date, desc: `Breakage: ${b.reason}`, qty: `-${b.blocks}`, color: 'var(--danger)' }));
+        sales.filter(s=>s.size==='6').forEach(s => hist.push({ id: s.id, clickType: 'sale', date: s.date, desc: `Sold to ${s.customerName}`, qty: `-${s.quantity}`, color: 'var(--danger)' }));
+        breakagesLog.filter(b=>b.size==='6').forEach(b => hist.push({ date: b.date, desc: `Breakage: ${b.reason}`, qty: `-${b.blocks}`, color: 'var(--danger)' }));
     }
 
     hist.sort((a,b) => new Date(b.date) - new Date(a.date));
@@ -579,7 +589,7 @@ function openStockItem(type, size) {
 
 function openAddStock(type, size) {
     closeModal();
-    if (type === 'cement' || type === 'sand') {
+    if (type === 'cement' || type === 'sand' || type === 'empty_bag') {
         openPurchase();
         setTimeout(() => {
             if(document.getElementById('pur-mat')) {
@@ -600,7 +610,7 @@ function openAddStock(type, size) {
 
 function openSubtractStock(type, size) {
     closeModal();
-    if (type === 'cement' || type === 'sand') {
+    if (type === 'cement' || type === 'sand' || type === 'empty_bag') {
         openAdjustStock();
         setTimeout(() => {
             if(document.getElementById('adj-mat')) {
@@ -643,7 +653,7 @@ function renderAnalytics(main) {
     const moneyYouOwe = purchases.reduce((sum, p) => sum + Math.max(0, p.cost - (p.amountPaid || 0)), 0);
     
     let unsoldValue = 0;
-    ['4', '6', '9'].forEach(sz => {
+    ['6'].forEach(sz => {
         const readyBatches = batches.filter(b => b.size === sz && b.status === 'ready');
         const produced = readyBatches.reduce((s,b)=>s+(b.blocksProduced - b.breakages),0);
         const sold = sales.filter(s => s.size === sz).reduce((s,v)=>s+v.quantity,0);
@@ -688,7 +698,7 @@ function renderAnalytics(main) {
         chartHtml += `<div class="chart-bar" style="height:${pct}%;" title="${formatNaira(d.rev)}"><div class="chart-label">${d.day}</div></div>`;
     });
 
-    const sizeTotals = { '4': 0, '6': 0, '9': 0 };
+    const sizeTotals = { '6': 0 };
     sales.forEach(s => { if(sizeTotals[s.size] !== undefined) sizeTotals[s.size] += s.quantity; });
     let bestSizeHtml = '';
     Object.keys(sizeTotals).sort((a,b)=>sizeTotals[b]-sizeTotals[a]).forEach(size => {
@@ -869,7 +879,7 @@ function openPurchase() {
     document.getElementById('modal-body').innerHTML = `
         <h3>${t.logPurchase}</h3>
         <div class="form-group"><label>${t.supplierName}</label><input type="text" id="pur-supplier" list="supplier-names" placeholder="e.g. Dangote"><datalist id="supplier-names"></datalist></div>
-        <div class="form-group"><label>Material</label><select id="pur-mat"><option value="cement">${t.cement}</option><option value="sand">${t.sand}</option></select></div>
+        <div class="form-group"><label>Material</label><select id="pur-mat"><option value="cement">${t.cement}</option><option value="sand">${t.sand}</option><option value="empty_bag">${t.empty_bag}</option></select></div>
         <div class="row">
             <div class="form-group"><label>Qty</label><input type="number" id="pur-qty" value="" placeholder="0" oninput="calcPurchase()"></div>
             <div class="form-group"><label>Cost per Unit (₦)</label><input type="number" id="pur-unit-cost" value="" placeholder="0" oninput="calcPurchase()"></div>
@@ -918,7 +928,7 @@ function openAdjustStock() {
     document.getElementById('modal-body').innerHTML = `
         <h3>Adjust Raw Material</h3>
         <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Use negative numbers for spoilage/loss, positive for extra stock found.</p>
-        <div class="form-group"><label>Material</label><select id="adj-mat"><option value="cement">Cement</option><option value="sand">Sand</option></select></div>
+        <div class="form-group"><label>Material</label><select id="adj-mat"><option value="cement">Cement</option><option value="sand">Sand</option><option value="empty_bag">Empty Bags</option></select></div>
         <div class="form-group"><label>Adjustment Qty</label><input type="number" id="adj-qty" value="" placeholder="0" placeholder="e.g. -5"></div>
         <div class="form-group"><label>Reason</label><input type="text" id="adj-reason" placeholder="e.g. Spoiled"></div>
         <button class="btn" onclick="saveAdjustStock()">Save Adjustment</button>
@@ -952,7 +962,7 @@ function editPurchase(id) {
     document.getElementById('modal-body').innerHTML = `
         <h3>Edit Purchase</h3>
         <div class="form-group"><label>Supplier Name</label><input type="text" id="edit-p-supplier" value="${p.supplierName}"></div>
-        <div class="form-group"><label>Material</label><select id="edit-p-mat"><option value="cement" ${p.material==='cement'?'selected':''}>Cement</option><option value="sand" ${p.material==='sand'?'selected':''}>Sand</option></select></div>
+        <div class="form-group"><label>Material</label><select id="edit-p-mat"><option value="cement" ${p.material==='cement'?'selected':''}>Cement</option><option value="sand" ${p.material==='sand'?'selected':''}>Sand</option><option value="empty_bag" ${p.material==='empty_bag'?'selected':''}>Empty Bags</option></select></div>
         <div class="row">
             <div class="form-group"><label>Quantity</label><input type="number" id="edit-p-qty" value="${p.qty || ''}" placeholder="0" oninput="calcEditPurchase()"></div>
             <div class="form-group"><label>Cost per Unit</label><input type="number" id="edit-p-unit-cost" value="${unitCost || ''}" placeholder="0" oninput="calcEditPurchase()"></div>
@@ -1122,7 +1132,7 @@ function renderSales(main) {
             <div style="background:var(--bg); padding:12px; border-radius:8px; margin-bottom:12px;">
                 <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Blocks</div>
                 <div class="row">
-                    <div class="form-group" style="flex:1.5;"><label>${t.size}</label><select id="s-size" onchange="updateDefaultPrice()"><option value="4">4"</option><option value="6">6"</option><option value="9">9"</option></select></div>
+                    <div class="form-group" style="flex:1.5;"><label>${t.size}</label><select id="s-size" onchange="updateDefaultPrice()"><option value="6">6"</option></select></div>
                     <div class="form-group" style="flex:1;"><label>Qty</label><input type="number" id="s-qty" value="" placeholder="0" oninput="calcSale()"></div>
                     <div class="form-group" style="flex:1.5;"><label>Price (₦)</label><input type="number" id="s-price" value="" placeholder="0" oninput="calcSale()"></div>
                 </div>
@@ -1168,11 +1178,13 @@ function calcSale() {
     const cQty = parseFloat(document.getElementById('s-cement-qty').value) || 0;
     const cPrice = parseFloat(document.getElementById('s-cement-price').value) || 0;
     const sQty = parseFloat(document.getElementById('s-sand-qty').value) || 0;
+    const eQty = parseFloat(document.getElementById('s-empty-bag-qty').value) || 0;
+    const ePrice = parseFloat(document.getElementById('s-empty-bag-price').value) || 0;
     const sPrice = parseFloat(document.getElementById('s-sand-price').value) || 0;
     const delivery = parseFloat(document.getElementById('s-delivery').value) || 0;
     const paid = parseFloat(document.getElementById('s-paid').value) || 0;
     
-    const total = (bQty * bPrice) + (cQty * cPrice) + (sQty * sPrice) + delivery;
+    const total = (bQty * bPrice) + (cQty * cPrice) + (sQty * sPrice) + (eQty * ePrice) + delivery;
     const balance = total - paid;
     
     document.getElementById('s-total-display').textContent = total.toLocaleString();
@@ -1206,9 +1218,11 @@ function executeSaveSale(qty, price, delivery, paid, saleDate, custName) {
         const cQty = parseInt(document.getElementById('s-cement-qty').value) || 0;
         const cPrice = parseFloat(document.getElementById('s-cement-price').value) || 0;
         const sQty = parseInt(document.getElementById('s-sand-qty').value) || 0;
+        const eQty = parseInt(document.getElementById('s-empty-bag-qty').value) || 0;
+        const ePrice = parseFloat(document.getElementById('s-empty-bag-price').value) || 0;
         const sPrice = parseFloat(document.getElementById('s-sand-price').value) || 0;
         
-        const total = (qty * price) + (cQty * cPrice) + (sQty * sPrice) + delivery;
+        const total = (qty * price) + (cQty * cPrice) + (sQty * sPrice) + (eQty * ePrice) + delivery;
         const balance = total - paid;
 
         let maxInv = 0;
@@ -1229,6 +1243,8 @@ function executeSaveSale(qty, price, delivery, paid, saleDate, custName) {
             cementPrice: cPrice,
             sandQty: sQty,
             sandPrice: sPrice,
+            emptyBagQty: eQty,
+            emptyBagPrice: ePrice,
             deliveryCharge: delivery, 
             totalAmount: total, 
             amountPaidAtSale: paid, 
@@ -1254,6 +1270,7 @@ function executeSaveSale(qty, price, delivery, paid, saleDate, custName) {
         if (qty > 0) itemsHtml += `<div class="kv"><span>${qty} pcs of ${sale.size}" Blocks</span><strong>${formatNaira(qty * price)}</strong></div>`;
         if (cQty > 0) itemsHtml += `<div class="kv"><span>${cQty} bags of Cement</span><strong>${formatNaira(cQty * cPrice)}</strong></div>`;
         if (sQty > 0) itemsHtml += `<div class="kv"><span>${sQty} bags of Sand</span><strong>${formatNaira(sQty * sPrice)}</strong></div>`;
+        if (eQty > 0) itemsHtml += `<div class="kv"><span>${eQty} Empty Bags</span><strong>${formatNaira(eQty * ePrice)}</strong></div>`;
         if (delivery > 0) itemsHtml += `<div class="kv"><span>Delivery Charge</span><strong>${formatNaira(delivery)}</strong></div>`;
 
         document.getElementById('modal-body').innerHTML = `
@@ -1293,6 +1310,7 @@ function openSaleDetails(saleId) {
     if (s.quantity > 0) itemsHtml += `<div class="kv"><span>${s.quantity} pcs of ${s.size}" Blocks</span><strong>${formatNaira(s.quantity * s.pricePerBlock)}</strong></div>`;
     if (s.cementQty > 0) itemsHtml += `<div class="kv"><span>${s.cementQty} bags of Cement</span><strong>${formatNaira(s.cementQty * s.cementPrice)}</strong></div>`;
     if (s.sandQty > 0) itemsHtml += `<div class="kv"><span>${s.sandQty} bags of Sand</span><strong>${formatNaira(s.sandQty * s.sandPrice)}</strong></div>`;
+    if (s.emptyBagQty > 0) itemsHtml += `<div class="kv"><span>${s.emptyBagQty} Empty Bags</span><strong>${formatNaira(s.emptyBagQty * s.emptyBagPrice)}</strong></div>`;
     if (s.deliveryCharge > 0) itemsHtml += `<div class="kv"><span>Delivery Charge</span><strong>${formatNaira(s.deliveryCharge)}</strong></div>`;
 
     document.getElementById('modal-body').innerHTML = `
@@ -1343,7 +1361,7 @@ function editSale(saleId) {
         <div style="background:var(--bg); padding:12px; border-radius:8px; margin-bottom:12px;">
             <div style="font-weight:700; font-size:13px; margin-bottom:8px;">Blocks</div>
             <div class="row">
-                <div class="form-group" style="flex:1.5;"><label>Size</label><select id="edit-s-size"><option value="4" ${s.size==='4'?'selected':''}>4"</option><option value="6" ${s.size==='6'?'selected':''}>6"</option><option value="9" ${s.size==='9'?'selected':''}>9"</option></select></div>
+                <div class="form-group" style="flex:1.5;"><label>Size</label><select id="edit-s-size"><option value="6">6"</option></select></div>
                 <div class="form-group" style="flex:1;"><label>Qty</label><input type="number" id="edit-s-qty" value="${s.quantity || ''}" placeholder="0" oninput="calcEditSale()"></div>
                 <div class="form-group" style="flex:1.5;"><label>Price (₦)</label><input type="number" id="edit-s-price" value="${s.pricePerBlock || ''}" placeholder="0" oninput="calcEditSale()"></div>
             </div>
@@ -1356,6 +1374,10 @@ function editSale(saleId) {
         <div class="row">
             <div class="form-group"><label>Sand Qty (Bags)</label><input type="number" id="edit-s-sand-qty" value="${s.sandQty || ''}" placeholder="0" oninput="calcEditSale()"></div>
             <div class="form-group"><label>Sand Price (₦)</label><input type="number" id="edit-s-sand-price" value="${s.sandPrice || ''}" placeholder="0" oninput="calcEditSale()"></div>
+        </div>
+        <div class="row">
+            <div class="form-group"><label>Empty Bags Qty</label><input type="number" id="edit-s-empty-bag-qty" value="${s.emptyBagQty || ''}" placeholder="0" oninput="calcEditSale()"></div>
+            <div class="form-group"><label>Empty Bag Price (₦)</label><input type="number" id="edit-s-empty-bag-price" value="${s.emptyBagPrice || ''}" placeholder="0" oninput="calcEditSale()"></div>
         </div>
 
         <div class="eyebrow">Payment</div>
@@ -1383,11 +1405,13 @@ function calcEditSale() {
     const cQty = parseFloat(document.getElementById('edit-s-cement-qty').value) || 0;
     const cPrice = parseFloat(document.getElementById('edit-s-cement-price').value) || 0;
     const sQty = parseFloat(document.getElementById('edit-s-sand-qty').value) || 0;
+    const eQty = parseFloat(document.getElementById('edit-s-empty-bag-qty').value) || 0;
+    const ePrice = parseFloat(document.getElementById('edit-s-empty-bag-price').value) || 0;
     const sPrice = parseFloat(document.getElementById('edit-s-sand-price').value) || 0;
     const delivery = parseFloat(document.getElementById('edit-s-delivery').value) || 0;
     const paid = parseFloat(document.getElementById('edit-s-paid').value) || 0;
     
-    const total = (bQty * bPrice) + (cQty * cPrice) + (sQty * sPrice) + delivery;
+    const total = (bQty * bPrice) + (cQty * cPrice) + (sQty * sPrice) + (eQty * ePrice) + delivery;
     const balance = total - paid;
     
     document.getElementById('edit-s-total').textContent = total.toLocaleString();
@@ -1407,11 +1431,13 @@ function saveEditedSale(saleId) {
     s.cementPrice = parseFloat(document.getElementById('edit-s-cement-price').value) || 0;
     s.sandQty = parseInt(document.getElementById('edit-s-sand-qty').value) || 0;
     s.sandPrice = parseFloat(document.getElementById('edit-s-sand-price').value) || 0;
+    s.emptyBagQty = parseInt(document.getElementById('edit-s-empty-bag-qty').value) || 0;
+    s.emptyBagPrice = parseFloat(document.getElementById('edit-s-empty-bag-price').value) || 0;
     
     s.deliveryCharge = parseInt(document.getElementById('edit-s-delivery').value) || 0;
     s.amountPaidAtSale = parseInt(document.getElementById('edit-s-paid').value) || 0;
     
-    s.totalAmount = (s.quantity * s.pricePerBlock) + (s.cementQty * s.cementPrice) + (s.sandQty * s.sandPrice) + s.deliveryCharge;
+    s.totalAmount = (s.quantity * s.pricePerBlock) + (s.cementQty * s.cementPrice) + (s.sandQty * s.sandPrice) + (s.emptyBagQty * s.emptyBagPrice) + s.deliveryCharge;
     s.balanceOwing = s.totalAmount - s.amountPaidAtSale;
     
     saveData('sales', sales); closeModal(); nav('sales'); showToast('Sale updated successfully', 'success');
@@ -1433,7 +1459,7 @@ function openReturn() {
     document.getElementById('modal-body').innerHTML = `
         <h3>${t.logReturn || 'Log Return'}</h3>
         <div class="form-group"><label>${t.customer}</label><input type="text" id="r-customer" placeholder="Name"></div>
-        <div class="row"><div class="form-group"><label>${t.date}</label><input type="date" id="r-date" value="${getTodayStr()}"></div><div class="form-group"><label>${t.size}</label><select id="r-size"><option value="4">4"</option><option value="6">6"</option><option value="9">9"</option></select></div></div>
+        <div class="row"><div class="form-group"><label>${t.date}</label><input type="date" id="r-date" value="${getTodayStr()}"></div><div class="form-group"><label>${t.size}</label><select id="r-size"><option value="6">6"</option></select></div></div>
         <div class="row"><div class="form-group"><label>${t.qtyReturned || 'Qty Returned'}</label><input type="number" id="r-qty" value="" min="1" placeholder="1"></div><div class="form-group"><label>${t.refundAmt || 'Refund Amount (₦)'}</label><input type="number" id="r-refund" value="" placeholder="0"></div></div>
         <div class="form-group"><label>${t.reason || 'Reason'}</label><input type="text" id="r-reason" placeholder="e.g. Broken"></div>
         <button class="btn" onclick="saveReturn()">Save Return</button>
@@ -1452,6 +1478,7 @@ function buildWhatsAppReceipt(sale) {
     if (sale.quantity > 0) itemsText += `- ${sale.quantity} pcs of ${sale.size}" Blocks @ ₦${sale.pricePerBlock.toLocaleString()}\n`;
     if (sale.cementQty > 0) itemsText += `- ${sale.cementQty} bags of Cement @ ₦${sale.cementPrice.toLocaleString()}\n`;
     if (sale.sandQty > 0) itemsText += `- ${sale.sandQty} bags of Sand @ ₦${sale.sandPrice.toLocaleString()}\n`;
+    if (sale.emptyBagQty > 0) itemsText += `- ${sale.emptyBagQty} Empty Bags @ ₦${sale.emptyBagPrice.toLocaleString()}\n`;
     if (sale.deliveryCharge > 0) itemsText += `- Delivery Charge: ₦${sale.deliveryCharge.toLocaleString()}\n`;
 
     const text = "*🧱 " + settings.businessName.toUpperCase() + "*\n" +
@@ -1540,7 +1567,7 @@ function renderProduction(main) {
     main.innerHTML = `
         <div class="card">
             <h3>${ico('production')} ${t.newBatch}</h3>
-            <div class="row"><div class="form-group"><label>Date</label><input type="date" id="p-date" value="${today}"></div><div class="form-group"><label>${t.size}</label><select id="p-size"><option value="4">4"</option><option value="6">6"</option><option value="9">9"</option></select></div></div>
+            <div class="row"><div class="form-group"><label>Date</label><input type="date" id="p-date" value="${today}"></div><div class="form-group"><label>${t.size}</label><select id="p-size"><option value="6">6"</option></select></div></div>
             <div class="row"><div class="form-group"><label>${t.worker}</label><input type="text" id="p-worker" list="worker-names" placeholder="Worker name"><datalist id="worker-names"></datalist></div><div class="form-group"><label>${t.blocksProduced}</label><input type="number" id="p-blocks" value="" placeholder="0" oninput="calcBatchCost()"><div style="display:flex; gap:6px; margin-top:6px;"><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 100, 'calcBatchCost')">+100</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 500, 'calcBatchCost')">+500</button><button type="button" class="btn btn-outline" style="padding:6px; font-size:12px; margin:0;" onclick="quickAdd('p-blocks', 1000, 'calcBatchCost')">+1000</button><button type="button" class="btn" style="padding:6px; font-size:12px; margin:0; background:var(--accent); color:#fff; border:none;" onclick="autoFillMaterials()">⚡ Auto-Fill Mix</button></div></div></div>
             <div class="eyebrow">Materials Used</div>
             <div class="row"><div class="form-group"><label>${t.cementBags}</label><input type="number" id="p-cement-bags" value="" placeholder="0" oninput="calcBatchCost()"></div><div class="form-group"><label>${t.costPerBag}</label><input type="number" id="p-cement-cost" value="" placeholder="0" oninput="calcBatchCost()"></div></div>
@@ -1607,7 +1634,7 @@ function editBatch(batchId) {
     const b = batches.find(x => x.id === batchId);
     document.getElementById('modal-body').innerHTML = `
         <h3>Edit Batch</h3>
-        <div class="row"><div class="form-group"><label>Date</label><input type="date" id="edit-b-date" value="${b.date}"></div><div class="form-group"><label>Size</label><select id="edit-b-size"><option value="4" ${b.size==='4'?'selected':''}>4"</option><option value="6" ${b.size==='6'?'selected':''}>6"</option><option value="9" ${b.size==='9'?'selected':''}>9"</option></select></div></div>
+        <div class="row"><div class="form-group"><label>Date</label><input type="date" id="edit-b-date" value="${b.date}"></div><div class="form-group"><label>Size</label><select id="edit-b-size"><option value="6">6"</option></select></div></div>
         <div class="row"><div class="form-group"><label>Worker</label><input type="text" id="edit-b-worker" value="${b.worker}"></div><div class="form-group"><label>Blocks Produced</label><input type="number" id="edit-b-blocks" value="${b.blocksProduced || ''}" placeholder="0" oninput="calcEditBatch()"></div></div>
         <div class="row"><div class="form-group"><label>Total Cost (₦)</label><input type="number" id="edit-b-totalcost" value="${b.totalCost || ''}" placeholder="0" oninput="calcEditBatch()"></div><div class="form-group"><label>Breakages</label><input type="number" id="edit-b-breakages" value="${b.breakages || ''}" placeholder="0"></div></div>
         <div class="form-group"><label>Curing Loss</label><input type="number" id="edit-b-curing-loss" value="${b.curingLoss || ''}" placeholder="0"></div>

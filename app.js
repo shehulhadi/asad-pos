@@ -270,20 +270,23 @@ function loadApp() {
     document.getElementById('login-view').classList.remove('active');
     document.getElementById('app-view').classList.add('active');
     document.getElementById('role-badge').textContent = currentUser === 'owner' ? 'Owner' : 'Staff';
-    document.getElementById('ib-update').innerHTML = ico('refresh');
-    document.getElementById('ib-backup').innerHTML = ico('update');
-    document.getElementById('ib-logout').innerHTML = ico('logout');
-    document.getElementById('btn-settings').innerHTML = ico('settings');
     
-    const owner = currentUser === 'owner';
-    document.getElementById('btn-settings').classList.toggle('show', owner);
+    const ibUpdate = document.getElementById('ib-update');
+    if (ibUpdate) ibUpdate.innerHTML = ico('refresh');
+    const ibBackup = document.getElementById('ib-backup');
+    if (ibBackup) ibBackup.innerHTML = ico('update');
+    const ibLogout = document.getElementById('ib-logout');
+    if (ibLogout) ibLogout.innerHTML = ico('logout');
+
     document.getElementById('pin-input').value = '';
     const bizName = settings.businessName || 'My Business';
     document.title = bizName;
     document.getElementById('app-title').textContent = bizName;
+    
     buildNav();
     nav('dashboard');
 }
+
 function logout() {
     currentUser = null;
     sessionStorage.removeItem('asad:auth');
@@ -307,20 +310,33 @@ function buildNav() {
     
     navEl.innerHTML = html;
 }
+
 function nav(view) {
     currentView = view;
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+    if (view === 'inventory') view = 'dashboard';
+    
+    document.querySelectorAll('.nav-btn').forEach(b => {
+        if (b.dataset.view) {
+            b.classList.toggle('active', b.dataset.view === view);
+        }
+    });
+    
     const main = document.getElementById('main-content');
     main.innerHTML = '';
     main.scrollTop = 0;
     
-    if (view === 'dashboard') renderDashboard(main);
-    else if (view === 'analytics') renderAnalytics(main);
-    else if (view === 'sales') renderSales(main);
-    else if (view === 'production') renderProduction(main);
-    else if (view === 'expenses') renderExpenses(main);
-    else if (view === 'debts') renderDebts(main);
-    else if (view === 'reports') renderReports(main);
+    try {
+        if (view === 'dashboard') renderDashboard(main);
+        else if (view === 'analytics') renderAnalytics(main);
+        else if (view === 'sales') renderSales(main);
+        else if (view === 'production') renderProduction(main);
+        else if (view === 'expenses') renderExpenses(main);
+        else if (view === 'debts') renderDebts(main);
+        else if (view === 'reports') renderReports(main);
+    } catch (e) {
+        console.error(e);
+        main.innerHTML = `<div style="padding:20px;text-align:center;color:var(--danger);">Error loading page: ${e.message}</div>`;
+    }
 }
 
 function openSettings() {

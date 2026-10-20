@@ -1567,45 +1567,98 @@ function shareReceiptImage(saleId) {
     try {
         const s = sales.find(x => x.id === saleId);
         if (!s) return showToast('Sale not found', 'err');
+
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const width = 600, height = 850;
+        const width = 600, height = 900;
         canvas.width = width; canvas.height = height;
+
+        // Background
         ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, height);
+
+        // Header
         ctx.fillStyle = '#059669'; ctx.fillRect(0, 0, width, 120);
         ctx.fillStyle = '#ffffff'; ctx.font = 'bold 32px Arial'; ctx.textAlign = 'center';
         ctx.fillText((settings.businessName || 'MY BUSINESS').toUpperCase(), width / 2, 50);
         ctx.font = '18px Arial'; ctx.fillText('📞 ' + (settings.businessPhone || ''), width / 2, 85);
+
+        // Invoice Info
         ctx.fillStyle = '#0f172a'; ctx.textAlign = 'left'; ctx.font = 'bold 24px Arial';
         ctx.fillText('INVOICE / RECEIPT', 40, 170);
+
         ctx.font = '16px Arial'; ctx.fillStyle = '#64748b';
         ctx.fillText('Invoice No:', 40, 210); ctx.fillText('Date:', 40, 240); ctx.fillText('Customer:', 40, 270);
+
         ctx.fillStyle = '#0f172a'; ctx.font = 'bold 16px Arial';
         ctx.fillText(s.invoiceNo || 'N/A', 160, 210);
         ctx.fillText(s.date + ' ' + (s.createdAt ? new Date(s.createdAt).toLocaleTimeString() : ''), 160, 240);
         ctx.fillText(s.customerName, 160, 270);
+
+        // Divider
         ctx.beginPath(); ctx.moveTo(40, 300); ctx.lineTo(560, 300); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2; ctx.stroke();
-        ctx.fillStyle = '#64748b'; ctx.font = 'bold 16px Arial'; ctx.fillText('Description', 40, 340);
-        ctx.textAlign = 'right'; ctx.fillText('Amount', 560, 340);
-        ctx.fillStyle = '#0f172a'; ctx.font = '16px Arial'; ctx.textAlign = 'left';
-        ctx.fillText(s.quantity + ' pcs of ' + s.size + '" Blocks', 40, 380);
-        ctx.fillText('(@ ₦' + s.pricePerBlock.toLocaleString() + ')', 40, 405);
-        ctx.textAlign = 'right'; ctx.fillText('₦' + (s.quantity * s.pricePerBlock).toLocaleString(), 560, 380);
-        let matString = "";
-        if (s.cementQty > 0) { matString += s.cementQty + " bags cement (₦" + s.cementPrice + ")"; } else { matString += Math.ceil(s.quantity / (settings.mixCement || 50)) + " bags cement (est)"; }
-        if (s.sandQty > 0) { matString += ", " + s.sandQty + " bags sand (₦" + s.sandPrice + ")"; } else { matString += ", " + Math.ceil(s.quantity / (settings.mixSand || 500)) + " bags sand (est)"; }
-        ctx.textAlign = 'left'; ctx.fillStyle = '#64748b'; ctx.font = '14px Arial'; ctx.fillText('Materials: ' + matString, 40, 440);
-        ctx.fillStyle = '#0f172a'; ctx.font = '16px Arial';
-        if (s.deliveryCharge > 0) { ctx.textAlign = 'left'; ctx.fillText('Delivery Charge', 40, 480); ctx.textAlign = 'right'; ctx.fillText('₦' + s.deliveryCharge.toLocaleString(), 560, 480); }
-        ctx.beginPath(); ctx.moveTo(40, 515); ctx.lineTo(560, 515); ctx.stroke();
-        ctx.textAlign = 'left'; ctx.font = 'bold 20px Arial'; ctx.fillText('Total Amount:', 40, 555);
-        ctx.textAlign = 'right'; ctx.fillStyle = '#059669'; ctx.fillText('₦' + s.totalAmount.toLocaleString(), 560, 555);
-        ctx.fillStyle = '#64748b'; ctx.font = '16px Arial'; ctx.textAlign = 'left'; ctx.fillText('Amount Paid:', 40, 595);
-        ctx.textAlign = 'right'; ctx.fillStyle = '#0f172a'; ctx.fillText('₦' + s.amountPaidAtSale.toLocaleString(), 560, 595);
-        ctx.fillStyle = '#64748b'; ctx.textAlign = 'left'; ctx.fillText('Outstanding Balance:', 40, 635);
-        ctx.textAlign = 'right'; ctx.fillStyle = s.balanceOwing > 0 ? '#dc2626' : '#059669'; ctx.fillText('₦' + s.balanceOwing.toLocaleString(), 560, 635);
+
+        // Table Headers
+        ctx.fillStyle = '#64748b'; ctx.font = 'bold 16px Arial'; ctx.textAlign = 'left';
+        ctx.fillText('Item Description', 40, 340);
+        ctx.textAlign = 'right'; ctx.fillText('Subtotal', 560, 340);
+
+        let yPos = 380;
+        let hasItems = false;
+
+        const drawLineItem = (title, qty, price) => {
+            if (qty > 0) {
+                hasItems = true;
+                ctx.textAlign = 'left'; ctx.fillStyle = '#0f172a'; ctx.font = '16px Arial';
+                ctx.fillText(`${title} (${qty} @ ₦${price.toLocaleString()})`, 40, yPos);
+                ctx.textAlign = 'right'; ctx.font = 'bold 16px Arial';
+                ctx.fillText(`₦${(qty * price).toLocaleString()}`, 560, yPos);
+                yPos += 30;
+            }
+        };
+
+        drawLineItem(`${s.size}" Blocks`, s.quantity, s.pricePerBlock);
+        drawLineItem(`Cement Bags`, s.cementQty, s.cementPrice);
+        drawLineItem(`Sand Bags`, s.sandQty, s.sandPrice);
+        drawLineItem(`Empty Bags`, s.emptyBagQty, s.emptyBagPrice);
+
+        if (s.deliveryCharge > 0) {
+            hasItems = true;
+            ctx.textAlign = 'left'; ctx.fillStyle = '#64748b'; ctx.font = '16px Arial';
+            ctx.fillText(`Delivery Charge`, 40, yPos);
+            ctx.textAlign = 'right'; ctx.fillStyle = '#0f172a'; ctx.font = 'bold 16px Arial';
+            ctx.fillText(`₦${s.deliveryCharge.toLocaleString()}`, 560, yPos);
+            yPos += 30;
+        }
+
+        if (!hasItems) {
+            ctx.textAlign = 'left'; ctx.fillStyle = '#64748b'; ctx.font = 'italic 16px Arial';
+            ctx.fillText('No items logged.', 40, yPos);
+            yPos += 30;
+        }
+
+        // Divider
+        yPos += 10;
+        ctx.beginPath(); ctx.moveTo(40, yPos); ctx.lineTo(560, yPos); ctx.stroke();
+
+        // Totals
+        yPos += 40;
+        ctx.textAlign = 'left'; ctx.font = 'bold 20px Arial'; ctx.fillText('Total Amount:', 40, yPos);
+        ctx.textAlign = 'right'; ctx.fillStyle = '#059669'; ctx.fillText(`₦${s.totalAmount.toLocaleString()}`, 560, yPos);
+
+        yPos += 40;
+        ctx.fillStyle = '#64748b'; ctx.font = '16px Arial'; ctx.textAlign = 'left'; ctx.fillText('Amount Paid:', 40, yPos);
+        ctx.textAlign = 'right'; ctx.fillStyle = '#0f172a'; ctx.font = 'bold 16px Arial'; ctx.fillText(`₦${s.amountPaidAtSale.toLocaleString()}`, 560, yPos);
+
+        yPos += 40;
+        ctx.fillStyle = '#64748b'; ctx.textAlign = 'left'; ctx.font = '16px Arial'; ctx.fillText('Outstanding Balance:', 40, yPos);
+        ctx.textAlign = 'right'; ctx.fillStyle = s.balanceOwing > 0 ? '#dc2626' : '#059669'; ctx.font = 'bold 18px Arial'; ctx.fillText(`₦${s.balanceOwing.toLocaleString()}`, 560, yPos);
+
+        // Footer
         ctx.fillStyle = '#64748b'; ctx.font = 'italic 16px Arial'; ctx.textAlign = 'center';
-        ctx.fillText('Thank you for your business!', width / 2, 720);
+        ctx.fillText('Thank you for your business!', width / 2, height - 80);
+        ctx.font = '14px Arial';
+        ctx.fillText('Powered by Asad Tech Concepts', width / 2, height - 50);
+
         canvas.toBlob(function(blob) {
             try {
                 const file = new File([blob], 'Receipt_' + (s.invoiceNo || s.id) + '.png', { type: 'image/png' });

@@ -481,10 +481,11 @@ function renderDashboard(main) {
     const sandAdj = stockAdjustments.filter(a=>a.material==='sand').reduce((s,a)=>s+a.qty,0);
     const sandStock = sandPurchased - sandUsed + sandAdj;
 
+    const emptyBagsPurchased = purchases.filter(p=>p.material==='empty_bag').reduce((s,p)=>s+p.qty,0);
     const emptyBagsProduced = batches.reduce((s,b)=>s+(b.cementBags||0),0);
     const emptyBagsSold = sales.reduce((s,v)=>s+(v.emptyBagQty||0),0);
     const emptyBagsAdj = stockAdjustments.filter(a=>a.material==='empty_bag').reduce((s,a)=>s+a.qty,0);
-    const emptyBagsStock = emptyBagsProduced - emptyBagsSold + emptyBagsAdj;
+    const emptyBagsStock = emptyBagsPurchased + emptyBagsProduced - emptyBagsSold + emptyBagsAdj;
 
     const readyBatches = batches.filter(b => b.size === '6' && b.status === 'ready');
     const produced = readyBatches.reduce((s,b)=>s+(b.blocksProduced - b.breakages),0);
@@ -547,10 +548,11 @@ function openStockItem(type, size) {
             const adj = stockAdjustments.filter(a=>a.material==='sand').reduce((s,a)=>s+a.qty,0);
             currentStock = purchased - used + adj;
         } else {
+            const purchased = purchases.filter(p=>p.material==='empty_bag').reduce((s,p)=>s+p.qty,0);
             const produced = batches.reduce((s,b)=>s+(b.cementBags||0),0);
             const sold = sales.reduce((s,v)=>s+(v.emptyBagQty||0),0);
             const adj = stockAdjustments.filter(a=>a.material==='empty_bag').reduce((s,a)=>s+a.qty,0);
-            currentStock = produced - sold + adj;
+            currentStock = purchased + produced - sold + adj;
         }
 
         purchases.filter(p=>p.material===type).forEach(p => hist.push({ id: p.id, clickType: 'pur', date: p.date, desc: `Purchase from ${p.supplierName}`, qty: `+${p.qty}`, color: 'var(--brand)' }));

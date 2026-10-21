@@ -1,5 +1,5 @@
-const CACHE_NAME = 'elbabs-v1';
-const ASSETS = ['./', './index.html', './manifest.json'];
+const CACHE_NAME = 'elbabs-v2';
+const ASSETS = ['./', './index.html', './style.css', './app.js', './manifest.json'];
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();

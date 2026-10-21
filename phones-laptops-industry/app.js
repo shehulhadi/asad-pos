@@ -1,6 +1,7 @@
 let settings = JSON.parse(localStorage.getItem('elbabs:settings')) || { pin: '1234' };
 let inventory = JSON.parse(localStorage.getItem('elbabs:inventory')) || [];
 let sales = JSON.parse(localStorage.getItem('elbabs:sales')) || [];
+let expenses = JSON.parse(localStorage.getItem('elbabs:expenses')) || [];
 let currentView = 'inventory';
 
 function saveData(key, data) { localStorage.setItem('elbabs:' + key, JSON.stringify(data)); }
@@ -38,9 +39,10 @@ function nav(view, btn = null) {
 
     if (view === 'inventory') renderInventory(main);
     else if (view === 'sales') renderSales(main);
-    else if (view === 'dashboard') main.innerHTML = '<div class="card"><h3>Dashboard</h3><p style="text-align:center; color:var(--muted); padding:20px;">Coming in Phase 3</p></div>';
+    else if (view === 'dashboard') renderDashboard(main);
 }
 
+// --- INVENTORY ---
 function renderInventory(main) {
     let listHtml = '';
     const available = inventory.filter(p => p.status === 'Available').reverse();
@@ -109,6 +111,7 @@ function savePhone() {
     nav('inventory');
 }
 
+// --- SALES ---
 function renderSales(main) {
     const availablePhones = inventory.filter(p => p.status === 'Available');
     
@@ -202,6 +205,7 @@ function saveSale() {
         customerName: custName,
         customerPhone: custPhone,
         deviceId: deviceId,
+        costPrice: device.costPrice,
         phoneName: `${device.brand} ${device.model} (${device.storage})`,
         totalAmount: price,
         amountPaid: paid,
@@ -231,6 +235,84 @@ function saveSale() {
         </div>
     `;
     document.getElementById('modal').classList.add('active');
+}
+
+// --- DASHBOARD ---
+function renderDashboard(main) {
+    const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
+    const totalCostSold = sales.reduce((sum, s) => sum + s.costPrice, 0);
+    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const netProfit = totalRevenue - totalCostSold - totalExpenses;
+    
+    const cashInHand = sales.reduce((sum, s) => sum + s.amountPaid, 0);
+    const moneyOwed = sales.reduce((sum, s) => sum + s.balanceOwing, 0);
+    const capitalInStock = inventory.filter(p => p.status === 'Available').reduce((sum, p) => sum + p.costPrice, 0);
+
+    let recentExpenses = [...expenses].reverse().slice(0, 5).map(e => `
+        <div class="kv"><span>${e.date} · ${e.note}</span><strong style="color:var(--danger);">-${formatNaira(e.amount)}</strong></div>
+    `).join('');
+
+    main.innerHTML = `
+        <div class="quick" style="margin-bottom: 20px;">
+            <button onclick="openAddExpense()" style="color:var(--danger); border-color:var(--danger);">+ Add Expense</button>
+        </div>
+
+        <div class="hero">
+            <div class="lbl">Net Profit</div>
+            <div class="big ${netProfit < 0 ? 'neg' : ''}">${formatNaira(netProfit)}</div>
+            <div class="meta">
+                <div>Revenue<strong>${formatNaira(totalRevenue)}</strong></div>
+                <div>Expenses<strong>${formatNaira(totalExpenses)}</strong></div>
+            </div>
+        </div>
+
+        <div class="dash-grid">
+            <div class="stat"><div class="top"><span class="dot g">${icon('cash')}</span><h4>Cash in Hand</h4></div><div class="val">${formatNaira(cashInHand)}</div></div>
+            <div class="stat"><div class="top"><span class="dot r">${icon('arrowIn')}</span><h4>Owed to You</h4></div><div class="val">${formatNaira(moneyOwed)}</div></div>
+            <div class="stat"><div class="top"><span class="dot b">${icon('box')}</span><h4>Capital in Stock</h4></div><div class="val">${formatNaira(capitalInStock)}</div></div>
+        </div>
+
+        <div class="card">
+            <h3>Recent Expenses</h3>
+            ${recentExpenses || '<p style="font-size:13px; color:var(--muted);">No expenses logged yet.</p>'}
+        </div>
+    `;
+}
+
+function icon(name) {
+    const icons = {
+        cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>',
+        arrowIn: '<path d="M12 4v12m0 0l-4-4m4 4l4-4M5 20h14"/>',
+        box: '<path d="M3 8l9-5 9 5v8l-9 5-9-5z"/><path d="M3 8l9 5 9-5"/>'
+    };
+    return `<svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px;">${icons[name]||''}</svg>`;
+}
+
+function openAddExpense() {
+    document.getElementById('modal-body').innerHTML = `
+        <h3>Add Expense</h3>
+        <div class="form-group"><label>Date</label><input type="date" id="e-date" value="${new Date().toISOString().split('T')[0]}"></div>
+        <div class="form-group"><label>Amount (₦)</label><input type="number" id="e-amount" placeholder="0"></div>
+        <div class="form-group"><label>Note / Category</label><input type="text" id="e-note" placeholder="e.g. Shop Rent, Transport"></div>
+        <button class="btn" onclick="saveExpense()">Save Expense</button>
+        <button class="btn" style="background:var(--bg); color:var(--text); border:1px solid var(--line);" onclick="closeModal()">Cancel</button>
+    `;
+    document.getElementById('modal').classList.add('active');
+}
+
+function saveExpense() {
+    const amt = parseFloat(document.getElementById('e-amount').value) || 0;
+    if (amt <= 0) return alert('Enter a valid amount');
+
+    expenses.push({
+        id: Date.now().toString(),
+        date: document.getElementById('e-date').value,
+        amount: amt,
+        note: document.getElementById('e-note').value || 'General Expense'
+    });
+    saveData('expenses', expenses);
+    closeModal();
+    nav('dashboard');
 }
 
 if (sessionStorage.getItem('elbabs:auth') === 'true') {

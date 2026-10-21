@@ -32,9 +32,14 @@
                     <span style="font-size:10px; font-weight:700; color:#6ee7b7; text-transform:uppercase;">Owner</span>
                 </div>
             </div>
-            <button class="icon-btn" onclick="logout()" title="Logout">
-                <svg class="ic" viewBox="0 0 24 24"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg>
-            </button>
+            <div style="display:flex; gap:10px;">
+                <button class="icon-btn" onclick="forceUpdate()" title="Update App">
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M20 11a8 8 0 10-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+                </button>
+                <button class="icon-btn" onclick="logout()" title="Logout">
+                    <svg class="ic" viewBox="0 0 24 24"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg>
+                </button>
+            </div>
         </header>
         <main id="main-content"></main>
         <nav id="bottom-nav">

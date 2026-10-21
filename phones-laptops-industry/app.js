@@ -8,6 +8,20 @@ function saveData(key, data) { localStorage.setItem('elbabs:' + key, JSON.string
 function formatNaira(num) { return '₦' + Number(num).toLocaleString(); }
 function closeModal() { document.getElementById('modal').classList.remove('active'); }
 
+async function forceUpdate() {
+    if (confirm("This will download the latest app version.\nYOUR DATA WILL NOT BE DELETED.\n\nContinue?")) {
+        try {
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                for (let r of regs) await r.unregister();
+            }
+            const keys = await caches.keys();
+            for (let k of keys) await caches.delete(k);
+        } catch(e) {}
+        window.location.reload(true);
+    }
+}
+
 function login() {
     const pin = document.getElementById('pin-input').value;
     const err = document.getElementById('login-error');
@@ -40,9 +54,9 @@ function nav(view, btn = null) {
     if (view === 'inventory') renderInventory(main);
     else if (view === 'sales') renderSales(main);
     else if (view === 'dashboard') renderDashboard(main);
+    else if (view === 'reports') renderReports(main);
 }
 
-// --- INVENTORY ---
 function renderInventory(main) {
     let listHtml = '';
     const available = inventory.filter(p => p.status === 'Available').reverse();
@@ -111,7 +125,6 @@ function savePhone() {
     nav('inventory');
 }
 
-// --- SALES ---
 function renderSales(main) {
     const availablePhones = inventory.filter(p => p.status === 'Available');
     
@@ -237,10 +250,9 @@ function saveSale() {
     document.getElementById('modal').classList.add('active');
 }
 
-// --- DASHBOARD ---
 function renderDashboard(main) {
     const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
-    const totalCostSold = sales.reduce((sum, s) => sum + s.costPrice, 0);
+    const totalCostSold = sales.reduce((sum, s) => sum + (s.costPrice || 0), 0);
     const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
     const netProfit = totalRevenue - totalCostSold - totalExpenses;
     
@@ -253,8 +265,9 @@ function renderDashboard(main) {
     `).join('');
 
     main.innerHTML = `
-        <div class="quick" style="margin-bottom: 20px;">
-            <button onclick="openAddExpense()" style="color:var(--danger); border-color:var(--danger);">+ Add Expense</button>
+        <div class="quick" style="margin-bottom: 20px; flex-wrap: wrap;">
+            <button onclick="openAddExpense()" style="color:var(--danger); border-color:var(--danger); flex: 1 1 45%;">+ Add Expense</button>
+            <button onclick="nav('reports')" style="flex: 1 1 45%;">📁 Reports & Backup</button>
         </div>
 
         <div class="hero">
@@ -277,6 +290,79 @@ function renderDashboard(main) {
             ${recentExpenses || '<p style="font-size:13px; color:var(--muted);">No expenses logged yet.</p>'}
         </div>
     `;
+}
+
+function renderReports(main) {
+    main.innerHTML = `
+        <h3 style="margin-bottom:16px;">Reports & Backup</h3>
+        
+        <div class="card">
+            <h3>Data Backup</h3>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">Save a backup of all your inventory, sales, and expenses to your phone.</p>
+            <button class="btn btn-primary" style="margin-bottom:8px;" onclick="exportJSON()">📤 Export JSON Backup</button>
+            
+            <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importJSON(event)">
+            <button class="btn" style="background:#64748b;" onclick="document.getElementById('import-file').click()">📥 Import JSON Backup</button>
+        </div>
+
+        <div class="card">
+            <h3>Sales Report</h3>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">Download a CSV spreadsheet of all your sales for accounting.</p>
+            <button class="btn" style="background:#059669;" onclick="exportCSV()">Export Sales to CSV</button>
+        </div>
+
+        <button class="btn outline" onclick="nav('dashboard')">Back to Dashboard</button>
+    `;
+}
+
+function exportJSON() {
+    const data = {
+        settings: JSON.parse(localStorage.getItem('elbabs:settings')) || {},
+        inventory: JSON.parse(localStorage.getItem('elbabs:inventory')) || [],
+        sales: JSON.parse(localStorage.getItem('elbabs:sales')) || [],
+        expenses: JSON.parse(localStorage.getItem('elbabs:expenses')) || []
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'Elbabs_Backup_' + new Date().toISOString().split('T')[0] + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function importJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (data.inventory && data.sales) {
+                if (data.settings) localStorage.setItem('elbabs:settings', JSON.stringify(data.settings));
+                localStorage.setItem('elbabs:inventory', JSON.stringify(data.inventory));
+                localStorage.setItem('elbabs:sales', JSON.stringify(data.sales));
+                localStorage.setItem('elbabs:expenses', JSON.stringify(data.expenses || []));
+                alert('Data restored successfully! App will reload.');
+                location.reload();
+            } else {
+                alert('Invalid backup file.');
+            }
+        } catch(err) { alert('Error parsing file: ' + err.message); }
+    };
+    reader.readAsText(file);
+}
+
+function exportCSV() {
+    let csv = "Date,Customer,Device,Total Amount,Paid,Balance\n";
+    sales.forEach(s => {
+        csv += `${s.date},"${s.customerName}","${s.phoneName}",${s.totalAmount},${s.amountPaid},${s.balanceOwing}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'Elbabs_Sales_' + new Date().toISOString().split('T')[0] + '.csv';
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
 function icon(name) {

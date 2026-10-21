@@ -57,18 +57,20 @@ function nav(view, btn = null) {
     else if (view === 'reports') renderReports(main);
 }
 
+// --- INVENTORY ---
 function renderInventory(main) {
     let listHtml = '';
     const available = inventory.filter(p => p.status === 'Available').reverse();
     
     available.forEach(p => {
         listHtml += `
-            <div class="list-item">
+            <div class="list-item" style="cursor:pointer;" onclick="openDeviceDetails('${p.id}')">
                 <div class="list-header">
                     <span>${p.brand} ${p.model}</span>
                     <strong style="color:var(--brand);">${formatNaira(p.sellingPrice)}</strong>
                 </div>
-                <div class="list-sub">${p.storage} · ${p.condition} · Cost: ${formatNaira(p.costPrice)}</div>
+                <div class="list-sub">${p.storage} · ${p.condition} · IMEI: ${p.imei || 'N/A'}</div>
+                <div class="list-sub" style="margin-top:4px;">Seller: ${p.sellerName || 'Unknown'} (${p.sellerPhone || 'No phone'})</div>
                 <div style="margin-top:6px;"><span class="tag green">In Stock</span></div>
             </div>
         `;
@@ -76,11 +78,15 @@ function renderInventory(main) {
 
     main.innerHTML = `
         <div class="card">
-            <h3>Add New Phone / Laptop</h3>
-            <div class="form-group"><label>Brand (e.g. Apple, Samsung)</label><input type="text" id="p-brand" placeholder="Brand"></div>
-            <div class="form-group"><label>Model (e.g. iPhone 13, Galaxy A54)</label><input type="text" id="p-model" placeholder="Model"></div>
+            <h3>Add New Device / Trade-In</h3>
+            
+            <div class="eyebrow" style="margin-top:0;">Device Info</div>
             <div class="row">
-                <div class="form-group"><label>Storage (e.g. 128GB)</label><input type="text" id="p-storage" placeholder="128GB"></div>
+                <div class="form-group"><label>Brand</label><input type="text" id="p-brand" placeholder="e.g. Apple"></div>
+                <div class="form-group"><label>Model</label><input type="text" id="p-model" placeholder="e.g. iPhone 13"></div>
+            </div>
+            <div class="row">
+                <div class="form-group"><label>Storage</label><input type="text" id="p-storage" placeholder="128GB"></div>
                 <div class="form-group"><label>Condition</label><select id="p-condition">
                     <option value="New">New</option>
                     <option value="Used - Grade A">Used - Grade A</option>
@@ -88,6 +94,16 @@ function renderInventory(main) {
                     <option value="Needs Repair">Needs Repair</option>
                 </select></div>
             </div>
+            <div class="form-group"><label>IMEI / Serial Number</label><input type="text" id="p-imei" placeholder="Enter IMEI"></div>
+            
+            <div class="eyebrow">Seller Info (Where did you buy it?)</div>
+            <div class="form-group"><label>Seller Name</label><input type="text" id="p-seller-name" placeholder="Name"></div>
+            <div class="row">
+                <div class="form-group"><label>Seller Phone</label><input type="tel" id="p-seller-phone" placeholder="Phone"></div>
+                <div class="form-group"><label>Seller Address</label><input type="text" id="p-seller-address" placeholder="Address"></div>
+            </div>
+
+            <div class="eyebrow">Financials</div>
             <div class="row">
                 <div class="form-group"><label>Cost Price (₦)</label><input type="number" id="p-cost" placeholder="0"></div>
                 <div class="form-group"><label>Selling Price (₦)</label><input type="number" id="p-sell" placeholder="0"></div>
@@ -96,7 +112,7 @@ function renderInventory(main) {
         </div>
 
         <h3 style="margin: 20px 0 10px; font-size: 16px;">Available Inventory (${available.length})</h3>
-        ${listHtml || '<p style="text-align:center; color:var(--muted);">No phones in stock yet.</p>'}
+        ${listHtml || '<p style="text-align:center; color:var(--muted);">No devices in stock yet.</p>'}
     `;
 }
 
@@ -115,6 +131,10 @@ function savePhone() {
         model: model,
         storage: document.getElementById('p-storage').value || 'N/A',
         condition: document.getElementById('p-condition').value,
+        imei: document.getElementById('p-imei').value || '',
+        sellerName: document.getElementById('p-seller-name').value || '',
+        sellerPhone: document.getElementById('p-seller-phone').value || '',
+        sellerAddress: document.getElementById('p-seller-address').value || '',
         costPrice: cost,
         sellingPrice: sell,
         status: 'Available'
@@ -125,6 +145,54 @@ function savePhone() {
     nav('inventory');
 }
 
+function openDeviceDetails(id) {
+    const p = inventory.find(x => x.id === id);
+    if (!p) return;
+    
+    let saleInfo = '';
+    if (p.status === 'Sold') {
+        const sale = sales.find(s => s.deviceId === p.id);
+        if (sale) {
+            saleInfo = `
+                <div class="eyebrow" style="color:var(--brand);">Sale Info</div>
+                <div class="kv"><span>Sold To</span><strong>${sale.customerName}</strong></div>
+                <div class="kv"><span>Customer Phone</span><strong>${sale.customerPhone || 'N/A'}</strong></div>
+                <div class="kv"><span>Sale Price</span><strong>${formatNaira(sale.totalAmount)}</strong></div>
+                <div class="kv"><span>Date Sold</span><strong>${sale.date}</strong></div>
+            `;
+        }
+    }
+
+    document.getElementById('modal-body').innerHTML = `
+        <h3>${p.brand} ${p.model}</h3>
+        <div style="text-align:center; margin-bottom:20px;">
+            <span class="tag ${p.status === 'Available' ? 'green' : ''}" style="font-size:14px; padding:6px 12px; background:${p.status === 'Available' ? 'var(--brand-soft)' : '#eee'}; color:${p.status === 'Available' ? 'var(--brand-dark)' : '#555'};">
+                ${p.status.toUpperCase()}
+            </span>
+        </div>
+        
+        <div class="eyebrow">Device Specs</div>
+        <div class="kv"><span>Storage</span><strong>${p.storage}</strong></div>
+        <div class="kv"><span>Condition</span><strong>${p.condition}</strong></div>
+        <div class="kv"><span>IMEI / Serial</span><strong>${p.imei || 'N/A'}</strong></div>
+        
+        <div class="eyebrow">Seller Info (Intake)</div>
+        <div class="kv"><span>Name</span><strong>${p.sellerName || 'N/A'}</strong></div>
+        <div class="kv"><span>Phone</span><strong>${p.sellerPhone || 'N/A'}</strong></div>
+        <div class="kv"><span>Address</span><strong>${p.sellerAddress || 'N/A'}</strong></div>
+
+        ${saleInfo}
+        
+        <div class="eyebrow">Financials</div>
+        <div class="kv"><span>Cost Price</span><strong>${formatNaira(p.costPrice)}</strong></div>
+        <div class="kv"><span>Target Selling Price</span><strong>${formatNaira(p.sellingPrice)}</strong></div>
+        
+        <button class="btn outline" style="margin-top:20px;" onclick="closeModal()">Close</button>
+    `;
+    document.getElementById('modal').classList.add('active');
+}
+
+// --- SALES ---
 function renderSales(main) {
     const availablePhones = inventory.filter(p => p.status === 'Available');
     
@@ -151,14 +219,20 @@ function renderSales(main) {
     main.innerHTML = `
         <div class="card">
             <h3>New Sale</h3>
-            <div class="form-group">
-                <label>Select Device</label>
-                <select id="s-device" onchange="updateSalePrice()">
-                    ${optionsHtml}
-                </select>
+            <div class="row">
+                <div class="form-group" style="flex:2;">
+                    <label>Select Device</label>
+                    <select id="s-device" onchange="updateSalePrice()">
+                        ${optionsHtml}
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1; display:flex; align-items:flex-end;">
+                    <button class="btn" style="margin:0; padding:10px; font-size:12px; background:var(--accent);" onclick="startTradeIn()">🔄 Trade-In</button>
+                </div>
             </div>
+            
             <div class="form-group"><label>Customer Name</label><input type="text" id="s-customer" placeholder="Name"></div>
-            <div class="form-group"><label>Phone Number</label><input type="tel" id="s-phone" placeholder="Phone"></div>
+            <div class="form-group"><label>Customer Phone</label><input type="tel" id="s-phone" placeholder="Phone"></div>
             
             <div class="row">
                 <div class="form-group"><label>Selling Price (₦)</label><input type="number" id="s-price" value="" placeholder="0" oninput="calcSale()"></div>
@@ -175,6 +249,23 @@ function renderSales(main) {
         <h3 style="margin: 20px 0 10px; font-size: 16px;">Recent Sales</h3>
         ${historyHtml || '<p style="text-align:center; color:var(--muted);">No sales recorded yet.</p>'}
     `;
+}
+
+function startTradeIn() {
+    const custName = document.getElementById('s-customer').value;
+    const custPhone = document.getElementById('s-phone').value;
+    
+    nav('inventory');
+    
+    // Pre-fill seller info with customer info
+    setTimeout(() => {
+        if(document.getElementById('p-seller-name')) {
+            document.getElementById('p-seller-name').value = custName;
+            document.getElementById('p-seller-phone').value = custPhone;
+            window.scrollTo(0, document.body.scrollHeight);
+            alert('Enter the Trade-In device details below. Customer info has been pre-filled as the Seller.');
+        }
+    }, 100);
 }
 
 function updateSalePrice() {

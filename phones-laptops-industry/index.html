@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0b1220">
+    <title>Elbabs Communications</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        :root {
+            --ink: #0b1220; --ink-2: #131d33; --ink-3: #1e2a45; --brand: #2563eb; --brand-dark: #1d4ed8; --brand-soft: #e8efff;
+            --accent: #f59e0b; --accent-soft: #fef3c7; --blue: #2563eb; --danger: #dc2626; --danger-soft: #fdecec;
+            --warning: #d97706; --bg: #f3f5f8; --surface: #ffffff; --text: #0f172a; --muted: #64748b; --line: #e6eaf0;
+            --shadow-sm: 0 1px 2px rgba(15, 23, 42, .06); --shadow-md: 0 6px 20px -6px rgba(15, 23, 42, .12); --shadow-lg: 0 24px 48px -12px rgba(15, 23, 42, .35);
+            --radius: 16px; --radius-sm: 10px; --safe-b: env(safe-area-inset-bottom, 0px); --safe-t: env(safe-area-inset-top, 0px);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; line-height: 1.45; font-size: 15px; }
+        svg.ic { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .view { display: none; flex: 1; flex-direction: column; min-height: 0; }
+        .view.active { display: flex; }
+
+        /* Login */
+        #login-view { justify-content: center; align-items: center; padding: 24px; background: radial-gradient(900px 400px at 85% -10%, rgba(37,99,235,.35), transparent 60%), radial-gradient(700px 400px at -10% 110%, rgba(245,158,11,.18), transparent 60%), var(--ink); color: #fff; }
+        .login-card { width: 100%; max-width: 340px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; height: 100%; }
+        .brand-mark { width: 68px; height: 68px; border-radius: 20px; margin: 0 auto 20px; display: grid; place-items: center; font-weight: 800; font-size: 24px; letter-spacing: -1px; color: #fff; background: linear-gradient(135deg, var(--brand) 0%, #3b82f6 100%); box-shadow: 0 12px 32px -8px rgba(37,99,235,.55); }
+        .login-card h1 { font-size: 24px; font-weight: 800; letter-spacing: -.6px; line-height: 1.2; }
+        .login-card .sub { font-size: 13px; font-weight: 500; color: #94a3b8; letter-spacing: 0.5px; margin-top: 8px; margin-bottom: 36px; }
+        .pin-input { width: 100%; padding: 16px; font-size: 28px; text-align: center; letter-spacing: 14px; text-indent: 14px; border-radius: var(--radius); border: 1.5px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; margin-bottom: 14px; outline: none; transition: .2s; }
+        .pin-input:focus { border-color: var(--brand); background: rgba(255,255,255,.1); box-shadow: 0 0 0 4px rgba(37,99,235,.2); }
+        .btn-primary { background: linear-gradient(135deg, var(--brand) 0%, #3b82f6 100%); color: #fff; border: none; padding: 16px; font-size: 16px; border-radius: var(--radius); width: 100%; font-weight: 700; cursor: pointer; transition: transform .1s; box-shadow: 0 10px 24px -8px rgba(37,99,235,.6); }
+        .btn-primary:active { transform: scale(.98); }
+
+        /* Shell */
+        header { background: var(--ink); color: #fff; padding: calc(12px + var(--safe-t)) 16px 12px; display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+        .hdr-brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        .hdr-brand .brand-mark { width: 38px; height: 38px; border-radius: 11px; margin: 0; font-size: 14px; box-shadow: none; }
+        .hdr-brand h2 { font-size: 16px; font-weight: 700; letter-spacing: -.3px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
+        .icon-btn { background: rgba(255,255,255,.08); color: #e2e8f0; border: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; cursor: pointer; }
+        main { flex: 1; overflow-y: auto; padding: 18px 16px; padding-bottom: calc(96px + var(--safe-b)); }
+        
+        nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,.94); backdrop-filter: blur(14px); border-top: 1px solid var(--line); display: flex; padding: 8px 6px calc(8px + var(--safe-b)); z-index: 20; }
+        .nav-btn { background: none; border: none; font-size: 10.5px; color: var(--muted); font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 2px 0; flex: 1; }
+        .nav-btn .pill { width: 46px; height: 28px; border-radius: 14px; display: grid; place-items: center; }
+        .nav-btn.active { color: var(--brand-dark); }
+        .nav-btn.active .pill { background: var(--brand-soft); }
+
+        /* Cards & Lists */
+        .card { background: var(--surface); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; box-shadow: var(--shadow-sm); border: 1px solid var(--line); }
+        .card h3 { margin-bottom: 14px; font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 12px; margin-bottom: 6px; font-weight: 600; color: var(--muted); }
+        .form-group input, .form-group select { width: 100%; padding: 13px 14px; border: 1.5px solid var(--line); border-radius: var(--radius-sm); font-size: 16px; background: #f8fafc; outline: none; }
+        .row { display: flex; gap: 12px; }
+        .row > div { flex: 1; min-width: 0; }
+        .btn { background: var(--brand); color: #fff; border: none; padding: 14px; font-size: 15px; border-radius: var(--radius-sm); width: 100%; font-weight: 700; cursor: pointer; margin-top: 8px; }
+        
+        .list-item { background: var(--surface); padding: 14px 16px; border-radius: 14px; margin-bottom: 10px; border: 1px solid var(--line); box-shadow: var(--shadow-sm); position: relative; overflow: hidden; }
+        .list-item::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--brand); }
+        .list-header { display: flex; justify-content: space-between; font-weight: 700; font-size: 15px; margin-bottom: 3px; }
+        .list-sub { font-size: 12.5px; color: var(--muted); }
+        .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 20px; }
+        .tag.green { background: var(--brand-soft); color: var(--brand-dark); }
+        
+        .modal { display: none; position: fixed; inset: 0; background: rgba(11,18,32,.7); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background: #fff; border-radius: 24px; padding: 24px; width: 100%; max-width: 440px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+        .modal-content h3 { margin-bottom: 18px; font-size: 18px; font-weight: 800; }
+    </style>
+</head>
+<body>
+
+    <div id="login-view" class="view active">
+        <div class="login-card">
+            <div class="brand-mark">EC</div>
+            <h1>Elbabs Comm.</h1>
+            <div class="sub">PHONES & LAPTOPS</div>
+            <div style="width: 100%;">
+                <input type="password" id="pin-input" class="pin-input" placeholder="••••" maxlength="4" inputmode="numeric" autocomplete="off">
+                <button class="btn-primary" onclick="login()">Login</button>
+                <div id="login-error" style="color: #fca5a5; margin-top: 16px; display: none; font-weight: 600; font-size: 14px;">Invalid PIN</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-view" class="view">
+        <header>
+            <div class="hdr-brand">
+                <div class="brand-mark">EC</div>
+                <div>
+                    <h2 id="app-title">Elbabs Comm.</h2>
+                    <span style="font-size:10px; font-weight:700; color:#6ee7b7; text-transform:uppercase;">Owner</span>
+                </div>
+            </div>
+            <button class="icon-btn" onclick="logout()" title="Logout">
+                <svg class="ic" viewBox="0 0 24 24"><path d="M9 4H5v16h4M16 8l4 4-4 4M20 12H9"/></svg>
+            </button>
+        </header>
+        <main id="main-content"></main>
+        <nav id="bottom-nav">
+            <button class="nav-btn active" onclick="nav('inventory', this)">
+                <span class="pill"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></span>
+                Inventory
+            </button>
+            <button class="nav-btn" onclick="nav('sales', this)">
+                <span class="pill"><svg class="ic" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14M8 5l8 14M5 9h14M5 14h14"/></svg></span>
+                Sales
+            </button>
+            <button class="nav-btn" onclick="nav('dashboard', this)">
+                <span class="pill"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></span>
+                Dashboard
+            </button>
+        </nav>
+    </div>
+
+    <div id="modal" class="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-content" id="modal-body"></div>
+    </div>
+
+<script>
+    let settings = JSON.parse(localStorage.getItem('elbabs:settings')) || { pin: '1234' };
+    let inventory = JSON.parse(localStorage.getItem('elbabs:inventory')) || [];
+    let currentView = 'inventory';
+
+    function saveData(key, data) { localStorage.setItem('elbabs:' + key, JSON.stringify(data)); }
+    function formatNaira(num) { return '₦' + Number(num).toLocaleString(); }
+
+    function login() {
+        const pin = document.getElementById('pin-input').value;
+        const err = document.getElementById('login-error');
+        if (pin === settings.pin) {
+            sessionStorage.setItem('elbabs:auth', 'true');
+            document.getElementById('login-view').classList.remove('active');
+            document.getElementById('app-view').classList.add('active');
+            nav('inventory');
+        } else {
+            err.style.display = 'block';
+        }
+    }
+
+    function logout() {
+        sessionStorage.removeItem('elbabs:auth');
+        document.getElementById('app-view').classList.remove('active');
+        document.getElementById('login-view').classList.add('active');
+        document.getElementById('pin-input').value = '';
+    }
+
+    function nav(view, btn = null) {
+        currentView = view;
+        if (btn) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+        const main = document.getElementById('main-content');
+        main.innerHTML = '';
+
+        if (view === 'inventory') renderInventory(main);
+        else if (view === 'sales') main.innerHTML = '<div class="card"><h3>Sales</h3><p style="text-align:center; color:var(--muted); padding:20px;">Coming in Phase 2</p></div>';
+        else if (view === 'dashboard') main.innerHTML = '<div class="card"><h3>Dashboard</h3><p style="text-align:center; color:var(--muted); padding:20px;">Coming in Phase 3</p></div>';
+    }
+
+    function renderInventory(main) {
+        let listHtml = '';
+        const available = inventory.filter(p => p.status === 'Available').reverse();
+        
+        available.forEach(p => {
+            listHtml += `
+                <div class="list-item">
+                    <div class="list-header">
+                        <span>${p.brand} ${p.model}</span>
+                        <strong style="color:var(--brand);">${formatNaira(p.sellingPrice)}</strong>
+                    </div>
+                    <div class="list-sub">${p.storage} · ${p.condition} · Cost: ${formatNaira(p.costPrice)}</div>
+                    <div style="margin-top:6px;"><span class="tag green">In Stock</span></div>
+                </div>
+            `;
+        });
+
+        main.innerHTML = `
+            <div class="card">
+                <h3>Add New Phone / Laptop</h3>
+                <div class="form-group"><label>Brand (e.g. Apple, Samsung)</label><input type="text" id="p-brand" placeholder="Brand"></div>
+                <div class="form-group"><label>Model (e.g. iPhone 13, Galaxy A54)</label><input type="text" id="p-model" placeholder="Model"></div>
+                <div class="row">
+                    <div class="form-group"><label>Storage (e.g. 128GB)</label><input type="text" id="p-storage" placeholder="128GB"></div>
+                    <div class="form-group"><label>Condition</label><select id="p-condition">
+                        <option value="New">New</option>
+                        <option value="Used - Grade A">Used - Grade A</option>
+                        <option value="Used - Grade B">Used - Grade B</option>
+                        <option value="Needs Repair">Needs Repair</option>
+                    </select></div>
+                </div>
+                <div class="row">
+                    <div class="form-group"><label>Cost Price (₦)</label><input type="number" id="p-cost" placeholder="0"></div>
+                    <div class="form-group"><label>Selling Price (₦)</label><input type="number" id="p-sell" placeholder="0"></div>
+                </div>
+                <button class="btn" onclick="savePhone()">Add to Inventory</button>
+            </div>
+
+            <h3 style="margin: 20px 0 10px; font-size: 16px;">Inventory (${available.length})</h3>
+            ${listHtml || '<p style="text-align:center; color:var(--muted);">No phones in stock yet.</p>'}
+        `;
+    }
+
+    function savePhone() {
+        const brand = document.getElementById('p-brand').value;
+        const model = document.getElementById('p-model').value;
+        const cost = parseFloat(document.getElementById('p-cost').value) || 0;
+        const sell = parseFloat(document.getElementById('p-sell').value) || 0;
+        
+        if(!brand || !model || sell <= 0) return alert('Please fill Brand, Model and Selling Price');
+
+        const phone = {
+            id: Date.now().toString(),
+            date: new Date().toISOString().split('T')[0],
+            brand: brand,
+            model: model,
+            storage: document.getElementById('p-storage').value || 'N/A',
+            condition: document.getElementById('p-condition').value,
+            costPrice: cost,
+            sellingPrice: sell,
+            status: 'Available'
+        };
+
+        inventory.push(phone);
+        saveData('inventory', inventory);
+        nav('inventory');
+    }
+
+    // Auto login check
+    if (sessionStorage.getItem('elbabs:auth') === 'true') {
+        document.getElementById('login-view').classList.remove('active');
+        document.getElementById('app-view').classList.add('active');
+        nav('inventory');
+    }
+</script>
+</body>
+</html>

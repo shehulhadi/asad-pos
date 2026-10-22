@@ -684,47 +684,76 @@ function renderAnalytics(main) {
     const weekAgo = new Date(today.getTime() - 7*24*60*60*1000).toISOString().split('T')[0];
     const monthAgo = new Date(today.getTime() - 30*24*60*60*1000).toISOString().split('T')[0];
 
+    // --- HELPER: Raw Stock & Avg Cost ---
+    const getStockAndCost = (material) => {
+        const items = purchases.filter(p => p.material === material);
+        const totalQty = items.reduce((s,p)=>s+p.qty,0);
+        const totalCost = items.reduce((s,p)=>s+p.cost,0);
+        const avgCost = totalQty > 0 ? totalCost / totalQty : 0;
+        
+        const purchased = totalQty;
+        const used = material === 'empty_bag' 
+            ? sales.reduce((s,v)=>s+(v.emptyBagQty||0),0)
+            : batches.reduce((s,b)=>s+(material==='cement'?b.cementBags:b.sandQty||0),0);
+        const adj = stockAdjustments.filter(a=>a.material===material).reduce((s,a)=>s+a.qty,0);
+        
+        let currentStock = 0;
+        if (material === 'empty_bag') {
+            const produced = batches.reduce((s,b)=>s+(b.cementBags||0),0);
+            currentStock = purchased + produced - used + adj;
+        } else {
+            currentStock = purchased - used + adj;
+        }
+        return { stock: Math.max(0, currentStock), cost: avgCost };
+    };
+
+    const cementData = getStockAndCost('cement');
+    const sandData = getStockAndCost('sand');
+    const ebData = getStockAndCost('empty_bag');
+
+    // --- 1. REVENUE & COGS ---
     const totalReturnsAmount = returns.reduce((sum, r) => sum + (r.refundAmount || 0), 0);
     const allRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0) - totalReturnsAmount;
 
-    // Calculate Average Costs for Raw Materials
-    let totalCementBags = 0, totalCementCost = 0;
-    purchases.filter(p=>p.material==='cement').forEach(p => { totalCementBags += p.qty; totalCementCost += p.cost; });
-    const avgCementCost = totalCementBags > 0 ? totalCementCost / totalCementBags : 0;
-
-    let totalSandBags = 0, totalSandCost = 0;
-    purchases.filter(p=>p.material==='sand').forEach(p => { totalSandBags += p.qty; totalSandCost += p.cost; });
-    const avgSandCost = totalSandBags > 0 ? totalSandCost / totalSandBags : 0;
-
-    let totalEmptyBags = 0, totalEmptyBagCost = 0;
-    purchases.filter(p=>p.material==='empty_bag').forEach(p => { totalEmptyBags += p.qty; totalEmptyBagCost += p.cost; });
-    const avgEmptyBagCost = totalEmptyBags > 0 ? totalEmptyBagCost / totalEmptyBags : 0;
-
-    const blockCOGS = sales.reduce((sum, s) => sum + ((s.quantity || 0) * getAvgCost(s.size)), 0);
-    const cementCOGS = sales.reduce((sum, s) => sum + ((s.cementQty || 0) * avgCementCost), 0);
-    const sandCOGS = sales.reduce((sum, s) => sum + ((s.sandQty || 0) * avgSandCost), 0);
-    const emptyBagCOGS = sales.reduce((sum, s) => sum + ((s.emptyBagQty || 0) * avgEmptyBagCost), 0);
-    const allCOGS = blockCOGS + cementCOGS + sandCOGS + emptyBagCOGS;
-    const allExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-    const netProfit = allRevenue - allCOGS - allExpenses;
-    
-    const cashIn = sales.reduce((sum, s) => sum + s.amountPaidAtSale, 0) + payments.reduce((sum, p) => sum + p.amount, 0);
-    const totalPurchaseCash = purchases.reduce((sum, p) => sum + (p.amountPaid || 0), 0); // Money spent on stock
-    const cashInHand = cashIn - allExpenses - totalPurchaseCash;
-    const moneyOwedToOwner = sales.filter(s => !s.writtenOff).reduce((sum, s) => sum + s.balanceOwing, 0);
-    const moneyYouOwe = purchases.reduce((sum, p) => sum + Math.max(0, p.cost - (p.amountPaid || 0)), 0);
-    
-    let unsoldValue = 0;
-    ['6'].forEach(sz => {
-        const readyBatches = batches.filter(b => b.size === sz && b.status === 'ready');
-        const produced = readyBatches.reduce((s,b)=>s+(b.blocksProduced - b.breakages),0);
-        const sold = sales.filter(s => s.size === sz).reduce((s,v)=>s+v.quantity,0);
-        const broken = breakagesLog.filter(b => b.size === sz).reduce((s,v)=>s+v.blocks,0);
-        const returned = returns.filter(r => r.size === sz).reduce((s, r) => s + r.quantity, 0);
-        const remaining = Math.max(0, produced - sold - broken + returned);
-        unsoldValue += remaining * getAvgCost(sz);
+    let allCOGS = 0;
+    sales.forEach(s => {
+        allCOGS += (s.quantity || 0) * getAvgCost(s.size);
+        allCOGS += (s.cementQty || 0) * cementData.cost;
+        allCOGS += (s.sandQty || 0) * sandData.cost;
+        allCOGS += (s.emptyBagQty || 0) * ebData.cost;
     });
 
+    const allExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const netProfit = allRevenue - allCOGS - allExpenses;
+
+    // --- 2. CASH IN HAND ---
+    const cashFromSales = sales.reduce((sum, s) => sum + s.amountPaidAtSale, 0) + payments.reduce((sum, p) => sum + p.amount, 0);
+    const totalPurchaseCash = purchases.reduce((sum, p) => sum + (p.amountPaid || 0), 0);
+    const cashInHand = cashFromSales - allExpenses - totalPurchaseCash;
+
+    // --- 3. DEBTS ---
+    const moneyOwedToOwner = sales.filter(s => !s.writtenOff).reduce((sum, s) => sum + s.balanceOwing, 0);
+    const moneyYouOwe = purchases.reduce((sum, p) => sum + Math.max(0, p.cost - (p.amountPaid || 0)), 0);
+
+    // --- 4. STOCK VALUE ---
+    let unsoldValue = 0;
+    
+    // Blocks Value
+    const readyBatches = batches.filter(b => b.size === '6' && b.status === 'ready');
+    const producedBlocks = readyBatches.reduce((s,b)=>s+(b.blocksProduced - b.breakages),0);
+    const soldBlocks = sales.filter(s => s.size === '6').reduce((s,v)=>s+v.quantity,0);
+    const brokenBlocks = breakagesLog.filter(b => b.size === '6').reduce((s,v)=>s+v.blocks,0);
+    const returnedBlocks = returns.filter(r => r.size === '6').reduce((s, r) => s + r.quantity, 0);
+    const remainingBlocks = Math.max(0, producedBlocks - soldBlocks - brokenBlocks + returnedBlocks);
+    
+    unsoldValue += remainingBlocks * getAvgCost('6');
+    
+    // Raw Materials Value
+    unsoldValue += cementData.stock * cementData.cost;
+    unsoldValue += sandData.stock * sandData.cost;
+    unsoldValue += ebData.stock * ebData.cost;
+
+    // --- CHART DATA ---
     const dayRev = sales.filter(s => s.date === todayStr).reduce((sum, s) => sum + s.totalAmount, 0);
     const weekRev = sales.filter(s => s.date >= weekAgo).reduce((sum, s) => sum + s.totalAmount, 0);
     const monthRev = sales.filter(s => s.date >= monthAgo).reduce((sum, s) => sum + s.totalAmount, 0);
@@ -760,10 +789,11 @@ function renderAnalytics(main) {
         chartHtml += `<div class="chart-bar" style="height:${pct}%;" title="${formatNaira(d.rev)}"><div class="chart-label">${d.day}</div></div>`;
     });
 
+    // --- LISTS ---
     const sizeTotals = { '6': 0 };
     sales.forEach(s => { if(sizeTotals[s.size] !== undefined) sizeTotals[s.size] += s.quantity; });
     let bestSizeHtml = '';
-    Object.keys(sizeTotals).sort((a,b)=>sizeTotals[b]-sizeTotals[a]).forEach(size => {
+    Object.keys(sizeTotals).forEach(size => {
         if (sizeTotals[size] > 0) bestSizeHtml += `<div class="kv"><span>${size}" Blocks</span><strong>${sizeTotals[size].toLocaleString()} pcs</strong></div>`;
     });
 
@@ -776,40 +806,22 @@ function renderAnalytics(main) {
     });
 
     let profitHtml = '';
-    ['4','6','9'].forEach(sz => {
-        const szSales = sales.filter(s => s.size === sz);
-        const totalQty = szSales.reduce((sum, s) => sum + s.quantity, 0);
-        const totalAmt = szSales.reduce((sum, s) => sum + s.totalAmount, 0);
-        const avgSellPrice = totalQty > 0 ? (totalAmt / totalQty) : 0;
-        const avgCost = getAvgCost(sz);
-        const profit = avgSellPrice - avgCost;
-        if (avgSellPrice > 0) profitHtml += `<div class="kv"><span><strong>${sz}"</strong> <span style="color:var(--muted); font-size:12px;">Sell ${formatNaira(avgSellPrice)}</span></span><strong class="${profit >= 0 ? 'pos' : 'neg'}">${formatNaira(profit)}</strong></div>`;
-    });
-
-    let marginAlertHtml = '';
-    sales.forEach(s => {
-        const avgCost = getAvgCost(s.size);
-        const minPrice = avgCost * (1 + (settings.marginAlertPct/100));
-        if (s.pricePerBlock < minPrice && avgCost > 0) marginAlertHtml += `<div class="list-item alert"><div class="list-header"><span>${s.customerName}</span><span>${formatNaira(s.pricePerBlock)}/block</span></div><div class="list-sub">${t.marginWarning} (Cost: ${formatNaira(avgCost)})</div></div>`;
-    });
+    const szSales = sales.filter(s => s.size === '6');
+    const totalQty = szSales.reduce((sum, s) => sum + s.quantity, 0);
+    const totalAmt = szSales.reduce((sum, s) => sum + s.totalAmount, 0);
+    const avgSellPrice = totalQty > 0 ? (totalAmt / totalQty) : 0;
+    const avgCost = getAvgCost('6');
+    const profit = avgSellPrice - avgCost;
+    if (avgSellPrice > 0) profitHtml += `<div class="kv"><span><strong>6"</strong> <span style="color:var(--muted); font-size:12px;">Sell ${formatNaira(avgSellPrice)}</span></span><strong class="${profit >= 0 ? 'pos' : 'neg'}">${formatNaira(profit)}</strong></div>`;
 
     const totalQtySold = sales.reduce((sum, s) => sum + s.quantity, 0);
     const profitPerBlock = totalQtySold > 0 ? (allRevenue - allCOGS) / totalQtySold : 0;
     let breakEvenText = "Set fixed costs in Settings";
     if (settings.fixedCostsMonthly > 0) breakEvenText = profitPerBlock > 0 ? Math.ceil(settings.fixedCostsMonthly / profitPerBlock).toLocaleString() + " blocks/month" : "Log sales to calculate";
 
-    const cementPurchased = purchases.filter(p=>p.material==='cement').reduce((s,p)=>s+p.qty,0);
-    const cementUsed = batches.reduce((s,b)=>s+(b.cementBags||0),0);
-    const cementAdj = stockAdjustments.filter(a=>a.material==='cement').reduce((s,a)=>s+a.qty,0);
-    const cementStock = cementPurchased - cementUsed + cementAdj;
-    const sandPurchased = purchases.filter(p=>p.material==='sand').reduce((s,p)=>s+p.qty,0);
-    const sandUsed = batches.reduce((s,b)=>s+(b.sandQty||0),0);
-    const sandAdj = stockAdjustments.filter(a=>a.material==='sand').reduce((s,a)=>s+a.qty,0);
-    const sandStock = sandPurchased - sandUsed + sandAdj;
-
     let lowStockHtml = '';
-    if (cementStock <= settings.lowCement) lowStockHtml += `<div class="list-item alert" style="margin-bottom:8px;"><div class="list-header"><span>🪨 Cement</span><span>${cementStock} bags left</span></div><div class="list-sub">LOW STOCK ALERT</div></div>`;
-    if (sandStock <= settings.lowSand) lowStockHtml += `<div class="list-item alert" style="margin-bottom:8px;"><div class="list-header"><span>🏖️ Sand</span><span>${sandStock} bags left</span></div><div class="list-sub">LOW STOCK ALERT</div></div>`;
+    if (cementData.stock <= settings.lowCement) lowStockHtml += `<div class="list-item alert" style="margin-bottom:8px;"><div class="list-header"><span>🪨 Cement</span><span>${cementData.stock} bags left</span></div><div class="list-sub">LOW STOCK ALERT</div></div>`;
+    if (sandData.stock <= settings.lowSand) lowStockHtml += `<div class="list-item alert" style="margin-bottom:8px;"><div class="list-header"><span>🏖️ Sand</span><span>${sandData.stock} bags left</span></div><div class="list-sub">LOW STOCK ALERT</div></div>`;
 
     let alertWrapper = '';
     if (lowStockHtml) {
@@ -839,10 +851,10 @@ function renderAnalytics(main) {
     } else expChartHtml = '<p style="font-size:13px; color:var(--muted);">No expenses logged this month.</p>';
 
     main.innerHTML = `
-        <div class="quick" style="flex-wrap: wrap;">
-            ${currentUser === 'owner' ? `<button onclick="nav('reports')" style="flex: 1 1 45%;">${ico('report')} Reports</button>` : ''}
-            <button onclick="nav('debts')" style="flex: 1 1 45%;">${ico('debts')} Debts</button>
-            <button onclick="openDailyClosing()" style="color:var(--brand); border-color:var(--brand); flex: 1 1 100%; margin-top: 8px;">📊 Close Day</button>
+        <div class="quick">
+            <button onclick="nav('dashboard')">${ico('box')} Stock</button>
+            <button onclick="nav('reports')">${ico('report')} Reports</button>
+            <button onclick="openDailyClosing()" style="color:var(--brand); border-color:var(--brand);">📊 Close Day</button>
         </div>
         ${alertWrapper}
         <div class="hero">

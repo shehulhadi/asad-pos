@@ -2187,62 +2187,41 @@ if(document.getElementById('login-title-text')) {
 }
 restoreSession();
 
-// --- Triple Back Button to Close ---
-let backPressCount = 0;
-let backPressTimer = null;
 
-history.pushState({ page: 'main' }, '', location.href);
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed', err));
+}
 
-window.addEventListener('popstate', function(event) {
-    // Push state again to keep the user on the page
-    history.pushState({ page: 'main' }, '', location.href);
-
-    // If user is in a sub-view (like Stock Details), back should just go to Dashboard
-    if (currentView === 'stock_details' || currentView === 'reports') {
-        nav('dashboard');
-        backPressCount = 0; 
-        return;
-    }
-
-    backPressCount++;
-
-    if (backPressCount === 3) {
-        clearTimeout(backPressTimer);
-        backPressCount = 0;
-        window.location.href = '../index.html'; // Exit to launcher
-    } else {
-        showToast(`Press back ${3 - backPressCount} more time(s) to exit`, 'default');
-        clearTimeout(backPressTimer);
-        backPressTimer = setTimeout(() => { backPressCount = 0; }, 2000);
-    }
-});
+// Restore session on load
+restoreSession();
 
 // --- Smart Back Button Logic ---
 let backPressCount = 0;
 let backPressTimer = null;
-
 history.pushState({ page: 'main' }, '', location.href);
 
 window.addEventListener('popstate', function(event) {
-    // Keep the user locked in the app
     history.pushState({ page: 'main' }, '', location.href);
 
-    // If NOT on the dashboard, just go back to dashboard
-    if (currentView !== 'dashboard') {
-        nav('dashboard');
-        backPressCount = 0;
-        if (backPressTimer) clearTimeout(backPressTimer);
-        return;
+    if (currentUser) {
+        if (currentView !== 'dashboard') {
+            nav('dashboard');
+            backPressCount = 0;
+            if (backPressTimer) clearTimeout(backPressTimer);
+            return;
+        }
     }
 
-    // If ON the dashboard, trigger the 3-click exit
     backPressCount++;
     if (backPressCount === 3) {
         if (backPressTimer) clearTimeout(backPressTimer);
         backPressCount = 0;
-        window.location.href = '../index.html'; // Exit to Launcher
+        window.location.href = '../index.html';
     } else {
-        showToast(`Press back ${3 - backPressCount} more time${3 - backPressCount > 1 ? 's' : ''} to exit`, 'default');
+        if (typeof showToast === 'function') {
+            showToast(`Press back ${3 - backPressCount} more time${3 - backPressCount > 1 ? 's' : ''} to exit`, 'default');
+        }
         if (backPressTimer) clearTimeout(backPressTimer);
         backPressTimer = setTimeout(() => { backPressCount = 0; }, 2000);
     }

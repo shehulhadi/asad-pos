@@ -99,7 +99,9 @@ let stockAdjustments = JSON.parse(localStorage.getItem('asad:stockAdjustments'))
 
 let currentUser = null; 
 let currentView = 'dashboard';
-let currentDebtTab = 'customer'; 
+let currentDebtTab = 'customer';
+let stockType = '';
+let stockSize = ''; 
 let currentRating = 0;
 
 function getWATDate() {
@@ -316,8 +318,10 @@ function buildNav() {
     navEl.innerHTML = html;
 }
 
-function nav(view) {
+function nav(view, btn = null, type = null, size = null) {
     currentView = view;
+    if (type) stockType = type;
+    if (size) stockSize = size;
     if (view === 'inventory') view = 'dashboard';
     
     document.querySelectorAll('.nav-btn').forEach(b => {
@@ -338,6 +342,7 @@ function nav(view) {
         else if (view === 'expenses') renderExpenses(main);
         else if (view === 'debts') renderDebts(main);
         else if (view === 'reports') renderReports(main);
+        else if (view === 'stock_details') renderStockDetails(main, stockType, stockSize);
     } catch (e) {
         console.error(e);
         main.innerHTML = `<div style="padding:20px;text-align:center;color:var(--danger);">Error loading page: ${e.message}</div>`;
@@ -529,7 +534,7 @@ function renderDashboard(main) {
     `;
 }
 
-function openStockItem(type, size) {
+function renderStockDetails(main, type, size) {
     let title = '';
     let currentStock = 0;
     let historyHtml = '';
@@ -584,7 +589,7 @@ function openStockItem(type, size) {
     // Sort by exact millisecond timestamp descending
     hist.sort((a,b) => b.timestamp - a.timestamp);
     
-    historyHtml = hist.slice(0, 20).map(h => {
+    historyHtml = hist.slice(0, 30).map(h => {
         let clickAttr = '';
         if (h.clickType === 'pur') clickAttr = `onclick="openPurchaseDetails('${h.id}')" style="cursor:pointer;"`;
         if (h.clickType === 'sale') clickAttr = `onclick="openSaleDetails('${h.id}')" style="cursor:pointer;"`;
@@ -599,26 +604,25 @@ function openStockItem(type, size) {
         return `<div class="kv" ${clickAttr}><span>${h.date}${timeStr} · ${h.desc}</span><strong style="color:${h.color};">${h.qty}</strong></div>`;
     }).join('');
 
-    document.getElementById('modal-body').innerHTML = `
-        <h3>${title}</h3>
-        <div style="text-align:center; margin-bottom:20px;">
-            <p style="font-size:13px; color:var(--muted);">Current Stock</p>
-            <p style="font-size:36px; font-weight:800; color:var(--brand);">${currentStock}</p>
+    main.innerHTML = `
+        <button class="back-link" onclick="nav('dashboard')">${ico('back')} Back to Stock</button>
+        <div class="page-title">${title}</div>
+        
+        <div style="text-align:center; padding: 20px 0 30px;">
+            <p style="font-size:13px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; font-weight:700;">Current Stock</p>
+            <p style="font-size:48px; font-weight:800; color:var(--brand); line-height:1;">${currentStock}</p>
         </div>
         
-        <div class="row" style="margin-bottom:16px;">
-            <button class="btn" style="margin-top:0; background:var(--brand);" onclick="openAddStock('${type}', '${size}')">+ Add Stock</button>
-            <button class="btn" style="margin-top:0; background:var(--danger);" onclick="openSubtractStock('${type}', '${size}')">- Subtract</button>
+        <div class="row" style="margin-bottom:24px;">
+            <button class="btn" style="margin-top:0; background:var(--brand); padding:16px; font-size:16px;" onclick="openAddStock('${type}', '${size}')">+ Add Stock</button>
+            <button class="btn" style="margin-top:0; background:var(--danger); padding:16px; font-size:16px;" onclick="openSubtractStock('${type}', '${size}')">- Subtract</button>
         </div>
         
-        <div class="eyebrow">Recent History</div>
-        <div style="max-height: 250px; overflow-y:auto; border:1px solid var(--line); border-radius:8px; padding:0 12px; margin-bottom:16px;">
-            ${historyHtml || '<p style="font-size:13px; color:var(--muted); padding:12px 0;">No history yet.</p>'}
+        <div class="section-title">${ico('bars')} Recent History</div>
+        <div style="border:1px solid var(--line); border-radius:12px; padding:0 16px; margin-bottom:20px; background:var(--surface);">
+            ${historyHtml || '<p style="font-size:13px; color:var(--muted); padding:16px 0; text-align:center;">No history yet.</p>'}
         </div>
-        
-        <button class="btn btn-outline" onclick="closeModal()">Close</button>
     `;
-    document.getElementById('modal').classList.add('active');
 }
 
 function openAddStock(type, size) {
@@ -1293,13 +1297,20 @@ function calcSale() {
 
 function saveSale() {
     try {
-        const qty = parseInt(document.getElementById('s-qty').value) || 0;
-        const price = parseInt(document.getElementById('s-price').value) || 0;
-        const delivery = parseInt(document.getElementById('s-delivery').value) || 0;
-        const paid = parseInt(document.getElementById('s-paid').value) || 0;
-        const saleDate = document.getElementById('s-date').value || getTodayStr();
-        const custName = document.getElementById('s-customer').value || 'Walk-in';
-        if(qty <= 0) return showToast('Enter valid quantity', 'err');
+        const qty = parseInt(document.getElementById('s-qty')?.value) || 0;
+        const price = parseInt(document.getElementById('s-price')?.value) || 0;
+        const delivery = parseInt(document.getElementById('s-delivery')?.value) || 0;
+        const paid = parseInt(document.getElementById('s-paid')?.value) || 0;
+        const saleDate = document.getElementById('s-date')?.value || getTodayStr();
+        const custName = document.getElementById('s-customer')?.value || 'Walk-in';
+        
+        const cQty = parseInt(document.getElementById('s-cement-qty')?.value) || 0;
+        const sQty = parseInt(document.getElementById('s-sand-qty')?.value) || 0;
+        const eQty = parseInt(document.getElementById('s-empty-bag-qty')?.value) || 0;
+
+        if (qty <= 0 && cQty <= 0 && sQty <= 0 && eQty <= 0) {
+            return showToast('Enter a quantity for at least one item', 'err');
+        }
         const total = (qty * price) + delivery;
         const balance = total - paid;
         const limit = (settings.creditLimits && settings.creditLimits[custName]) ? settings.creditLimits[custName] : 0;

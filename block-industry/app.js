@@ -322,14 +322,17 @@ function nav(view, btn = null, type = null, size = null) {
     currentView = view;
     if (type) stockType = type;
     if (size) stockSize = size;
-    if (view === 'inventory') view = 'dashboard';
     
-    document.querySelectorAll('.nav-btn').forEach(b => {
-        if (b.dataset.view) {
-            b.classList.toggle('active', b.dataset.view === view);
+    if (btn) {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    } else {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        if(document.querySelector(`.nav-btn[data-view="${view}"]`)) {
+            document.querySelector(`.nav-btn[data-view="${view}"]`).classList.add('active');
         }
-    });
-    
+    }
+
     const main = document.getElementById('main-content');
     main.innerHTML = '';
     main.scrollTop = 0;
@@ -345,8 +348,14 @@ function nav(view, btn = null, type = null, size = null) {
         else if (view === 'stock_details') renderStockDetails(main, stockType, stockSize);
     } catch (e) {
         console.error(e);
-        main.innerHTML = `<div style="padding:20px;text-align:center;color:var(--danger);">Error loading page: ${e.message}</div>`;
+        main.innerHTML = `<div style="padding:20px;text-align:center;color:var(--danger);">Error: ${e.message}</div>`;
     }
+}
+
+function openStockDetailsPage(type, size) {
+    stockType = type;
+    stockSize = size;
+    nav('stock_details');
 }
 
 function openSettings() {

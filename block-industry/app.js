@@ -814,6 +814,15 @@ function renderAnalytics(main) {
     const profit = avgSellPrice - avgCost;
     if (avgSellPrice > 0) profitHtml += `<div class="kv"><span><strong>6"</strong> <span style="color:var(--muted); font-size:12px;">Sell ${formatNaira(avgSellPrice)}</span></span><strong class="${profit >= 0 ? 'pos' : 'neg'}">${formatNaira(profit)}</strong></div>`;
 
+    let marginAlertHtml = '';
+    sales.forEach(s => {
+        const avgCost = getAvgCost(s.size);
+        const minPrice = avgCost * (1 + (settings.marginAlertPct/100));
+        if (s.pricePerBlock < minPrice && avgCost > 0) {
+            marginAlertHtml += `<div class="list-item alert"><div class="list-header"><span>${s.customerName}</span><span>${formatNaira(s.pricePerBlock)}/block</span></div><div class="list-sub">${t.marginWarning} (Cost: ${formatNaira(avgCost)})</div></div>`;
+        }
+    });
+
     const totalQtySold = sales.reduce((sum, s) => sum + s.quantity, 0);
     const profitPerBlock = totalQtySold > 0 ? (allRevenue - allCOGS) / totalQtySold : 0;
     let breakEvenText = "Set fixed costs in Settings";

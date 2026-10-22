@@ -326,13 +326,8 @@ function nav(view, btn = null, type = null, size = null) {
     if (btn) {
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-    } else {
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        if(document.querySelector(`.nav-btn[data-view="${view}"]`)) {
-            document.querySelector(`.nav-btn[data-view="${view}"]`).classList.add('active');
-        }
     }
-
+    
     const main = document.getElementById('main-content');
     main.innerHTML = '';
     main.scrollTop = 0;
@@ -350,12 +345,6 @@ function nav(view, btn = null, type = null, size = null) {
         console.error(e);
         main.innerHTML = `<div style="padding:20px;text-align:center;color:var(--danger);">Error: ${e.message}</div>`;
     }
-}
-
-function openStockDetailsPage(type, size) {
-    stockType = type;
-    stockSize = size;
-    nav('stock_details');
 }
 
 function openSettings() {
@@ -509,8 +498,8 @@ function renderDashboard(main) {
     const blockStock = produced - sold - broken + returned;
 
     const tile = (title, stock, type, size) => `
-        <div class="stock-tile" style="cursor:pointer; padding: 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s;" onclick="openStockItem('${type}', '${size}')">
-            <div class="k" style="font-size: 11px; font-weight:700; text-align:center;">${title}</div>
+        <div class="stock-tile" style="cursor:pointer; padding: 16px; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: 0.2s;" onclick="openStockDetailsPage('${type}', '${size}')">
+            <div class="k" style="font-size: 11px; font-weight: 700; text-align:center;">${title}</div>
             <div class="n" style="font-size: 24px; margin: 8px 0;">${stock}</div>
             <div style="font-size: 10px; color: var(--brand); font-weight: 700;">View Details ›</div>
         </div>

@@ -90,6 +90,7 @@ if(!settings.creditLimits) settings.creditLimits = {};
 let sales = JSON.parse(localStorage.getItem('asad:sales')) || [];
 let payments = JSON.parse(localStorage.getItem('asad:customerPayments')) || [];
 let expenses = JSON.parse(localStorage.getItem('asad:expenses')) || [];
+let capital = JSON.parse(localStorage.getItem('asad:capital')) || [];
 let batches = JSON.parse(localStorage.getItem('asad:batches')) || [];
 let purchases = JSON.parse(localStorage.getItem('asad:purchases')) || [];
 let breakagesLog = JSON.parse(localStorage.getItem('asad:breakages')) || [];
@@ -732,7 +733,8 @@ function renderAnalytics(main) {
     // --- CASH IN HAND ---
     const cashFromSales = sales.reduce((sum, s) => sum + N(s.amountPaidAtSale), 0) + payments.reduce((sum, p) => sum + N(p.amount), 0);
     const totalPurchaseCash = purchases.reduce((sum, p) => sum + N(p.amountPaid), 0);
-    const cashInHand = cashFromSales - allExpenses - totalPurchaseCash;
+    const totalCapitalAdded = capital.reduce((sum, c) => sum + N(c.amount), 0);
+    const cashInHand = cashFromSales - allExpenses - totalPurchaseCash + totalCapitalAdded;
 
     // --- DEBTS ---
     const moneyOwedToOwner = sales.filter(s => !s.writtenOff).reduce((sum, s) => sum + N(s.balanceOwing), 0);
@@ -843,7 +845,7 @@ function renderAnalytics(main) {
             </div>
         </div>
         <div class="dash-grid">
-            <div class="stat"><div class="top"><span class="dot g">${ico('cash')}</span><h4>${t.cashInHand}</h4></div><div class="val">${formatNaira(cashInHand)}</div></div>
+            <div class="stat" onclick="openAddCapitalModal()" style="cursor:pointer; position:relative;"><div class="top"><span class="dot g">${ico('cash')}</span><h4>${t.cashInHand} <span style="color:var(--brand); font-size:16px;">+</span></h4></div><div class="val">${formatNaira(cashInHand)}</div></div>
             <div class="stat"><div class="top"><span class="dot a">${ico('arrowIn')}</span><h4>${t.moneyOwed}</h4></div><div class="val">${formatNaira(moneyOwedToOwner)}</div></div>
             <div class="stat"><div class="top"><span class="dot r">${ico('arrowOut')}</span><h4>${t.moneyYouOwe}</h4></div><div class="val ${moneyYouOwe > 0 ? 'neg' : ''}">${formatNaira(moneyYouOwe)}</div></div>
             <div class="stat"><div class="top"><span class="dot b">${ico('box')}</span><h4>${t.stockValue}</h4></div><div class="val">${formatNaira(unsoldValue)}</div></div>
@@ -865,6 +867,43 @@ function renderAnalytics(main) {
         </div>
     `;
 }
+
+
+function openAddCapitalModal() {
+    document.getElementById('modal-body').innerHTML = `
+        <h3>Add Cash to Business</h3>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Use this to add money from outside (e.g. personal savings, bank loan) to balance your Cash in Hand.</p>
+        <div class="form-group">
+            <label>Amount (₦)</label>
+            <input type="number" id="cap-amount" placeholder="0" min="1">
+        </div>
+        <div class="form-group">
+            <label>Note / Source</label>
+            <input type="text" id="cap-note" placeholder="e.g. Owner Capital, Bank Loan" value="Owner Capital">
+        </div>
+        <button class="btn" onclick="saveCapital()">Add Cash</button>
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    `;
+    document.getElementById('modal').classList.add('active');
+}
+
+function saveCapital() {
+    const amount = parseFloat(document.getElementById('cap-amount').value) || 0;
+    if (amount <= 0) return showToast('Enter a valid amount', 'err');
+    
+    capital.push({
+        id: Date.now().toString(),
+        date: getTodayStr(),
+        amount: amount,
+        note: document.getElementById('cap-note').value || 'Owner Capital'
+    });
+    
+    saveData('capital', capital);
+    closeModal();
+    nav('analytics');
+    showToast('Cash added successfully', 'success');
+}
+
 
 function toggleAlerts() {
     const container = document.getElementById('alert-list-container');

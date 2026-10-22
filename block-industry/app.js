@@ -743,7 +743,7 @@ function renderAnalytics(main) {
     // --- STOCK VALUE ---
     let unsoldValue = 0;
     
-    // Blocks Value
+    // Blocks Value (Use Default Selling Price if set, else fallback to cost)
     const readyBatches = batches.filter(b => b.size === '6' && b.status === 'ready');
     const producedBlocks = readyBatches.reduce((s,b)=>s+(N(b.blocksProduced) - N(b.breakages)),0);
     const soldBlocks = sales.filter(s => s.size === '6').reduce((s,v)=>s+N(v.quantity),0);
@@ -751,12 +751,16 @@ function renderAnalytics(main) {
     const returnedBlocks = returns.filter(r => r.size === '6').reduce((s, r) => s + N(r.quantity), 0);
     const remainingBlocks = Math.max(0, producedBlocks - soldBlocks - brokenBlocks + returnedBlocks);
     
-    unsoldValue += remainingBlocks * getAvgCost('6');
+    const blockValPrice = N(settings.defaultPrices['6']) || getAvgCost('6');
+    unsoldValue += remainingBlocks * blockValPrice;
     
-    // Raw Materials Value
-    unsoldValue += cementData.stock * cementData.cost;
-    unsoldValue += sandData.stock * sandData.cost;
-    unsoldValue += ebData.stock * ebData.cost;
+    // Raw Materials Value (Use Default Selling Price if set, else fallback to avg cost)
+    const cementValPrice = N(settings.defaultCementPrice) || cementData.cost;
+    const ebValPrice = N(settings.defaultEmptyBagPrice) || ebData.cost;
+
+    unsoldValue += cementData.stock * cementValPrice;
+    // Sand omitted as requested
+    unsoldValue += ebData.stock * ebValPrice;
 
     // --- CHART DATA ---
     const dayRev = sales.filter(s => s.date === todayStr).reduce((sum, s) => sum + N(s.totalAmount), 0);

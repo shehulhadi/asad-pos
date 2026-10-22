@@ -363,40 +363,47 @@ function openSettings() {
             <label style="margin:0; font-size:14px; font-weight:700;">Dark Mode</label>
             <input type="checkbox" id="set-dark-mode" style="width:20px; height:20px;" ${settings.darkMode ? 'checked' : ''}>
         </div>
+        
         <div class="eyebrow">Default Selling Prices (₦)</div>
         <div class="row">
-            <div class="form-group"><label>4" Block</label><input type="number" id="set-price-4" value="${settings.defaultPrices['4'] || ''}" placeholder="0"></div>
             <div class="form-group"><label>6" Block</label><input type="number" id="set-price-6" value="${settings.defaultPrices['6'] || ''}" placeholder="0"></div>
-            <div class="form-group"><label>9" Block</label><input type="number" id="set-price-9" value="${settings.defaultPrices['9'] || ''}" placeholder="0"></div>
+            <div class="form-group"><label>Cement (Bag)</label><input type="number" id="set-price-cement" value="${settings.defaultCementPrice || ''}" placeholder="0"></div>
+            <div class="form-group"><label>Empty Bag (pc)</label><input type="number" id="set-price-emptybag" value="${settings.defaultEmptyBagPrice || ''}" placeholder="0"></div>
         </div>
+
         <div class="eyebrow">Standard Mix Ratios</div>
         <div class="row">
-            <div class="form-group"><label>Blocks per Cement Bag</label><input type="number" id="set-mix-cement" value="${settings.mixCement || ''}" placeholder="0"></div>
-            <div class="form-group"><label>Blocks per Sand Bag</label><input type="number" id="set-mix-sand" value="${settings.mixSand || ''}" placeholder="0"></div>
+            <div class="form-group"><label>Blocks per Cement Bag</label><input type="number" id="set-mix-cement" value="${settings.mixCement || 50}"></div>
+            <div class="form-group"><label>Blocks per Sand Bag</label><input type="number" id="set-mix-sand" value="${settings.mixSand || 500}"></div>
         </div>
+        
         <div class="form-group" style="margin-top:16px;">
             <label>Sales Reminder</label>
             <select id="set-reminder">
-                <option value="" placeholder="0" ${settings.reminderInterval == 0 ? 'selected' : ''}>Off</option>
+                <option value="0" ${settings.reminderInterval == 0 ? 'selected' : ''}>Off</option>
                 <option value="1" ${settings.reminderInterval == 1 ? 'selected' : ''}>Every 1 Hour</option>
                 <option value="2" ${settings.reminderInterval == 2 ? 'selected' : ''}>Every 2 Hours</option>
                 <option value="4" ${settings.reminderInterval == 4 ? 'selected' : ''}>Every 4 Hours</option>
             </select>
         </div>
+        
         <div class="row">
             <div class="form-group"><label>${t.marginAlert}</label><input type="number" id="set-margin" value="${settings.marginAlertPct || ''}" placeholder="0"></div>
             <div class="form-group"><label>${t.fixedCosts}</label><input type="number" id="set-fixed" value="${settings.fixedCostsMonthly || ''}" placeholder="0"></div>
         </div>
+        
         <div class="eyebrow">Low Stock Thresholds</div>
         <div class="row">
             <div class="form-group"><label>${t.cement}</label><input type="number" id="set-low-cement" value="${settings.lowCement || ''}" placeholder="0"></div>
             <div class="form-group"><label>${t.sand}</label><input type="number" id="set-low-sand" value="${settings.lowSand || ''}" placeholder="0"></div>
         </div>
+        
         <div class="eyebrow">Custom Expense Categories</div>
         <div class="row">
             <div class="form-group" style="flex:2;"><input type="text" id="set-new-expense" placeholder="e.g. Truck Hire"></div>
             <div class="form-group" style="flex:1;"><button class="btn btn-outline" style="margin-top:0;" onclick="addExpenseCategory()">Add</button></div>
         </div>
+        
         <div class="form-group" style="display:flex; justify-content:space-between; align-items:center;">
             <label style="margin:0; font-size:14px; font-weight:700;">Security PINs</label>
         </div>
@@ -404,8 +411,9 @@ function openSettings() {
             <div class="form-group"><label>Owner PIN</label><input type="password" id="set-owner-pin" maxlength="4" value="${settings.ownerPin}"></div>
             <div class="form-group"><label>Staff PIN</label><input type="password" id="set-staff-pin" maxlength="4" value="${settings.staffPin}"></div>
         </div>
+        
         <button class="btn" onclick="saveSettings()">${t.saveSettings}</button>
-        <button class="btn btn-outline" style="margin-top:10px;" onclick="openDirectory()">📂 Customer & Supplier Directory</button>
+        <button class="btn btn-outline" style="margin-top:10px;" onclick="openDirectory()">📂 Directory</button>
         <button class="btn btn-outline" style="margin-top:10px;" onclick="closeModal()">Cancel</button>
         <button class="btn btn-danger" style="margin-top:22px;" onclick="clearAllData()">${t.clearData}</button>
     `;
@@ -429,22 +437,23 @@ function saveSettings() {
     const newLang = document.getElementById('set-lang').value;
     const langChanged = newLang !== settings.lang;
     settings.lang = newLang;
+    
     settings.darkMode = document.getElementById('set-dark-mode').checked;
     if(settings.darkMode) document.body.classList.add('dark');
     else document.body.classList.remove('dark');
     
-    settings.reminderInterval = parseInt(document.getElementById('set-reminder').value);
+    settings.reminderInterval = parseInt(document.getElementById('set-reminder').value) || 0;
     if (settings.reminderInterval > 0 && Notification.permission !== 'granted') {
         Notification.requestPermission().then(perm => { if (perm === 'granted') setupReminders(); });
     } else { setupReminders(); }
 
     settings.mixCement = parseInt(document.getElementById('set-mix-cement').value) || 50;
     settings.mixSand = parseInt(document.getElementById('set-mix-sand').value) || 500;
-    settings.defaultPrices = {
-        '4': parseFloat(document.getElementById('set-price-4').value) || 0,
-        '6': parseFloat(document.getElementById('set-price-6').value) || 0,
-        '9': parseFloat(document.getElementById('set-price-9').value) || 0
-    };
+    
+    settings.defaultPrices = { '6': parseFloat(document.getElementById('set-price-6').value) || 0 };
+    settings.defaultCementPrice = parseFloat(document.getElementById('set-price-cement').value) || 0;
+    settings.defaultEmptyBagPrice = parseFloat(document.getElementById('set-price-emptybag').value) || 0;
+    
     settings.marginAlertPct = parseFloat(document.getElementById('set-margin').value) || 0;
     settings.fixedCostsMonthly = parseFloat(document.getElementById('set-fixed').value) || 0;
     settings.lowCement = parseFloat(document.getElementById('set-low-cement').value) || 0;

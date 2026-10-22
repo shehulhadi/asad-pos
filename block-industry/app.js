@@ -588,7 +588,15 @@ function openStockItem(type, size) {
         let clickAttr = '';
         if (h.clickType === 'pur') clickAttr = `onclick="openPurchaseDetails('${h.id}')" style="cursor:pointer;"`;
         if (h.clickType === 'sale') clickAttr = `onclick="openSaleDetails('${h.id}')" style="cursor:pointer;"`;
-        return `<div class="kv" ${clickAttr}><span>${h.date} · ${h.desc}</span><strong style="color:${h.color};">${h.qty}</strong></div>`;
+        
+        let timeStr = '';
+        if (h.timestamp) {
+            const dt = new Date(h.timestamp);
+            const time = dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+            timeStr = ' ' + time;
+        }
+        
+        return `<div class="kv" ${clickAttr}><span>${h.date}${timeStr} · ${h.desc}</span><strong style="color:${h.color};">${h.qty}</strong></div>`;
     }).join('');
 
     document.getElementById('modal-body').innerHTML = `

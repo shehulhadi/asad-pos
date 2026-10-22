@@ -555,16 +555,16 @@ function openStockItem(type, size) {
             currentStock = purchased + produced - sold + adj;
         }
 
-        purchases.filter(p=>p.material===type).forEach(p => hist.push({ id: p.id, clickType: 'pur', date: p.date, desc: `Purchase from ${p.supplierName}`, qty: `+${p.qty}`, color: 'var(--brand)' }));
-        stockAdjustments.filter(a=>a.material===type).forEach(a => hist.push({ date: a.date, desc: `Adjustment: ${a.reason}`, qty: a.qty > 0 ? `+${a.qty}` : `${a.qty}`, color: a.qty > 0 ? 'var(--brand)' : 'var(--danger)' }));
+        purchases.filter(p=>p.material===type).forEach(p => hist.push({ id: p.id, timestamp: Number(p.id) || new Date(p.date).getTime(), clickType: 'pur', date: p.date, desc: `Purchase from ${p.supplierName}`, qty: `+${p.qty}`, color: 'var(--brand)' }));
+        stockAdjustments.filter(a=>a.material===type).forEach(a => hist.push({ id: a.id, timestamp: Number(a.id) || new Date(a.date).getTime(), date: a.date, desc: `Adjustment: ${a.reason}`, qty: a.qty > 0 ? `+${a.qty}` : `${a.qty}`, color: a.qty > 0 ? 'var(--brand)' : 'var(--danger)' }));
         
         if(type === 'empty_bag') {
-            batches.forEach(b => { if(b.cementBags > 0) hist.push({ date: b.date, desc: `Generated from cement usage`, qty: `+${b.cementBags}`, color: 'var(--brand)' }); });
-            sales.forEach(s => { if(s.emptyBagQty > 0) hist.push({ id: s.id, clickType: 'sale', date: s.date, desc: `Sold to ${s.customerName}`, qty: `-${s.emptyBagQty}`, color: 'var(--danger)' }); });
+            batches.forEach(b => { if(b.cementBags > 0) hist.push({ id: b.id, timestamp: Number(b.id) || new Date(b.date).getTime(), date: b.date, desc: `Generated from cement usage`, qty: `+${b.cementBags}`, color: 'var(--brand)' }); });
+            sales.forEach(s => { if(s.emptyBagQty > 0) hist.push({ id: s.id, timestamp: Number(s.id) || new Date(s.date).getTime(), clickType: 'sale', date: s.date, desc: `Sold to ${s.customerName}`, qty: `-${s.emptyBagQty}`, color: 'var(--danger)' }); });
         } else {
             batches.forEach(b => {
-                if(type === 'cement' && b.cementBags > 0) hist.push({ date: b.date, desc: `Used in 6" batch`, qty: `-${b.cementBags}`, color: 'var(--danger)' });
-                if(type === 'sand' && b.sandQty > 0) hist.push({ date: b.date, desc: `Used in 6" batch`, qty: `-${b.sandQty}`, color: 'var(--danger)' });
+                if(type === 'cement' && b.cementBags > 0) hist.push({ id: b.id, timestamp: Number(b.id) || new Date(b.date).getTime(), date: b.date, desc: `Used in 6" batch`, qty: `-${b.cementBags}`, color: 'var(--danger)' });
+                if(type === 'sand' && b.sandQty > 0) hist.push({ id: b.id, timestamp: Number(b.id) || new Date(b.date).getTime(), date: b.date, desc: `Used in 6" batch`, qty: `-${b.sandQty}`, color: 'var(--danger)' });
             });
         }
     } else {
@@ -576,12 +576,13 @@ function openStockItem(type, size) {
         const returned = returns.filter(r => r.size === '6').reduce((s, r) => s + r.quantity, 0);
         currentStock = produced - sold - broken + returned;
 
-        readyBatches.forEach(b => hist.push({ date: b.date, desc: `Produced (${b.worker})`, qty: `+${b.blocksProduced}`, color: 'var(--brand)' }));
-        sales.filter(s=>s.size==='6').forEach(s => hist.push({ id: s.id, clickType: 'sale', date: s.date, desc: `Sold to ${s.customerName}`, qty: `-${s.quantity}`, color: 'var(--danger)' }));
-        breakagesLog.filter(b=>b.size==='6').forEach(b => hist.push({ date: b.date, desc: `Breakage: ${b.reason}`, qty: `-${b.blocks}`, color: 'var(--danger)' }));
+        readyBatches.forEach(b => hist.push({ id: b.id, timestamp: Number(b.id) || new Date(b.date).getTime(), date: b.date, desc: `Produced (${b.worker})`, qty: `+${b.blocksProduced}`, color: 'var(--brand)' }));
+        sales.filter(s=>s.size==='6').forEach(s => hist.push({ id: s.id, timestamp: Number(s.id) || new Date(s.date).getTime(), clickType: 'sale', date: s.date, desc: `Sold to ${s.customerName}`, qty: `-${s.quantity}`, color: 'var(--danger)' }));
+        breakagesLog.filter(b=>b.size==='6').forEach(b => hist.push({ id: b.id, timestamp: Number(b.id) || new Date(b.date).getTime(), date: b.date, desc: `Breakage: ${b.reason}`, qty: `-${b.blocks}`, color: 'var(--danger)' }));
     }
 
-    hist.sort((a,b) => new Date(b.date) - new Date(a.date));
+    // Sort by exact millisecond timestamp descending
+    hist.sort((a,b) => b.timestamp - a.timestamp);
     
     historyHtml = hist.slice(0, 20).map(h => {
         let clickAttr = '';

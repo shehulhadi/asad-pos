@@ -569,3 +569,33 @@ window.addEventListener('popstate', function(event) {
         }
     }
 });
+
+// --- Smart Back Button Logic ---
+let backPressCount = 0;
+let backPressTimer = null;
+
+history.pushState({ page: 'main' }, '', location.href);
+
+window.addEventListener('popstate', function(event) {
+    history.pushState({ page: 'main' }, '', location.href);
+
+    // If NOT on the inventory (home) page, go back to inventory
+    if (currentView !== 'inventory') {
+        nav('inventory');
+        backPressCount = 0;
+        if (backPressTimer) clearTimeout(backPressTimer);
+        return;
+    }
+
+    // If ON the inventory page, trigger the 3-click exit
+    backPressCount++;
+    if (backPressCount === 3) {
+        if (backPressTimer) clearTimeout(backPressTimer);
+        backPressCount = 0;
+        window.location.href = '../index.html';
+    } else {
+        alert(`Press back ${3 - backPressCount} more time${3 - backPressCount > 1 ? 's' : ''} to exit`);
+        if (backPressTimer) clearTimeout(backPressTimer);
+        backPressTimer = setTimeout(() => { backPressCount = 0; }, 2000);
+    }
+});

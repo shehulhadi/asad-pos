@@ -2216,3 +2216,34 @@ window.addEventListener('popstate', function(event) {
         backPressTimer = setTimeout(() => { backPressCount = 0; }, 2000);
     }
 });
+
+// --- Smart Back Button Logic ---
+let backPressCount = 0;
+let backPressTimer = null;
+
+history.pushState({ page: 'main' }, '', location.href);
+
+window.addEventListener('popstate', function(event) {
+    // Keep the user locked in the app
+    history.pushState({ page: 'main' }, '', location.href);
+
+    // If NOT on the dashboard, just go back to dashboard
+    if (currentView !== 'dashboard') {
+        nav('dashboard');
+        backPressCount = 0;
+        if (backPressTimer) clearTimeout(backPressTimer);
+        return;
+    }
+
+    // If ON the dashboard, trigger the 3-click exit
+    backPressCount++;
+    if (backPressCount === 3) {
+        if (backPressTimer) clearTimeout(backPressTimer);
+        backPressCount = 0;
+        window.location.href = '../index.html'; // Exit to Launcher
+    } else {
+        showToast(`Press back ${3 - backPressCount} more time${3 - backPressCount > 1 ? 's' : ''} to exit`, 'default');
+        if (backPressTimer) clearTimeout(backPressTimer);
+        backPressTimer = setTimeout(() => { backPressCount = 0; }, 2000);
+    }
+});

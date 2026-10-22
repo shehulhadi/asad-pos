@@ -1,4 +1,4 @@
-const CACHE_NAME = 'elbabs-v5';
+const CACHE_NAME = 'elbabs-v6';
 const ASSETS = ['./', './index.html', './style.css', './app.js', './manifest.json'];
 
 self.addEventListener('install', (e) => {

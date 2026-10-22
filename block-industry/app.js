@@ -2186,3 +2186,33 @@ if(document.getElementById('login-title-text')) {
     document.getElementById('login-logo').textContent = bizName.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
 }
 restoreSession();
+
+// --- Triple Back Button to Close ---
+let backPressCount = 0;
+let backPressTimer = null;
+
+history.pushState({ page: 'main' }, '', location.href);
+
+window.addEventListener('popstate', function(event) {
+    // Push state again to keep the user on the page
+    history.pushState({ page: 'main' }, '', location.href);
+
+    // If user is in a sub-view (like Stock Details), back should just go to Dashboard
+    if (currentView === 'stock_details' || currentView === 'reports') {
+        nav('dashboard');
+        backPressCount = 0; 
+        return;
+    }
+
+    backPressCount++;
+
+    if (backPressCount === 3) {
+        clearTimeout(backPressTimer);
+        backPressCount = 0;
+        window.location.href = '../index.html'; // Exit to launcher
+    } else {
+        showToast(`Press back ${3 - backPressCount} more time(s) to exit`, 'default');
+        clearTimeout(backPressTimer);
+        backPressTimer = setTimeout(() => { backPressCount = 0; }, 2000);
+    }
+});

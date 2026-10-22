@@ -538,3 +538,34 @@ if (sessionStorage.getItem('elbabs:auth') === 'true') {
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed', err));
 }
+
+// --- Triple Back Button to Close ---
+let backPressCount = 0;
+let backPressTimer = null;
+
+history.pushState({ page: 'main' }, '', location.href);
+
+window.addEventListener('popstate', function(event) {
+    history.pushState({ page: 'main' }, '', location.href);
+
+    if (currentView === 'reports') {
+        nav('dashboard');
+        backPressCount = 0; 
+        return;
+    }
+
+    backPressCount++;
+
+    if (backPressCount === 3) {
+        clearTimeout(backPressTimer);
+        backPressCount = 0;
+        window.location.href = '../index.html'; // Exit to launcher
+    } else {
+        clearTimeout(backPressTimer);
+        backPressTimer = setTimeout(() => { backPressCount = 0; }, 2000);
+        // Simple feedback for phones app
+        if(backPressCount > 1) {
+            // Optional: could add a toast here, but avoiding dependencies
+        }
+    }
+});

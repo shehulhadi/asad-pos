@@ -534,6 +534,13 @@ function renderDashboard(main) {
     `;
 }
 
+
+function openStockDetailsPage(type, size) {
+    stockType = type;
+    stockSize = size;
+    nav('stock_details');
+}
+
 function renderStockDetails(main, type, size) {
     let title = '';
     let currentStock = 0;
@@ -704,7 +711,8 @@ function renderAnalytics(main) {
     const netProfit = allRevenue - allCOGS - allExpenses;
     
     const cashIn = sales.reduce((sum, s) => sum + s.amountPaidAtSale, 0) + payments.reduce((sum, p) => sum + p.amount, 0);
-    const cashInHand = cashIn - allExpenses;
+    const totalPurchaseCash = purchases.reduce((sum, p) => sum + (p.amountPaid || 0), 0); // Money spent on stock
+    const cashInHand = cashIn - allExpenses - totalPurchaseCash;
     const moneyOwedToOwner = sales.filter(s => !s.writtenOff).reduce((sum, s) => sum + s.balanceOwing, 0);
     const moneyYouOwe = purchases.reduce((sum, p) => sum + Math.max(0, p.cost - (p.amountPaid || 0)), 0);
     

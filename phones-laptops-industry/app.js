@@ -79,7 +79,7 @@ function renderInventory(main) {
                     <span>${p.brand} ${p.model}</span>
                     <strong style="color:var(--brand);">${formatNaira(p.sellingPrice)}</strong>
                 </div>
-                <div class="list-sub">${p.storage} · ${p.condition} · IMEI: ${p.imei || 'N/A'}</div>
+                <div class="list-sub">${p.storage} · ${p.condition} · IMEI 1: ${p.imei || 'N/A'}</div>
                 <div class="list-sub" style="margin-top:4px;">Seller: ${p.sellerName || 'Unknown'}</div>
                 <div style="margin-top:6px;"><span class="tag green">In Stock</span></div>
             </div>
@@ -113,7 +113,10 @@ function openAddDeviceModal() {
                 <option value="Needs Repair">Needs Repair</option>
             </select></div>
         </div>
-        <div class="form-group"><label>IMEI / Serial Number</label><input type="text" id="p-imei" placeholder="Enter IMEI"></div>
+        <div class="row">
+            <div class="form-group"><label>IMEI 1 / Serial</label><input type="text" id="p-imei" placeholder="Enter IMEI 1"></div>
+            <div class="form-group"><label>IMEI 2</label><input type="text" id="p-imei2" placeholder="Enter IMEI 2 (Optional)"></div>
+        </div>
         
         <div class="eyebrow">Seller Info (Where did you buy it?)</div>
         <div class="form-group"><label>Seller Name</label><input type="text" id="p-seller-name" placeholder="Name"></div>
@@ -162,7 +165,8 @@ function openDeviceDetails(id) {
         <div class="eyebrow">Device Specs</div>
         <div class="kv"><span>Storage</span><strong>${p.storage}</strong></div>
         <div class="kv"><span>Condition</span><strong>${p.condition}</strong></div>
-        <div class="kv"><span>IMEI / Serial</span><strong>${p.imei || 'N/A'}</strong></div>
+        <div class="kv"><span>IMEI 1</span><strong>${p.imei || 'N/A'}</strong></div>
+        ${p.imei2 ? `<div class="kv"><span>IMEI 2</span><strong>${p.imei2}</strong></div>` : ''}
         
         <div class="eyebrow">Seller Info (Intake)</div>
         <div class="kv"><span>Name</span><strong>${p.sellerName || 'N/A'}</strong></div>
@@ -201,7 +205,10 @@ function editDevice(id) {
                 <option value="Needs Repair" ${p.condition==='Needs Repair'?'selected':''}>Needs Repair</option>
             </select></div>
         </div>
-        <div class="form-group"><label>IMEI</label><input type="text" id="edit-p-imei" value="${p.imei || ''}"></div>
+        <div class="row">
+            <div class="form-group"><label>IMEI 1</label><input type="text" id="edit-p-imei" value="${p.imei || ''}"></div>
+            <div class="form-group"><label>IMEI 2</label><input type="text" id="edit-p-imei2" value="${p.imei2 || ''}"></div>
+        </div>
         
         <div class="eyebrow">Seller Info</div>
         <div class="form-group"><label>Seller Name</label><input type="text" id="edit-p-seller-name" value="${p.sellerName || ''}"></div>
@@ -228,6 +235,7 @@ function saveEditedDevice(id) {
     p.storage = document.getElementById('edit-p-storage').value;
     p.condition = document.getElementById('edit-p-condition').value;
     p.imei = document.getElementById('edit-p-imei').value;
+    p.imei2 = document.getElementById('edit-p-imei2').value;
     p.sellerName = document.getElementById('edit-p-seller-name').value;
     p.sellerPhone = document.getElementById('edit-p-seller-phone').value;
     p.sellerAddress = document.getElementById('edit-p-seller-address').value;

@@ -112,7 +112,14 @@ function getWATDate() {
 function getTodayStr() {
     return getWATDate().toISOString().split('T')[0];
 }
-function saveData(key, data) { localStorage.setItem('asad:' + key, JSON.stringify(data)); }
+function saveData(key, data) {
+    try {
+        localStorage.setItem('asad:' + key, JSON.stringify(data));
+    } catch (e) {
+        alert('Storage Error: Could not save data. Your device storage may be full.');
+        console.error('saveData failed', e);
+    }
+}
 function formatNaira(num) { return '₦' + Number(num).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2}); }
 function backBtn(to) { return `<button class="back-link" onclick="nav('${to}')">${ico('back')} ${i18n[settings.lang][to] || 'Back'}</button>`; }
 
@@ -1278,7 +1285,9 @@ function importJSON(event) {
     reader.onload = function(e) {
         try {
             const data = JSON.parse(e.target.result);
-            if (!data['asad:settings']) throw new Error('Invalid backup file');
+            if (!data['asad:settings'] || !data['asad:sales'] || !data['asad:expenses']) {
+    throw new Error('Invalid backup file: missing required sections.');
+}
             Object.keys(data).forEach(key => { localStorage.setItem(key, JSON.stringify(data[key])); });
             showToast('Data restored successfully! Reloading...', 'success'); setTimeout(() => location.reload(), 1500);
         } catch (err) { showToast('Invalid JSON file: ' + err.message, 'err'); }

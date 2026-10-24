@@ -114,7 +114,12 @@ function renderInventory(main) {
                 </div>
                 <div class="list-sub">${p.ram || ''} ${p.rom || p.storage || ''} · ${p.condition} · IMEI 1: ${p.imei || 'N/A'}</div>
                 <div class="list-sub" style="margin-top:4px;">Seller: ${p.sellerName || 'Unknown'}</div>
-                <div style="margin-top:6px;"><span class="tag green">In Stock</span></div>
+                <div style="margin-top:8px; display:flex; justify-content:space-between; align-items:center;">
+                    <span class="tag green">In Stock</span>
+                    <button onclick="event.stopPropagation(); shareDeviceStatus('${p.id}')" style="background:var(--brand-soft); color:var(--brand-dark); border:none; border-radius:6px; padding:6px 10px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px; cursor:pointer;">
+                        📲 Share Status
+                    </button>
+                </div>
             </div>
         `;
     });
@@ -228,6 +233,19 @@ function savePhone() {
         <button class="btn btn-outline" onclick="closeModal(); nav('inventory')">Done</button>
     `;
     document.getElementById('modal').classList.add('active');
+}
+
+function shareDeviceStatus(id) {
+    const p = inventory.find(x => x.id === id);
+    if (!p) return;
+    const waStatusText = '📱 *' + p.brand + ' ' + p.model + '*\n' +
+        '🔹 RAM: ' + (p.ram || 'N/A') + '\n' +
+        '🔹 ROM: ' + (p.rom || p.storage || 'N/A') + '\n' +
+        '🔹 Condition: ' + p.condition + '\n' +
+        '💰 Price: ' + formatNaira(p.sellingPrice) + '\n\n' +
+        '📍 Available at Elbabs Communications!';
+    const waLink = `https://wa.me/?text=${encodeURIComponent(waStatusText)}`;
+    window.open(waLink, '_blank');
 }
 
 function openDeviceDetails(id) {

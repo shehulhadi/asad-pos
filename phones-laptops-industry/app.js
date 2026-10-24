@@ -257,9 +257,24 @@ function openDeviceDetails(id) {
         </div>
         
         <div class="eyebrow">Device Specs</div>
-        <div class="kv"><span>RAM</span><strong>${p.ram || 'N/A'}</strong></div>
-        <div class="kv"><span>ROM (Storage)</span><strong>${p.rom || p.storage || 'N/A'}</strong></div>
-        <div class="kv"><span>Condition</span><strong>${p.condition}</strong></div>
+        <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; margin-bottom:16px;">
+            <div style="background:var(--bg, #f4f4f5); padding:12px; border-radius:10px; text-align:center; border:1px solid var(--line, #e4e4e7);">
+                <div style="font-size:11px; color:var(--muted, #71717a); margin-bottom:4px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">RAM</div>
+                <div style="font-weight:700; font-size:15px;">${p.ram || 'N/A'}</div>
+            </div>
+            <div style="background:var(--bg, #f4f4f5); padding:12px; border-radius:10px; text-align:center; border:1px solid var(--line, #e4e4e7);">
+                <div style="font-size:11px; color:var(--muted, #71717a); margin-bottom:4px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">ROM</div>
+                <div style="font-weight:700; font-size:15px;">${p.rom || p.storage || 'N/A'}</div>
+            </div>
+            <div style="background:var(--bg, #f4f4f5); padding:12px; border-radius:10px; text-align:center; border:1px solid var(--line, #e4e4e7);">
+                <div style="font-size:11px; color:var(--muted, #71717a); margin-bottom:4px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Condition</div>
+                <div style="font-weight:700; font-size:15px;">${p.condition || 'N/A'}</div>
+            </div>
+            <div style="background:var(--bg, #f4f4f5); padding:12px; border-radius:10px; text-align:center; border:1px solid var(--line, #e4e4e7);">
+                <div style="font-size:11px; color:var(--muted, #71717a); margin-bottom:4px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Status</div>
+                <div style="font-weight:700; font-size:15px; color:${p.status === 'Available' ? 'var(--blue, #2563eb)' : 'var(--red, #dc2626)'};">${p.status || 'Available'}</div>
+            </div>
+        </div>
         <div class="kv"><span>IMEI 1</span><strong>${p.imei || 'N/A'}</strong></div>
         ${p.imei2 ? `<div class="kv"><span>IMEI 2</span><strong>${p.imei2}</strong></div>` : ''}
         

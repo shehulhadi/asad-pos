@@ -60,6 +60,7 @@
 
     <div id="modal" class="modal" onclick="if(event.target===this)closeModal()">
         <div class="modal-content" id="modal-body"></div>
+        <button type="button" class="modal-x" aria-label="Close" onclick="event.stopPropagation();closeModal();">✕</button>
     </div>
 
     <script src="app.js"></script>

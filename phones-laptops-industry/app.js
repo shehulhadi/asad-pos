@@ -14,6 +14,107 @@ function saveData(key, data) {
     }
 }
 function formatNaira(num) { return '₦' + Number(num).toLocaleString(); }
+
+function buildWhatsAppReceipt(s) {
+    let text = `*Receipt - Elbabs Communications*\n\n`;
+    text += `Customer: ${s.customerName}\n`;
+    text += `Date: ${s.date}\n`;
+    text += `Device: ${s.phoneName}\n\n`;
+    text += `*Total: ${formatNaira(s.totalAmount)}*\n`;
+    text += `Paid: ${formatNaira(s.amountPaid)}\n`;
+    text += `*Balance: ${formatNaira(s.balanceOwing)}*\n\n`;
+    text += `Thank you for your business!`;
+    return encodeURIComponent(text);
+}
+
+function triggerDownload(dataUrl) {
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = 'Elbabs_Receipt.png';
+    a.click();
+}
+
+function shareReceiptImage(saleId) {
+    try {
+        const s = sales.find(x => x.id === saleId);
+        if (!s) return showToast('Sale not found', 'err');
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const width = 600, height = 800;
+        canvas.width = width; canvas.height = height;
+
+        // Background
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, width, height);
+
+        // Header
+        ctx.fillStyle = '#2563eb'; ctx.fillRect(0, 0, width, 120);
+        ctx.fillStyle = '#ffffff'; ctx.font = 'bold 32px Arial'; ctx.textAlign = 'center';
+        ctx.fillText('ELBABS COMMUNICATIONS', width / 2, 55);
+        ctx.font = '18px Arial'; ctx.fillText('Sales Receipt', width / 2, 90);
+
+        // Info
+        ctx.fillStyle = '#0f172a'; ctx.textAlign = 'left'; ctx.font = 'bold 20px Arial';
+        ctx.fillText('Customer Details', 40, 170);
+
+        ctx.font = '16px Arial'; ctx.fillStyle = '#64748b';
+        ctx.fillText('Name:', 40, 210); ctx.fillText('Phone:', 40, 240); ctx.fillText('Date:', 40, 270);
+
+        ctx.fillStyle = '#0f172a'; ctx.font = 'bold 16px Arial';
+        ctx.fillText(s.customerName || 'N/A', 150, 210);
+        ctx.fillText(s.customerPhone || 'N/A', 150, 240);
+        ctx.fillText(s.date || new Date().toLocaleDateString(), 150, 270);
+
+        // Divider
+        ctx.beginPath(); ctx.moveTo(40, 300); ctx.lineTo(560, 300); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2; ctx.stroke();
+
+        // Device
+        ctx.fillStyle = '#0f172a'; ctx.font = 'bold 20px Arial';
+        ctx.fillText('Device Purchased', 40, 340);
+        ctx.font = '16px Arial'; ctx.fillStyle = '#0f172a';
+        ctx.fillText(s.phoneName || 'Device', 40, 380);
+
+        // Divider
+        ctx.beginPath(); ctx.moveTo(40, 410); ctx.lineTo(560, 410); ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2; ctx.stroke();
+
+        // Financials
+        ctx.fillStyle = '#0f172a'; ctx.font = 'bold 20px Arial';
+        ctx.fillText('Payment Summary', 40, 450);
+
+        ctx.font = '16px Arial'; ctx.fillStyle = '#64748b';
+        ctx.fillText('Total Amount:', 40, 490);
+        ctx.fillText('Amount Paid:', 40, 530);
+        ctx.fillText('Balance Owing:', 40, 570);
+
+        ctx.textAlign = 'right'; ctx.font = 'bold 18px Arial';
+        ctx.fillStyle = '#0f172a'; ctx.fillText(formatNaira(s.totalAmount), 560, 490);
+        ctx.fillStyle = '#16a34a'; ctx.fillText(formatNaira(s.amountPaid), 560, 530);
+        ctx.fillStyle = s.balanceOwing > 0 ? '#dc2626' : '#16a34a'; 
+        ctx.fillText(formatNaira(s.balanceOwing), 560, 570);
+
+        // Footer
+        ctx.textAlign = 'center'; ctx.fillStyle = '#94a3b8'; ctx.font = '14px Arial';
+        ctx.fillText('Thank you for your business!', width / 2, height - 40);
+
+        // Signature
+        if (s.customerSignature) {
+            const sigImg = new Image();
+            sigImg.src = s.customerSignature;
+            sigImg.onload = () => {
+                ctx.drawImage(sigImg, width - 200, height - 150, 150, 60);
+                ctx.fillStyle = '#64748b'; ctx.textAlign = 'center'; ctx.font = '12px Arial';
+                ctx.fillText('Customer Signature', width - 125, height - 70);
+                triggerDownload(canvas.toDataURL('image/png'));
+            };
+        } else {
+            triggerDownload(canvas.toDataURL('image/png'));
+        }
+    } catch(e) {
+        console.error(e);
+        showToast('Error generating image', 'err');
+    }
+}
+
 function closeModal() { document.getElementById('modal').classList.remove('active'); }
 
 function showToast(msg, type = 'default') {

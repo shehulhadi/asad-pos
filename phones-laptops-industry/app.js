@@ -98,7 +98,7 @@ function renderInventory(main) {
 
 function openAddDeviceModal() {
     document.getElementById('modal-body').innerHTML = `
-        <h3>Add New Device / Trade-In</h3>
+        <h3>Add New Device / Kakara</h3>
         <div class="eyebrow" style="margin-top:0;">Device Info</div>
         <div class="row">
             <div class="form-group"><label>Brand</label><input type="text" id="p-brand" placeholder="e.g. Apple"></div>
@@ -302,7 +302,7 @@ function openSaleModal() {
                 </select>
             </div>
             <div class="form-group" style="flex:1; display:flex; align-items:flex-end;">
-                <button class="btn" style="margin:0; padding:12px; font-size:12px; background:var(--accent); color:#fff; border:none; border-radius:8px;" onclick="startTradeIn()">🔄 Trade-In</button>
+                <button class="btn" style="margin:0; padding:12px; font-size:12px; background:var(--accent); color:#fff; border:none; border-radius:8px;" onclick="startTradeIn()">🔄 Kakara</button>
             </div>
         </div>
         
@@ -412,7 +412,7 @@ function startTradeIn() {
             if(document.getElementById('p-seller-name')) {
                 document.getElementById('p-seller-name').value = custName;
                 document.getElementById('p-seller-phone').value = custPhone;
-                alert('Enter the Trade-In device details below. Customer info has been pre-filled as the Seller.');
+                alert('Enter the Kakara device details below. Customer info has been pre-filled as the Seller.');
             }
         }, 100);
     }, 100);

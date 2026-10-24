@@ -770,8 +770,11 @@ function openSaleDetails(id) {
         <div class="kv"><span>Device</span><strong>${s.phoneName}</strong></div>
         <div class="kv"><span>Amount Paid</span><strong>${formatNaira(s.amountPaid)}</strong></div>
         
-        <div class="actions" style="margin-top:20px;">
-            <a href="https://wa.me/${(s.customerPhone||'').replace(/^0/, '234')}?text=${encodeURIComponent(`*Receipt - Elbabs Communications*\\n\\nCustomer: ${s.customerName}\\nDevice: ${s.phoneName}\\n\\n*Total: ${formatNaira(s.totalAmount)}*\\nPaid: ${formatNaira(s.amountPaid)}\\n*Balance: ${formatNaira(s.balanceOwing)}*`)}" target="_blank"><button class="wa">WhatsApp</button></a>
+        ${s.customerSignature ? `<div style="margin-top:20px; text-align:center;"><p style="font-size:12px; color:#666;">Customer Signature</p><img src="${s.customerSignature}" style="max-width:150px; border:1px solid #ccc; border-radius:8px; padding:5px; background:#fff;"></div>` : ''}
+
+        <div class="actions" style="margin-top:20px; margin-bottom:12px;">
+            <a href="https://wa.me/${(s.customerPhone || '').replace(/^0/, '234')}?text=${buildWhatsAppReceipt(s)}" target="_blank"><button class="wa">WhatsApp</button></a>
+            <button onclick="shareReceiptImage('${s.id}')">📸 Image</button>
         </div>
         <div class="row" style="margin-top:12px;">
             <button class="btn outline" onclick="closeModal()">Close</button>

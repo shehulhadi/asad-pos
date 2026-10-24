@@ -2,23 +2,33 @@ let settings = JSON.parse(localStorage.getItem('elbabs:settings')) || { pin: '12
 let inventory = JSON.parse(localStorage.getItem('elbabs:inventory')) || [];
 let sales = JSON.parse(localStorage.getItem('elbabs:sales')) || [];
 let expenses = JSON.parse(localStorage.getItem('elbabs:expenses')) || [];
+let capital = JSON.parse(localStorage.getItem('elbabs:capital')) || [];
 let currentView = 'inventory';
 
-function saveData(key, data) { localStorage.setItem('elbabs:' + key, JSON.stringify(data)); }
+function N(val) { return Number(val) || 0; }
+function saveData(key, data) { 
+    try {
+        localStorage.setItem('elbabs:' + key, JSON.stringify(data)); 
+    } catch (e) {
+        alert('Storage Error: Could not save data. Your device storage may be full.');
+        console.error('saveData failed', e);
+    }
+}
 function formatNaira(num) { return '₦' + Number(num).toLocaleString(); }
 function closeModal() { document.getElementById('modal').classList.remove('active'); }
 
-async function forceUpdate() {
+function forceUpdate() {
     if (confirm("This will download the latest app version.\nYOUR DATA WILL NOT BE DELETED.\n\nContinue?")) {
-        try {
+        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {
             if ('serviceWorker' in navigator) {
-                const regs = await navigator.serviceWorker.getRegistrations();
-                for (let r of regs) await r.unregister();
+                navigator.serviceWorker.getRegistrations().then(regs => {
+                    for(let r of regs) r.unregister();
+                    window.location.reload(true);
+                });
+            } else {
+                window.location.reload(true);
             }
-            const keys = await caches.keys();
-            for (let k of keys) await caches.delete(k);
-        } catch(e) {}
-        window.location.reload(true);
+        });
     }
 }
 
@@ -70,7 +80,7 @@ function renderInventory(main) {
                     <strong style="color:var(--brand);">${formatNaira(p.sellingPrice)}</strong>
                 </div>
                 <div class="list-sub">${p.storage} · ${p.condition} · IMEI: ${p.imei || 'N/A'}</div>
-                <div class="list-sub" style="margin-top:4px;">Seller: ${p.sellerName || 'Unknown'} (${p.sellerPhone || 'No phone'})</div>
+                <div class="list-sub" style="margin-top:4px;">Seller: ${p.sellerName || 'Unknown'}</div>
                 <div style="margin-top:6px;"><span class="tag green">In Stock</span></div>
             </div>
         `;
@@ -79,7 +89,6 @@ function renderInventory(main) {
     main.innerHTML = `
         <div class="card">
             <h3>Add New Device / Trade-In</h3>
-            
             <div class="eyebrow" style="margin-top:0;">Device Info</div>
             <div class="row">
                 <div class="form-group"><label>Brand</label><input type="text" id="p-brand" placeholder="e.g. Apple"></div>
@@ -257,7 +266,6 @@ function startTradeIn() {
     
     nav('inventory');
     
-    // Pre-fill seller info with customer info
     setTimeout(() => {
         if(document.getElementById('p-seller-name')) {
             document.getElementById('p-seller-name').value = custName;
@@ -341,15 +349,19 @@ function saveSale() {
     document.getElementById('modal').classList.add('active');
 }
 
+// --- DASHBOARD ---
 function renderDashboard(main) {
-    const totalRevenue = sales.reduce((sum, s) => sum + s.totalAmount, 0);
-    const totalCostSold = sales.reduce((sum, s) => sum + (s.costPrice || 0), 0);
-    const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+    const totalRevenue = sales.reduce((sum, s) => sum + N(s.totalAmount), 0);
+    const totalCostSold = sales.reduce((sum, s) => sum + N(s.costPrice), 0);
+    const totalExpenses = expenses.reduce((sum, e) => sum + N(e.amount), 0);
     const netProfit = totalRevenue - totalCostSold - totalExpenses;
     
-    const cashInHand = sales.reduce((sum, s) => sum + s.amountPaid, 0);
-    const moneyOwed = sales.reduce((sum, s) => sum + s.balanceOwing, 0);
-    const capitalInStock = inventory.filter(p => p.status === 'Available').reduce((sum, p) => sum + p.costPrice, 0);
+    const cashFromSales = sales.reduce((sum, s) => sum + N(s.amountPaid), 0);
+    const totalCapitalAdded = capital.reduce((sum, c) => sum + N(c.amount), 0);
+    const cashInHand = cashFromSales + totalCapitalAdded - totalExpenses;
+    
+    const moneyOwed = sales.reduce((sum, s) => sum + N(s.balanceOwing), 0);
+    const capitalInStock = inventory.filter(p => p.status === 'Available').reduce((sum, p) => sum + N(p.costPrice), 0);
 
     let recentExpenses = [...expenses].reverse().slice(0, 5).map(e => `
         <div class="kv"><span>${e.date} · ${e.note}</span><strong style="color:var(--danger);">-${formatNaira(e.amount)}</strong></div>
@@ -371,7 +383,10 @@ function renderDashboard(main) {
         </div>
 
         <div class="dash-grid">
-            <div class="stat"><div class="top"><span class="dot g">${icon('cash')}</span><h4>Cash in Hand</h4></div><div class="val">${formatNaira(cashInHand)}</div></div>
+            <div class="stat" onclick="openAddCapitalModal()" style="cursor:pointer; border: 2px dashed var(--brand); position:relative;">
+                <div class="top"><span class="dot g">${icon('cash')}</span><h4>Cash in Hand <span style="color:var(--brand); font-size:16px; font-weight:bold;">+ Add Cash</span></h4></div>
+                <div class="val">${formatNaira(cashInHand)}</div>
+            </div>
             <div class="stat"><div class="top"><span class="dot r">${icon('arrowIn')}</span><h4>Owed to You</h4></div><div class="val">${formatNaira(moneyOwed)}</div></div>
             <div class="stat"><div class="top"><span class="dot b">${icon('box')}</span><h4>Capital in Stock</h4></div><div class="val">${formatNaira(capitalInStock)}</div></div>
         </div>
@@ -383,6 +398,41 @@ function renderDashboard(main) {
     `;
 }
 
+function openAddCapitalModal() {
+    document.getElementById('modal-body').innerHTML = `
+        <h3>Add Cash to Business</h3>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Use this to add money from outside (e.g. personal savings, bank loan) to balance your Cash in Hand.</p>
+        <div class="form-group">
+            <label>Amount (₦)</label>
+            <input type="number" id="cap-amount" placeholder="0" min="1">
+        </div>
+        <div class="form-group">
+            <label>Note / Source</label>
+            <input type="text" id="cap-note" placeholder="e.g. Owner Capital, Bank Loan" value="Owner Capital">
+        </div>
+        <button class="btn" onclick="saveCapital()">Add Cash</button>
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    `;
+    document.getElementById('modal').classList.add('active');
+}
+
+function saveCapital() {
+    const amount = parseFloat(document.getElementById('cap-amount').value) || 0;
+    if (amount <= 0) return alert('Enter a valid amount');
+    
+    capital.push({
+        id: Date.now().toString(),
+        date: new Date().toISOString().split('T')[0],
+        amount: amount,
+        note: document.getElementById('cap-note').value || 'Owner Capital'
+    });
+    
+    saveData('capital', capital);
+    closeModal();
+    nav('dashboard');
+}
+
+// --- REPORTS & BACKUP ---
 function renderReports(main) {
     main.innerHTML = `
         <h3 style="margin-bottom:16px;">Reports & Backup</h3>
@@ -413,7 +463,8 @@ function exportJSON() {
         settings: JSON.parse(localStorage.getItem('elbabs:settings')) || {},
         inventory: JSON.parse(localStorage.getItem('elbabs:inventory')) || [],
         sales: JSON.parse(localStorage.getItem('elbabs:sales')) || [],
-        expenses: JSON.parse(localStorage.getItem('elbabs:expenses')) || []
+        expenses: JSON.parse(localStorage.getItem('elbabs:expenses')) || [],
+        capital: JSON.parse(localStorage.getItem('elbabs:capital')) || []
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -423,6 +474,29 @@ function exportJSON() {
     URL.revokeObjectURL(url);
 }
 
+async function emailBackup() {
+    const data = {
+        settings: JSON.parse(localStorage.getItem('elbabs:settings')) || {},
+        inventory: JSON.parse(localStorage.getItem('elbabs:inventory')) || [],
+        sales: JSON.parse(localStorage.getItem('elbabs:sales')) || [],
+        expenses: JSON.parse(localStorage.getItem('elbabs:expenses')) || [],
+        capital: JSON.parse(localStorage.getItem('elbabs:capital')) || []
+    };
+    const jsonStr = JSON.stringify(data, null, 2);
+    const filename = 'Elbabs_Backup_' + new Date().toISOString().split('T')[0] + '.json';
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const file = new File([blob], filename, { type: 'application/json' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({ files: [file], title: 'Elbabs Communications Backup' });
+        } catch (e) { console.log('Share failed', e); }
+    } else {
+        alert("Your device doesn't support direct file sharing. The JSON file has been downloaded.");
+        exportJSON();
+    }
+}
+
 function importJSON(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -430,16 +504,16 @@ function importJSON(event) {
     reader.onload = function(e) {
         try {
             const data = JSON.parse(e.target.result);
-            if (data.inventory && data.sales) {
-                if (data.settings) localStorage.setItem('elbabs:settings', JSON.stringify(data.settings));
-                localStorage.setItem('elbabs:inventory', JSON.stringify(data.inventory));
-                localStorage.setItem('elbabs:sales', JSON.stringify(data.sales));
-                localStorage.setItem('elbabs:expenses', JSON.stringify(data.expenses || []));
-                alert('Data restored successfully! App will reload.');
-                location.reload();
-            } else {
-                alert('Invalid backup file.');
+            if (!data.inventory || !data.sales) {
+                throw new Error('Invalid backup file: missing required sections.');
             }
+            if (data.settings) localStorage.setItem('elbabs:settings', JSON.stringify(data.settings));
+            localStorage.setItem('elbabs:inventory', JSON.stringify(data.inventory));
+            localStorage.setItem('elbabs:sales', JSON.stringify(data.sales));
+            localStorage.setItem('elbabs:expenses', JSON.stringify(data.expenses || []));
+            localStorage.setItem('elbabs:capital', JSON.stringify(data.capital || []));
+            alert('Data restored successfully! App will reload.');
+            location.reload();
         } catch(err) { alert('Error parsing file: ' + err.message); }
     };
     reader.readAsText(file);
@@ -457,41 +531,6 @@ function exportCSV() {
     a.click();
     URL.revokeObjectURL(url);
 }
-
-
-async function emailBackup() {
-    const data = {
-        settings: JSON.parse(localStorage.getItem('elbabs:settings')) || {},
-        inventory: JSON.parse(localStorage.getItem('elbabs:inventory')) || [],
-        sales: JSON.parse(localStorage.getItem('elbabs:sales')) || [],
-        expenses: JSON.parse(localStorage.getItem('elbabs:expenses')) || []
-    };
-    
-    const jsonStr = JSON.stringify(data, null, 2);
-    const filename = 'Elbabs_Backup_' + new Date().toISOString().split('T')[0] + '.json';
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const file = new File([blob], filename, { type: 'application/json' });
-
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-            await navigator.share({
-                files: [file],
-                title: 'Elbabs Communications Backup',
-                text: 'Please find attached the latest backup for Elbabs Communications.'
-            });
-        } catch (e) {
-            console.log('Share failed', e);
-        }
-    } else {
-        // Fallback: If sharing files is not supported, trigger a mailto link
-        const subject = encodeURIComponent('Elbabs Communications Backup - ' + new Date().toISOString().split('T')[0]);
-        const body = encodeURIComponent('Please find the backup file attached. (Note: You must download the file first using the Export button, then attach it to this email).');
-        window.location.href = `mailto:?subject=${subject}&body=${body}`;
-        alert("Your device doesn't support direct file sharing. The JSON file has been downloaded, you can manually attach it to your email.");
-        exportJSON(); // Also download it as fallback
-    }
-}
-
 
 function icon(name) {
     const icons = {
@@ -529,6 +568,7 @@ function saveExpense() {
     nav('dashboard');
 }
 
+// --- SMART BACK BUTTON & INIT ---
 if (sessionStorage.getItem('elbabs:auth') === 'true') {
     document.getElementById('login-view').classList.remove('active');
     document.getElementById('app-view').classList.add('active');
@@ -539,18 +579,6 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed', err));
 }
 
-
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration failed', err));
-}
-
-if (sessionStorage.getItem('elbabs:auth') === 'true') {
-    document.getElementById('login-view').classList.remove('active');
-    document.getElementById('app-view').classList.add('active');
-    nav('inventory');
-}
-
-// --- Smart Back Button Logic ---
 let backPressCount = 0;
 let backPressTimer = null;
 history.pushState({ page: 'main' }, '', location.href);

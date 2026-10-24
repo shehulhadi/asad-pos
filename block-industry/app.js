@@ -1313,7 +1313,59 @@ function renderSales(main) {
     `;
 }
 
+// --- SIGNATURE PAD LOGIC ---
+let currentSigData = null;
+let sigCanvas, sigCtx, isDrawing = false;
+
+function openSigModal() {
+    document.getElementById('sig-modal').classList.add('active');
+    setTimeout(() => {
+        sigCanvas = document.getElementById('sig-canvas');
+        if (!sigCanvas) return;
+        sigCtx = sigCanvas.getContext('2d');
+        const rect = sigCanvas.getBoundingClientRect();
+        sigCanvas.width = rect.width;
+        sigCanvas.height = rect.height;
+        sigCtx.lineWidth = 3; sigCtx.lineCap = 'round'; sigCtx.strokeStyle = '#000';
+
+        const getPos = (e) => {
+            const rect = sigCanvas.getBoundingClientRect();
+            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        };
+        sigCanvas.onpointerdown = (e) => {
+            isDrawing = true; const pos = getPos(e);
+            sigCtx.beginPath(); sigCtx.moveTo(pos.x, pos.y);
+            sigCanvas.setPointerCapture(e.pointerId);
+        };
+        sigCanvas.onpointermove = (e) => {
+            if (!isDrawing) return; const pos = getPos(e);
+            sigCtx.lineTo(pos.x, pos.y); sigCtx.stroke();
+        };
+        sigCanvas.onpointerup = () => { isDrawing = false; };
+        sigCanvas.onpointerout = () => { isDrawing = false; };
+    }, 150);
+}
+
+function clearSignature() {
+    if (sigCtx) sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+}
+
+function closeSigModal() {
+    document.getElementById('sig-modal').classList.remove('active');
+}
+
+function saveSignature() {
+    if (!sigCanvas) return;
+    currentSigData = sigCanvas.toDataURL('image/png');
+    closeSigModal();
+    showToast('Signature saved');
+    const sigBtn = document.getElementById('sig-btn-ui');
+    if (sigBtn) sigBtn.innerHTML = '✅ Signature Added';
+}
+// ---------------------------
+
 function openSaleModal() {
+    currentSigData = null;
     const t = i18n[settings.lang];
     document.getElementById('modal-body').innerHTML = `
         <h3>${ico('plus')} ${t.newSale}</h3>
@@ -1504,6 +1556,7 @@ function executeSaveSale(qty, price, delivery, paid, saleDate, custName) {
                 <a href="${waLink}" target="_blank"><button class="wa" style="padding:14px; font-size:15px;">WhatsApp</button></a>
                 <button onclick="shareReceiptImage('${sale.id}')" style="padding:14px; font-size:15px; background:var(--accent); color:#fff; border:none;">📸 Image</button>
             </div>
+            ${sale.customerSignature ? `<div style="margin-top:20px; text-align:center;"><p style="font-size:12px; color:#666;">Customer Signature</p><img src="${sale.customerSignature}" style="max-width:150px; border:1px solid #ccc; border-radius:8px; padding:5px; background:#fff;"></div>` : ''}
             <div class="row"><button class="btn btn-outline" onclick="printDocument()">Print</button><button class="btn btn-outline" onclick="closeModal(); nav('sales')">Close</button></div>`;
         document.getElementById('modal').classList.add('active');
     } catch (e) { showToast("Error: " + e.message, "err"); }

@@ -108,8 +108,11 @@ function renderInventory(main) {
     available.forEach(p => {
         listHtml += `
             <div class="list-item" style="cursor:pointer;" onclick="openDeviceDetails('${p.id}')">
-                <div class="list-header">
-                    <span>${p.brand} ${p.model}</span>
+                <div class="list-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        ${p.image ? `<img src="${p.image}" style="width:40px; height:40px; object-fit:cover; border-radius:6px; border:1px solid var(--line);">` : ''}
+                        <span>${p.brand} ${p.model}</span>
+                    </div>
                     <strong style="color:var(--brand);">${formatNaira(p.sellingPrice)}</strong>
                 </div>
                 <div class="list-sub">${p.ram || ''} ${p.rom || p.storage || ''} · ${p.condition} · IMEI 1: ${p.imei || 'N/A'}</div>
@@ -135,6 +138,7 @@ function renderInventory(main) {
 
 function openAddDeviceModal() {
     currentSigData = null;
+    currentImageData = null;
     document.getElementById('modal-body').innerHTML = `
         <h3>Add New Device / Kakara</h3>
         <div class="eyebrow" style="margin-top:0;">Device Info</div>
@@ -158,6 +162,12 @@ function openAddDeviceModal() {
         <div class="row">
             <div class="form-group"><label>IMEI 1 / Serial</label><input type="text" id="p-imei" placeholder="Enter IMEI 1"></div>
             <div class="form-group"><label>IMEI 2</label><input type="text" id="p-imei2" placeholder="Enter IMEI 2 (Optional)"></div>
+        </div>
+        <div class="eyebrow" style="margin-top:15px;">Device Photo</div>
+        <div class="form-group" style="text-align:center; background:var(--bg); padding:15px; border:1px dashed var(--line); border-radius:8px; cursor:pointer;" onclick="document.getElementById('p-image-input').click()">
+            <input type="file" id="p-image-input" accept="image/*" style="display:none;" onchange="handleImageUpload(event)">
+            <img id="p-image-preview" style="max-width:100%; max-height:150px; display:none; margin:0 auto; border-radius:6px;">
+            <div id="p-image-placeholder" style="color:var(--muted); font-size:13px;">📸 Tap to add or take a photo</div>
         </div>
         
         <div class="eyebrow">Seller Info</div>
@@ -205,6 +215,7 @@ function savePhone() {
         sellerAddress: document.getElementById('p-seller-address').value || '',
         costPrice: cost,
         sellingPrice: sell,
+        image: currentImageData,
         status: 'Available',
         sellerSignature: currentSigData
     };
@@ -239,6 +250,36 @@ function savePhone() {
 }
 
 // --- SIGNATURE PAD LOGIC ---
+// --- IMAGE UPLOAD LOGIC ---
+let currentImageData = null;
+function handleImageUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800;
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            // Compress to JPEG to save localStorage space
+            currentImageData = canvas.toDataURL('image/jpeg', 0.7);
+            
+            const preview = document.getElementById('p-image-preview');
+            preview.src = currentImageData;
+            preview.style.display = 'block';
+            document.getElementById('p-image-placeholder').style.display = 'none';
+        };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+// ---------------------------
+
 let currentSigData = null;
 let sigCanvas, sigCtx, isDrawing = false;
 

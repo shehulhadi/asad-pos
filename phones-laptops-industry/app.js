@@ -177,7 +177,6 @@ function openAddDeviceModal() {
             <div class="form-group"><label>Seller Address</label><input type="text" id="p-seller-address" placeholder="Address"></div>
         </div>
 
-        ${p.sellerSignature ? `<div style="margin-top:15px; text-align:center;"><div class="eyebrow">Seller Signature</div><img src="${p.sellerSignature}" style="max-width:200px; border:1px solid var(--line); border-radius:8px; background:#fff; padding:5px; margin-top:5px;"></div>` : ''}
         <div class="eyebrow">Financials</div>
         <div class="row">
             <div class="form-group"><label>Cost Price (₦)</label><input type="number" id="p-cost" placeholder="0"></div>

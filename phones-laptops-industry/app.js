@@ -10,7 +10,7 @@ function saveData(key, data) {
     try {
         localStorage.setItem('elbabs:' + key, JSON.stringify(data)); 
     } catch (e) {
-        alert('Storage Error: Could not save data. Your device storage may be full.');
+        showToast('Storage Error: Could not save data. Device storage may be full.', 'err');
         console.error('saveData failed', e);
     }
 }
@@ -18,7 +18,7 @@ function formatNaira(num) { return '₦' + Number(num).toLocaleString(); }
 function closeModal() { document.getElementById('modal').classList.remove('active'); }
 
 function forceUpdate() {
-    if (confirm("This will download the latest app version.\nYOUR DATA WILL NOT BE DELETED.\n\nContinue?")) {
+    showDialog("Update App?", "This will download the latest app version. Your data will not be deleted.", () => {
         caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.getRegistrations().then(regs => {
@@ -29,7 +29,42 @@ function forceUpdate() {
                 window.location.reload(true);
             }
         });
+    });
+}
+
+
+function showToast(msg, type = 'default') {
+    const container = document.getElementById('toast-container');
+    if(!container) return alert(msg);
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    let icon = type === 'success' ? '<svg class="ic" style="width:18px;height:18px;stroke:#fff;" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>' : (type === 'err' ? '<svg class="ic" style="width:18px;height:18px;stroke:#fff;" viewBox="0 0 24 24"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg>' : '');
+    toast.innerHTML = `${icon} <span>${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.remove(); }, 3000);
+}
+
+function showDialog(title, msg, onConfirm) {
+    const overlay = document.getElementById('dialog-overlay');
+    if(!overlay) {
+        if(confirm(title + '\n\n' + msg)) onConfirm();
+        return;
     }
+    document.getElementById('dialog-title').textContent = title;
+    document.getElementById('dialog-msg').textContent = msg;
+    const confirmBtn = document.getElementById('dialog-confirm-btn');
+    const newBtn = confirmBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+    newBtn.onclick = () => {
+        closeDialog();
+        if (onConfirm) onConfirm();
+    };
+    overlay.classList.add('active');
+}
+
+function closeDialog() {
+    const overlay = document.getElementById('dialog-overlay');
+    if(overlay) overlay.classList.remove('active');
 }
 
 function login() {
@@ -248,12 +283,12 @@ function saveEditedDevice(id) {
 }
 
 function deleteDevice(id) {
-    if (confirm("Are you sure you want to delete this device? This cannot be undone.")) {
+    showDialog("Delete Device?", "Are you sure you want to delete this device? This cannot be undone.", () => {
         inventory = inventory.filter(p => p.id !== id);
         saveData('inventory', inventory);
         closeModal();
         nav('inventory');
-    }
+    });
 }
 
 // --- SALES ---
@@ -384,7 +419,7 @@ function saveEditedSale(id) {
 }
 
 function deleteSale(id) {
-    if (confirm("Are you sure? Deleting this sale will return the device to Available stock.")) {
+    showDialog("Delete Sale?", "Are you sure? Deleting this sale will return the device to Available stock.", () => {
         const sale = sales.find(s => s.id === id);
         if (sale) {
             const device = inventory.find(p => p.id === sale.deviceId);
@@ -395,7 +430,7 @@ function deleteSale(id) {
         saveData('sales', sales);
         closeModal();
         nav('sales');
-    }
+    });
 }
 
 
@@ -412,7 +447,7 @@ function startTradeIn() {
             if(document.getElementById('p-seller-name')) {
                 document.getElementById('p-seller-name').value = custName;
                 document.getElementById('p-seller-phone').value = custPhone;
-                alert('Enter the Kakara device details below. Customer info has been pre-filled as the Seller.');
+                showToast('Enter the Kakara device details below.', 'success');
             }
         }, 100);
     }, 100);
@@ -441,11 +476,11 @@ function saveSale() {
     const price = parseFloat(document.getElementById('s-price').value) || 0;
     const paid = parseFloat(document.getElementById('s-paid').value) || 0;
 
-    if (!deviceId) return alert('Please select a device.');
-    if (price <= 0) return alert('Please enter a valid selling price.');
+    if (!deviceId) return showToast('Please select a device.', 'err');
+    if (price <= 0) return showToast('Please enter a valid selling price.', 'err');
 
     const deviceIndex = inventory.findIndex(p => p.id === deviceId);
-    if (deviceIndex === -1) return alert('Device not found in inventory.');
+    if (deviceIndex === -1) return showToast('Device not found in inventory.', 'err');
 
     const device = inventory[deviceIndex];
     const balance = price - paid;
@@ -560,7 +595,7 @@ function openAddCapitalModal() {
 
 function saveCapital() {
     const amount = parseFloat(document.getElementById('cap-amount').value) || 0;
-    if (amount <= 0) return alert('Enter a valid amount');
+    if (amount <= 0) return showToast('Enter a valid amount', 'err');
     
     capital.push({
         id: Date.now().toString(),
@@ -634,7 +669,7 @@ async function emailBackup() {
             await navigator.share({ files: [file], title: 'Elbabs Communications Backup' });
         } catch (e) { console.log('Share failed', e); }
     } else {
-        alert("Your device doesn't support direct file sharing. The JSON file has been downloaded.");
+        showToast("Share not supported. File downloaded.", 'default');
         exportJSON();
     }
 }
@@ -654,9 +689,9 @@ function importJSON(event) {
             localStorage.setItem('elbabs:sales', JSON.stringify(data.sales));
             localStorage.setItem('elbabs:expenses', JSON.stringify(data.expenses || []));
             localStorage.setItem('elbabs:capital', JSON.stringify(data.capital || []));
-            alert('Data restored successfully! App will reload.');
+            showToast('Data restored successfully! Reloading...', 'success');
             location.reload();
-        } catch(err) { alert('Error parsing file: ' + err.message); }
+        } catch(err) { showToast('Error: ' + err.message, 'err'); }
     };
     reader.readAsText(file);
 }
@@ -697,7 +732,7 @@ function openAddExpense() {
 
 function saveExpense() {
     const amt = parseFloat(document.getElementById('e-amount').value) || 0;
-    if (amt <= 0) return alert('Enter a valid amount');
+    if (amt <= 0) return showToast('Enter a valid amount', 'err');
 
     expenses.push({
         id: Date.now().toString(),
@@ -743,7 +778,7 @@ window.addEventListener('popstate', function(event) {
         backPressCount = 0;
         window.location.href = '../index.html';
     } else {
-        alert(`Press back ${3 - backPressCount} more time${3 - backPressCount > 1 ? 's' : ''} to exit`);
+        showToast(\`Press back \${3 - backPressCount} more time\${3 - backPressCount > 1 ? 's' : ''} to exit\`, 'default');
         if (backPressTimer) clearTimeout(backPressTimer);
         backPressTimer = setTimeout(() => { backPressCount = 0; }, 2000);
     }

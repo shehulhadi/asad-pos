@@ -63,5 +63,18 @@
     </div>
 
     <script src="app.js"></script>
+
+    <div id="toast-container"></div>
+    <div id="dialog-overlay" class="modal" style="z-index: 10000;">
+        <div class="modal-content" style="text-align: center;">
+            <h3 id="dialog-title">Title</h3>
+            <p id="dialog-msg" style="font-size: 14px; color: var(--muted); margin-bottom: 24px;">Message</p>
+            <div class="row">
+                <button class="btn btn-outline" onclick="closeDialog()">Cancel</button>
+                <button class="btn btn-primary" id="dialog-confirm-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+    
 </body>
 </html>

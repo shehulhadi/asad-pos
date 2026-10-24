@@ -114,7 +114,7 @@ function renderInventory(main) {
                     <span>${p.brand} ${p.model}</span>
                     <strong style="color:var(--brand);">${formatNaira(p.sellingPrice)}</strong>
                 </div>
-                <div class="list-sub">${p.storage} · ${p.condition} · IMEI 1: ${p.imei || 'N/A'}</div>
+                <div class="list-sub">${p.ram || ''} ${p.rom || p.storage || ''} · ${p.condition} · IMEI 1: ${p.imei || 'N/A'}</div>
                 <div class="list-sub" style="margin-top:4px;">Seller: ${p.sellerName || 'Unknown'}</div>
                 <div style="margin-top:6px;"><span class="tag green">In Stock</span></div>
             </div>
@@ -140,13 +140,17 @@ function openAddDeviceModal() {
             <div class="form-group"><label>Model</label><input type="text" id="p-model" placeholder="e.g. iPhone 13"></div>
         </div>
         <div class="row">
-            <div class="form-group"><label>Storage</label><input type="text" id="p-storage" placeholder="128GB"></div>
-            <div class="form-group"><label>Condition</label><select id="p-condition">
+            <div class="form-group"><label>RAM</label><input type="text" id="p-ram" placeholder="4GB"></div>
+            <div class="form-group"><label>ROM (Storage)</label><input type="text" id="p-rom" placeholder="128GB"></div>
+        </div>
+        <div class="form-group">
+            <label>Condition</label>
+            <select id="p-condition">
                 <option value="New">New</option>
                 <option value="Used - Grade A">Used - Grade A</option>
                 <option value="Used - Grade B">Used - Grade B</option>
                 <option value="Needs Repair">Needs Repair</option>
-            </select></div>
+            </select>
         </div>
         <div class="row">
             <div class="form-group"><label>IMEI 1 / Serial</label><input type="text" id="p-imei" placeholder="Enter IMEI 1"></div>
@@ -198,7 +202,8 @@ function openDeviceDetails(id) {
         </div>
         
         <div class="eyebrow">Device Specs</div>
-        <div class="kv"><span>Storage</span><strong>${p.storage}</strong></div>
+        <div class="kv"><span>RAM</span><strong>${p.ram || 'N/A'}</strong></div>
+        <div class="kv"><span>ROM (Storage)</span><strong>${p.rom || p.storage || 'N/A'}</strong></div>
         <div class="kv"><span>Condition</span><strong>${p.condition}</strong></div>
         <div class="kv"><span>IMEI 1</span><strong>${p.imei || 'N/A'}</strong></div>
         ${p.imei2 ? `<div class="kv"><span>IMEI 2</span><strong>${p.imei2}</strong></div>` : ''}
@@ -232,8 +237,10 @@ function editDevice(id) {
             <div class="form-group"><label>Model</label><input type="text" id="edit-p-model" value="${p.model}"></div>
         </div>
         <div class="row">
-            <div class="form-group"><label>Storage</label><input type="text" id="edit-p-storage" value="${p.storage}"></div>
-            <div class="form-group"><label>Condition</label><select id="edit-p-condition">
+            <div class="form-group"><label>RAM</label><input type="text" id="edit-p-ram" value="${p.ram || ''}"></div>
+            <div class="form-group"><label>ROM (Storage)</label><input type="text" id="edit-p-rom" value="${p.rom || p.storage || ''}"></div>
+        </div>
+        <div class="form-group"><label>Condition</label><select id="edit-p-condition">
                 <option value="New" ${p.condition==='New'?'selected':''}>New</option>
                 <option value="Used - Grade A" ${p.condition==='Used - Grade A'?'selected':''}>Used - Grade A</option>
                 <option value="Used - Grade B" ${p.condition==='Used - Grade B'?'selected':''}>Used - Grade B</option>
@@ -267,7 +274,9 @@ function saveEditedDevice(id) {
     const p = inventory.find(x => x.id === id);
     p.brand = document.getElementById('edit-p-brand').value;
     p.model = document.getElementById('edit-p-model').value;
-    p.storage = document.getElementById('edit-p-storage').value;
+    p.ram = document.getElementById('edit-p-ram').value;
+    p.rom = document.getElementById('edit-p-rom').value;
+    p.storage = p.rom;
     p.condition = document.getElementById('edit-p-condition').value;
     p.imei = document.getElementById('edit-p-imei').value;
     p.imei2 = document.getElementById('edit-p-imei2').value;
@@ -324,7 +333,7 @@ function openSaleModal() {
     
     let optionsHtml = '<option value="">-- Select a device --</option>';
     availablePhones.forEach(p => {
-        optionsHtml += `<option value="${p.id}" data-price="${p.sellingPrice}">${p.brand} ${p.model} (${p.storage}) - ${formatNaira(p.sellingPrice)}</option>`;
+        optionsHtml += `<option value="${p.id}" data-price="${p.sellingPrice}">${p.brand} ${p.model} (${p.ram || ''}/${p.rom || p.storage || ''}) - ${formatNaira(p.sellingPrice)}</option>`;
     });
 
     document.getElementById('modal-body').innerHTML = `
@@ -495,7 +504,7 @@ function saveSale() {
         customerPhone: custPhone,
         deviceId: deviceId,
         costPrice: device.costPrice,
-        phoneName: `${device.brand} ${device.model} (${device.storage})`,
+        phoneName: `${device.brand} ${device.model} (${device.ram || ''}/${device.rom || device.storage || ''})`,
         totalAmount: price,
         amountPaid: paid,
         balanceOwing: balance

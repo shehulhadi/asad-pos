@@ -10,28 +10,11 @@ function saveData(key, data) {
     try {
         localStorage.setItem('elbabs:' + key, JSON.stringify(data)); 
     } catch (e) {
-        showToast('Storage Error: Could not save data. Device storage may be full.', 'err');
-        console.error('saveData failed', e);
+        showToast('Storage Error: Could not save data.', 'err');
     }
 }
 function formatNaira(num) { return '₦' + Number(num).toLocaleString(); }
 function closeModal() { document.getElementById('modal').classList.remove('active'); }
-
-function forceUpdate() {
-    showDialog("Update App?", "This will download the latest app version. Your data will not be deleted.", () => {
-        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.getRegistrations().then(regs => {
-                    for(let r of regs) r.unregister();
-                    window.location.reload(true);
-                });
-            } else {
-                window.location.reload(true);
-            }
-        });
-    });
-}
-
 
 function showToast(msg, type = 'default') {
     const container = document.getElementById('toast-container');
@@ -65,6 +48,21 @@ function showDialog(title, msg, onConfirm) {
 function closeDialog() {
     const overlay = document.getElementById('dialog-overlay');
     if(overlay) overlay.classList.remove('active');
+}
+
+function forceUpdate() {
+    showDialog("Update App?", "This will download the latest app version. Your data will not be deleted.", () => {
+        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(regs => {
+                    for(let r of regs) r.unregister();
+                    window.location.reload(true);
+                });
+            } else {
+                window.location.reload(true);
+            }
+        });
+    });
 }
 
 function login() {
@@ -123,9 +121,8 @@ function renderInventory(main) {
 
     main.innerHTML = `
         <div class="quick" style="margin-bottom: 20px;">
-            <button onclick="openAddDeviceModal()" style="background:var(--brand); color:#fff; border:none; padding:14px; font-size:15px; border-radius:8px; font-weight:700; width:100%; box-shadow:0 4px 12px rgba(37,99,235,0.3);">+ Add New Device / Trade-In</button>
+            <button onclick="openAddDeviceModal()" style="background:var(--brand); color:#fff; border:none; padding:14px; font-size:15px; border-radius:8px; font-weight:700; width:100%; box-shadow:0 4px 12px rgba(37,99,235,0.3);">+ Add New Device / Kakara</button>
         </div>
-
         <h3 style="margin: 0 0 10px; font-size: 16px;">Available Inventory (${available.length})</h3>
         ${listHtml || '<p style="text-align:center; color:var(--muted);">No devices in stock yet.</p>'}
     `;
@@ -157,7 +154,7 @@ function openAddDeviceModal() {
             <div class="form-group"><label>IMEI 2</label><input type="text" id="p-imei2" placeholder="Enter IMEI 2 (Optional)"></div>
         </div>
         
-        <div class="eyebrow">Seller Info (Where did you buy it?)</div>
+        <div class="eyebrow">Seller Info</div>
         <div class="form-group"><label>Seller Name</label><input type="text" id="p-seller-name" placeholder="Name"></div>
         <div class="row">
             <div class="form-group"><label>Seller Phone</label><input type="tel" id="p-seller-phone" placeholder="Phone"></div>
@@ -171,6 +168,64 @@ function openAddDeviceModal() {
         </div>
         <button class="btn" onclick="savePhone()">Add to Inventory</button>
         <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    `;
+    document.getElementById('modal').classList.add('active');
+}
+
+function savePhone() {
+    const brand = document.getElementById('p-brand').value;
+    const model = document.getElementById('p-model').value;
+    const cost = parseFloat(document.getElementById('p-cost').value) || 0;
+    const sell = parseFloat(document.getElementById('p-sell').value) || 0;
+    const ram = document.getElementById('p-ram').value || '';
+    const rom = document.getElementById('p-rom').value || '';
+    
+    if(!brand || !model || sell <= 0) return showToast('Please fill Brand, Model and Selling Price', 'err');
+
+    const phone = {
+        id: Date.now().toString(),
+        date: new Date().toISOString().split('T')[0],
+        brand: brand,
+        model: model,
+        ram: ram,
+        rom: rom,
+        storage: rom,
+        condition: document.getElementById('p-condition').value,
+        imei: document.getElementById('p-imei').value || '',
+        imei2: document.getElementById('p-imei2').value || '',
+        sellerName: document.getElementById('p-seller-name').value || '',
+        sellerPhone: document.getElementById('p-seller-phone').value || '',
+        sellerAddress: document.getElementById('p-seller-address').value || '',
+        costPrice: cost,
+        sellingPrice: sell,
+        status: 'Available'
+    };
+
+    inventory.push(phone);
+    saveData('inventory', inventory);
+    closeModal();
+
+    const waStatusText = '📱 *' + brand + ' ' + model + '*\n' +
+        '🔹 RAM: ' + (ram || 'N/A') + '\n' +
+        '🔹 ROM: ' + (rom || 'N/A') + '\n' +
+        '🔹 Condition: ' + phone.condition + '\n' +
+        '💰 Price: ' + formatNaira(sell) + '\n\n' +
+        '📍 Available at Elbabs Communications!';
+    
+    const waLink = `https://wa.me/?text=${encodeURIComponent(waStatusText)}`;
+
+    document.getElementById('modal-body').innerHTML = `
+        <div style="text-align:center; margin-bottom:20px;">
+            <div style="width:56px; height:56px; border-radius:50%; background:var(--brand-soft); color:var(--brand-dark); display:grid; place-items:center; margin:0 auto 14px;">
+                <svg class="ic" style="width:28px;height:28px;stroke-width:2.2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h3 style="margin-bottom:4px;">Device Added!</h3>
+            <p style="font-size:13px; color:var(--muted);">${brand} ${model} is now in stock.</p>
+        </div>
+        <a href="${waLink}" target="_blank" style="text-decoration:none;">
+            <button class="btn wa" style="width:100%; padding:14px; font-size:15px; margin-bottom:10px; border:none;">📲 Share to WhatsApp Status</button>
+        </a>
+        <button class="btn btn-outline" onclick="closeModal(); nav('inventory')">Done</button>
     `;
     document.getElementById('modal').classList.add('active');
 }
@@ -240,12 +295,14 @@ function editDevice(id) {
             <div class="form-group"><label>RAM</label><input type="text" id="edit-p-ram" value="${p.ram || ''}"></div>
             <div class="form-group"><label>ROM (Storage)</label><input type="text" id="edit-p-rom" value="${p.rom || p.storage || ''}"></div>
         </div>
-        <div class="form-group"><label>Condition</label><select id="edit-p-condition">
+        <div class="form-group">
+            <label>Condition</label>
+            <select id="edit-p-condition">
                 <option value="New" ${p.condition==='New'?'selected':''}>New</option>
                 <option value="Used - Grade A" ${p.condition==='Used - Grade A'?'selected':''}>Used - Grade A</option>
                 <option value="Used - Grade B" ${p.condition==='Used - Grade B'?'selected':''}>Used - Grade B</option>
                 <option value="Needs Repair" ${p.condition==='Needs Repair'?'selected':''}>Needs Repair</option>
-            </select></div>
+            </select>
         </div>
         <div class="row">
             <div class="form-group"><label>IMEI 1</label><input type="text" id="edit-p-imei" value="${p.imei || ''}"></div>
@@ -322,7 +379,6 @@ function renderSales(main) {
         <div class="quick" style="margin-bottom: 20px;">
             <button onclick="openSaleModal()" style="background:var(--brand); color:#fff; border:none; padding:14px; font-size:15px; border-radius:8px; font-weight:700; width:100%; box-shadow:0 4px 12px rgba(37,99,235,0.3);">+ New Sale</button>
         </div>
-
         <h3 style="margin: 0 0 10px; font-size: 16px;">Recent Sales</h3>
         ${historyHtml || '<p style="text-align:center; color:var(--muted);">No sales recorded yet.</p>'}
     `;
@@ -367,81 +423,6 @@ function openSaleModal() {
     `;
     document.getElementById('modal').classList.add('active');
 }
-
-
-function openSaleDetails(id) {
-    const s = sales.find(x => x.id === id);
-    if (!s) return;
-    
-    document.getElementById('modal-body').innerHTML = `
-        <h3>Sale Receipt</h3>
-        <div style="text-align:center; margin-bottom:20px;">
-            <p style="font-size:13px; color:var(--muted);">${s.date}</p>
-            <p style="font-size:28px; font-weight:800; color:var(--brand); margin-top:8px;">${formatNaira(s.totalAmount)}</p>
-            ${s.balanceOwing > 0 ? `<span class="tag" style="background:var(--danger-soft); color:var(--danger); margin-top:6px;">Owing ${formatNaira(s.balanceOwing)}</span>` : `<span class="tag green" style="margin-top:6px;">Fully paid</span>`}
-        </div>
-        <div class="kv"><span>Customer</span><strong>${s.customerName}</strong></div>
-        <div class="kv"><span>Phone</span><strong>${s.customerPhone || 'N/A'}</strong></div>
-        <div class="kv"><span>Device</span><strong>${s.phoneName}</strong></div>
-        <div class="kv"><span>Amount Paid</span><strong>${formatNaira(s.amountPaid)}</strong></div>
-        
-        <div class="actions" style="margin-top:20px;">
-            <a href="https://wa.me/${(s.customerPhone||'').replace(/^0/, '234')}?text=${encodeURIComponent(`*Receipt - Elbabs Communications*\n\nCustomer: ${s.customerName}\nDevice: ${s.phoneName}\n\n*Total: ${formatNaira(s.totalAmount)}*\nPaid: ${formatNaira(s.amountPaid)}\n*Balance: ${formatNaira(s.balanceOwing)}*`)}" target="_blank"><button class="wa">WhatsApp</button></a>
-        </div>
-        <div class="row" style="margin-top:12px;">
-            <button class="btn outline" onclick="closeModal()">Close</button>
-            <button class="btn" onclick="editSale('${s.id}')">Edit Sale</button>
-        </div>
-        <button class="btn btn-danger" style="margin-top:10px;" onclick="deleteSale('${s.id}')">Delete Sale</button>
-    `;
-    document.getElementById('modal').classList.add('active');
-}
-
-function editSale(id) {
-    const s = sales.find(x => x.id === id);
-    document.getElementById('modal-body').innerHTML = `
-        <h3>Edit Sale</h3>
-        <div class="form-group"><label>Customer</label><input type="text" id="edit-s-customer" value="${s.customerName}"></div>
-        <div class="form-group"><label>Phone</label><input type="tel" id="edit-s-phone" value="${s.customerPhone || ''}"></div>
-        <div class="row">
-            <div class="form-group"><label>Selling Price (₦)</label><input type="number" id="edit-s-price" value="${s.totalAmount}"></div>
-            <div class="form-group"><label>Amount Paid (₦)</label><input type="number" id="edit-s-paid" value="${s.amountPaid}"></div>
-        </div>
-        <div class="row">
-            <button class="btn outline" onclick="openSaleDetails('${s.id}')">Back</button>
-            <button class="btn" onclick="saveEditedSale('${s.id}')">Save Changes</button>
-        </div>
-    `;
-}
-
-function saveEditedSale(id) {
-    const s = sales.find(x => x.id === id);
-    s.customerName = document.getElementById('edit-s-customer').value;
-    s.customerPhone = document.getElementById('edit-s-phone').value;
-    s.totalAmount = parseFloat(document.getElementById('edit-s-price').value) || 0;
-    s.amountPaid = parseFloat(document.getElementById('edit-s-paid').value) || 0;
-    s.balanceOwing = s.totalAmount - s.amountPaid;
-    
-    saveData('sales', sales);
-    closeModal();
-    nav('sales');
-}
-
-function deleteSale(id) {
-    showDialog("Delete Sale?", "Are you sure? Deleting this sale will return the device to Available stock.", () => {
-        const sale = sales.find(s => s.id === id);
-        if (sale) {
-            const device = inventory.find(p => p.id === sale.deviceId);
-            if (device) device.status = 'Available';
-            saveData('inventory', inventory);
-        }
-        sales = sales.filter(s => s.id !== id);
-        saveData('sales', sales);
-        closeModal();
-        nav('sales');
-    });
-}
-
 
 function startTradeIn() {
     const custName = document.getElementById('s-customer').value;
@@ -535,6 +516,79 @@ function saveSale() {
     document.getElementById('modal').classList.add('active');
 }
 
+function openSaleDetails(id) {
+    const s = sales.find(x => x.id === id);
+    if (!s) return;
+    
+    document.getElementById('modal-body').innerHTML = `
+        <h3>Sale Receipt</h3>
+        <div style="text-align:center; margin-bottom:20px;">
+            <p style="font-size:13px; color:var(--muted);">${s.date}</p>
+            <p style="font-size:28px; font-weight:800; color:var(--brand); margin-top:8px;">${formatNaira(s.totalAmount)}</p>
+            ${s.balanceOwing > 0 ? `<span class="tag" style="background:var(--danger-soft); color:var(--danger); margin-top:6px;">Owing ${formatNaira(s.balanceOwing)}</span>` : `<span class="tag green" style="margin-top:6px;">Fully paid</span>`}
+        </div>
+        <div class="kv"><span>Customer</span><strong>${s.customerName}</strong></div>
+        <div class="kv"><span>Phone</span><strong>${s.customerPhone || 'N/A'}</strong></div>
+        <div class="kv"><span>Device</span><strong>${s.phoneName}</strong></div>
+        <div class="kv"><span>Amount Paid</span><strong>${formatNaira(s.amountPaid)}</strong></div>
+        
+        <div class="actions" style="margin-top:20px;">
+            <a href="https://wa.me/${(s.customerPhone||'').replace(/^0/, '234')}?text=${encodeURIComponent(`*Receipt - Elbabs Communications*\\n\\nCustomer: ${s.customerName}\\nDevice: ${s.phoneName}\\n\\n*Total: ${formatNaira(s.totalAmount)}*\\nPaid: ${formatNaira(s.amountPaid)}\\n*Balance: ${formatNaira(s.balanceOwing)}*`)}" target="_blank"><button class="wa">WhatsApp</button></a>
+        </div>
+        <div class="row" style="margin-top:12px;">
+            <button class="btn outline" onclick="closeModal()">Close</button>
+            <button class="btn" onclick="editSale('${s.id}')">Edit Sale</button>
+        </div>
+        <button class="btn btn-danger" style="margin-top:10px;" onclick="deleteSale('${s.id}')">Delete Sale</button>
+    `;
+    document.getElementById('modal').classList.add('active');
+}
+
+function editSale(id) {
+    const s = sales.find(x => x.id === id);
+    document.getElementById('modal-body').innerHTML = `
+        <h3>Edit Sale</h3>
+        <div class="form-group"><label>Customer</label><input type="text" id="edit-s-customer" value="${s.customerName}"></div>
+        <div class="form-group"><label>Phone</label><input type="tel" id="edit-s-phone" value="${s.customerPhone || ''}"></div>
+        <div class="row">
+            <div class="form-group"><label>Selling Price (₦)</label><input type="number" id="edit-s-price" value="${s.totalAmount}"></div>
+            <div class="form-group"><label>Amount Paid (₦)</label><input type="number" id="edit-s-paid" value="${s.amountPaid}"></div>
+        </div>
+        <div class="row">
+            <button class="btn outline" onclick="openSaleDetails('${s.id}')">Back</button>
+            <button class="btn" onclick="saveEditedSale('${s.id}')">Save Changes</button>
+        </div>
+    `;
+}
+
+function saveEditedSale(id) {
+    const s = sales.find(x => x.id === id);
+    s.customerName = document.getElementById('edit-s-customer').value;
+    s.customerPhone = document.getElementById('edit-s-phone').value;
+    s.totalAmount = parseFloat(document.getElementById('edit-s-price').value) || 0;
+    s.amountPaid = parseFloat(document.getElementById('edit-s-paid').value) || 0;
+    s.balanceOwing = s.totalAmount - s.amountPaid;
+    
+    saveData('sales', sales);
+    closeModal();
+    nav('sales');
+}
+
+function deleteSale(id) {
+    showDialog("Delete Sale?", "Are you sure? Deleting this sale will return the device to Available stock.", () => {
+        const sale = sales.find(s => s.id === id);
+        if (sale) {
+            const device = inventory.find(p => p.id === sale.deviceId);
+            if (device) device.status = 'Available';
+            saveData('inventory', inventory);
+        }
+        sales = sales.filter(s => s.id !== id);
+        saveData('sales', sales);
+        closeModal();
+        nav('sales');
+    });
+}
+
 // --- DASHBOARD ---
 function renderDashboard(main) {
     const totalRevenue = sales.reduce((sum, s) => sum + N(s.totalAmount), 0);
@@ -618,7 +672,34 @@ function saveCapital() {
     nav('dashboard');
 }
 
-// --- REPORTS & BACKUP ---
+function openAddExpense() {
+    document.getElementById('modal-body').innerHTML = `
+        <h3>Add Expense</h3>
+        <div class="form-group"><label>Date</label><input type="date" id="e-date" value="${new Date().toISOString().split('T')[0]}"></div>
+        <div class="form-group"><label>Amount (₦)</label><input type="number" id="e-amount" placeholder="0"></div>
+        <div class="form-group"><label>Note / Category</label><input type="text" id="e-note" placeholder="e.g. Shop Rent, Transport"></div>
+        <button class="btn" onclick="saveExpense()">Save Expense</button>
+        <button class="btn" style="background:var(--bg); color:var(--text); border:1px solid var(--line);" onclick="closeModal()">Cancel</button>
+    `;
+    document.getElementById('modal').classList.add('active');
+}
+
+function saveExpense() {
+    const amt = parseFloat(document.getElementById('e-amount').value) || 0;
+    if (amt <= 0) return showToast('Enter a valid amount', 'err');
+
+    expenses.push({
+        id: Date.now().toString(),
+        date: document.getElementById('e-date').value,
+        amount: amt,
+        note: document.getElementById('e-note').value || 'General Expense'
+    });
+    saveData('expenses', expenses);
+    closeModal();
+    nav('dashboard');
+}
+
+// --- REPORTS ---
 function renderReports(main) {
     main.innerHTML = `
         <h3 style="margin-bottom:16px;">Reports & Backup</h3>
@@ -727,34 +808,6 @@ function icon(name) {
     return `<svg class="ic" viewBox="0 0 24 24" style="width:16px;height:16px;">${icons[name]||''}</svg>`;
 }
 
-function openAddExpense() {
-    document.getElementById('modal-body').innerHTML = `
-        <h3>Add Expense</h3>
-        <div class="form-group"><label>Date</label><input type="date" id="e-date" value="${new Date().toISOString().split('T')[0]}"></div>
-        <div class="form-group"><label>Amount (₦)</label><input type="number" id="e-amount" placeholder="0"></div>
-        <div class="form-group"><label>Note / Category</label><input type="text" id="e-note" placeholder="e.g. Shop Rent, Transport"></div>
-        <button class="btn" onclick="saveExpense()">Save Expense</button>
-        <button class="btn" style="background:var(--bg); color:var(--text); border:1px solid var(--line);" onclick="closeModal()">Cancel</button>
-    `;
-    document.getElementById('modal').classList.add('active');
-}
-
-function saveExpense() {
-    const amt = parseFloat(document.getElementById('e-amount').value) || 0;
-    if (amt <= 0) return showToast('Enter a valid amount', 'err');
-
-    expenses.push({
-        id: Date.now().toString(),
-        date: document.getElementById('e-date').value,
-        amount: amt,
-        note: document.getElementById('e-note').value || 'General Expense'
-    });
-    saveData('expenses', expenses);
-    closeModal();
-    nav('dashboard');
-}
-
-// --- SMART BACK BUTTON & INIT ---
 if (sessionStorage.getItem('elbabs:auth') === 'true') {
     document.getElementById('login-view').classList.remove('active');
     document.getElementById('app-view').classList.add('active');
@@ -787,7 +840,7 @@ window.addEventListener('popstate', function(event) {
         backPressCount = 0;
         window.location.href = '../index.html';
     } else {
-        showToast(\`Press back \${3 - backPressCount} more time\${3 - backPressCount > 1 ? 's' : ''} to exit\`, 'default');
+        showToast(`Press back ${3 - backPressCount} more time${3 - backPressCount > 1 ? 's' : ''} to exit`, 'default');
         if (backPressTimer) clearTimeout(backPressTimer);
         backPressTimer = setTimeout(() => { backPressCount = 0; }, 2000);
     }

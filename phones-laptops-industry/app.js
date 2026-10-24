@@ -134,6 +134,7 @@ function renderInventory(main) {
 }
 
 function openAddDeviceModal() {
+    currentSigData = null;
     document.getElementById('modal-body').innerHTML = `
         <h3>Add New Device / Kakara</h3>
         <div class="eyebrow" style="margin-top:0;">Device Info</div>
@@ -166,6 +167,7 @@ function openAddDeviceModal() {
             <div class="form-group"><label>Seller Address</label><input type="text" id="p-seller-address" placeholder="Address"></div>
         </div>
 
+        ${p.sellerSignature ? `<div style="margin-top:15px; text-align:center;"><div class="eyebrow">Seller Signature</div><img src="${p.sellerSignature}" style="max-width:200px; border:1px solid var(--line); border-radius:8px; background:#fff; padding:5px; margin-top:5px;"></div>` : ''}
         <div class="eyebrow">Financials</div>
         <div class="row">
             <div class="form-group"><label>Cost Price (₦)</label><input type="number" id="p-cost" placeholder="0"></div>
@@ -203,7 +205,8 @@ function savePhone() {
         sellerAddress: document.getElementById('p-seller-address').value || '',
         costPrice: cost,
         sellingPrice: sell,
-        status: 'Available'
+        status: 'Available',
+        sellerSignature: currentSigData
     };
 
     inventory.push(phone);
@@ -234,6 +237,67 @@ function savePhone() {
     `;
     document.getElementById('modal').classList.add('active');
 }
+
+// --- SIGNATURE PAD LOGIC ---
+let currentSigData = null;
+let sigCanvas, sigCtx, isDrawing = false;
+
+function openSigModal() {
+    document.getElementById('sig-modal').classList.add('active');
+    setTimeout(() => {
+        sigCanvas = document.getElementById('sig-canvas');
+        if (!sigCanvas) return;
+        sigCtx = sigCanvas.getContext('2d');
+        
+        // Match internal resolution to display size to prevent offset drawing
+        const rect = sigCanvas.getBoundingClientRect();
+        sigCanvas.width = rect.width;
+        sigCanvas.height = rect.height;
+        
+        sigCtx.lineWidth = 3;
+        sigCtx.lineCap = 'round';
+        sigCtx.strokeStyle = '#000';
+
+        const getPos = (e) => {
+            const rect = sigCanvas.getBoundingClientRect();
+            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        };
+
+        sigCanvas.onpointerdown = (e) => {
+            isDrawing = true;
+            const pos = getPos(e);
+            sigCtx.beginPath();
+            sigCtx.moveTo(pos.x, pos.y);
+            sigCanvas.setPointerCapture(e.pointerId);
+        };
+        sigCanvas.onpointermove = (e) => {
+            if (!isDrawing) return;
+            const pos = getPos(e);
+            sigCtx.lineTo(pos.x, pos.y);
+            sigCtx.stroke();
+        };
+        sigCanvas.onpointerup = () => { isDrawing = false; };
+        sigCanvas.onpointerout = () => { isDrawing = false; };
+    }, 150);
+}
+
+function clearSignature() {
+    if (sigCtx) sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+}
+
+function closeSigModal() {
+    document.getElementById('sig-modal').classList.remove('active');
+}
+
+function saveSignature() {
+    if (!sigCanvas) return;
+    currentSigData = sigCanvas.toDataURL('image/png');
+    closeSigModal();
+    showToast('Signature saved', 'default');
+    const sigBtn = document.getElementById('sig-btn-ui');
+    if (sigBtn) sigBtn.innerHTML = '✅ Signature Added';
+}
+// ---------------------------
 
 function shareDeviceStatus(id) {
     const p = inventory.find(x => x.id === id);

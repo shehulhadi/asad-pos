@@ -624,7 +624,7 @@ function renderSales(main) {
 
 function openSaleModal() {
     const availablePhones = inventory.filter(p => p.status === 'Available');
-    
+
     let optionsHtml = '<option value="">-- Select a device --</option>';
     availablePhones.forEach(p => {
         optionsHtml += `<option value="${p.id}" data-price="${p.sellingPrice}">${p.brand} ${p.model} (${p.ram || ''}/${p.rom || p.storage || ''}) - ${formatNaira(p.sellingPrice)}</option>`;
@@ -632,21 +632,30 @@ function openSaleModal() {
 
     document.getElementById('modal-body').innerHTML = `
         <h3>New Sale</h3>
-        <div class="row">
-            <div class="form-group" style="flex:2;">
-                <label>Select Device</label>
-                <select id="s-device" onchange="updateSalePrice()">
-                    ${optionsHtml}
-                </select>
-            </div>
-            <div class="form-group" style="flex:1; display:flex; align-items:flex-end;">
-                <button class="btn" style="margin:0; padding:12px; font-size:12px; background:var(--accent); color:#fff; border:none; border-radius:8px;" onclick="startTradeIn()">🔄 Kakara</button>
-            </div>
+        <div class="form-group">
+            <label>Select Device (Outgoing)</label>
+            <select id="s-device" onchange="updateSalePrice()">
+                ${optionsHtml}
+            </select>
         </div>
-        
+
         <div class="form-group"><label>Customer Name</label><input type="text" id="s-customer" placeholder="Name"></div>
         <div class="form-group"><label>Customer Phone</label><input type="tel" id="s-phone" placeholder="Phone"></div>
-        
+
+        <div style="margin: 15px 0; display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:12px; border-radius:8px; border:1px solid var(--line);">
+            <label style="margin:0; font-weight:700;">🔄 Kakara (Trade-In)</label>
+            <input type="checkbox" id="s-kakara-toggle" onchange="toggleKakara()" style="width:22px; height:22px; cursor:pointer;">
+        </div>
+
+        <div id="s-kakara-section" style="display:none; background:var(--bg); padding:15px; border-radius:8px; border:1px dashed var(--brand); margin-bottom:15px;">
+            <h4 style="margin-top:0; margin-bottom:10px; color:var(--brand);">Customer's Incoming Phone</h4>
+            <div class="row">
+                <div class="form-group"><label>Brand</label><input type="text" id="s-ti-brand" placeholder="e.g. Samsung"></div>
+                <div class="form-group"><label>Model</label><input type="text" id="s-ti-model" placeholder="e.g. A12"></div>
+            </div>
+            <div class="form-group"><label>Trade-In Value (₦)</label><input type="number" id="s-ti-value" placeholder="0" oninput="calcSale()"></div>
+        </div>
+
         <div class="row">
             <div class="form-group"><label>Selling Price (₦)</label><input type="number" id="s-price" value="" placeholder="0" oninput="calcSale()"></div>
             <div class="form-group"><label>Amount Paid (₦)</label><input type="number" id="s-paid" value="" placeholder="0" oninput="calcSale()"></div>
@@ -662,24 +671,13 @@ function openSaleModal() {
     document.getElementById('modal').classList.add('active');
 }
 
-function startTradeIn() {
-    const custName = document.getElementById('s-customer').value;
-    const custPhone = document.getElementById('s-phone').value;
-    
-    closeModal();
-    nav('inventory');
-    
-    setTimeout(() => {
-        openAddDeviceModal();
-        setTimeout(() => {
-            if(document.getElementById('p-seller-name')) {
-                document.getElementById('p-seller-name').value = custName;
-                document.getElementById('p-seller-phone').value = custPhone;
-                showToast('Enter the Kakara device details below.', 'success');
-            }
-        }, 100);
-    }, 100);
+function toggleKakara() {
+    const toggle = document.getElementById('s-kakara-toggle');
+    const section = document.getElementById('s-kakara-section');
+    section.style.display = toggle.checked ? 'block' : 'none';
+    calcSale();
 }
+
 
 function updateSalePrice() {
     const select = document.getElementById('s-device');
@@ -693,7 +691,12 @@ function updateSalePrice() {
 function calcSale() {
     const price = parseFloat(document.getElementById('s-price').value) || 0;
     const paid = parseFloat(document.getElementById('s-paid').value) || 0;
-    const balance = price - paid;
+    let tiValue = 0;
+    const isKakara = document.getElementById('s-kakara-toggle') && document.getElementById('s-kakara-toggle').checked;
+    if (isKakara) {
+        tiValue = parseFloat(document.getElementById('s-ti-value').value) || 0;
+    }
+    const balance = price - tiValue - paid;
     document.getElementById('s-balance-display').textContent = balance.toLocaleString();
 }
 
@@ -711,7 +714,38 @@ function saveSale() {
     if (deviceIndex === -1) return showToast('Device not found in inventory.', 'err');
 
     const device = inventory[deviceIndex];
-    const balance = price - paid;
+    
+    let tiValue = 0;
+    let tiBrand = '';
+    let tiModel = '';
+    
+    const isKakara = document.getElementById('s-kakara-toggle') && document.getElementById('s-kakara-toggle').checked;
+    if (isKakara) {
+        tiBrand = document.getElementById('s-ti-brand').value || 'Unknown';
+        tiModel = document.getElementById('s-ti-model').value || 'Device';
+        tiValue = parseFloat(document.getElementById('s-ti-value').value) || 0;
+        
+        if (tiValue > 0) {
+            const newPhone = {
+                id: Date.now().toString() + 'ti',
+                date: new Date().toISOString().split('T')[0],
+                brand: tiBrand,
+                model: tiModel,
+                ram: '',
+                rom: '',
+                condition: 'Used - Grade A',
+                imei: '',
+                sellerName: custName,
+                sellerPhone: custPhone,
+                costPrice: tiValue,
+                sellingPrice: tiValue * 1.2,
+                status: 'Available'
+            };
+            inventory.push(newPhone);
+        }
+    }
+
+    const balance = price - tiValue - paid;
 
     inventory[deviceIndex].status = 'Sold';
     saveData('inventory', inventory);
@@ -726,6 +760,8 @@ function saveSale() {
         phoneName: `${device.brand} ${device.model} (${device.ram || ''}/${device.rom || device.storage || ''})`,
         totalAmount: price,
         amountPaid: paid,
+        tradeInValue: tiValue,
+        tradeInDevice: tiValue > 0 ? `${tiBrand} ${tiModel}` : '',
         balanceOwing: balance
     };
 

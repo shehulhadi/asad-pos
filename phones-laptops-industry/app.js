@@ -169,7 +169,9 @@ function forceUpdate() {
 function login() {
     const pin = document.getElementById('pin-input').value;
     const err = document.getElementById('login-error');
-    if (pin === settings.pin) {
+    const storedPin = String(settings.pin || '1234');
+    
+    if (String(pin).trim() === storedPin) {
         sessionStorage.setItem('elbabs:auth', 'true');
         document.getElementById('login-view').classList.remove('active');
         document.getElementById('app-view').classList.add('active');

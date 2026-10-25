@@ -713,57 +713,21 @@ function updateSalePrice() {
 function calcSale() {
     const price = parseFloat(document.getElementById('s-price').value) || 0;
     const paid = parseFloat(document.getElementById('s-paid').value) || 0;
-    let tiValue = 0;
+        let tiValue = 0;
+    let tiPhoneName = '';
+
     const isKakara = document.getElementById('s-kakara-toggle') && document.getElementById('s-kakara-toggle').checked;
     if (isKakara) {
+        const tiDeviceId = document.getElementById('s-ti-device').value;
         tiValue = parseFloat(document.getElementById('s-ti-value').value) || 0;
-    }
-    const balance = price - tiValue - paid;
-    document.getElementById('s-balance-display').textContent = balance.toLocaleString();
-}
 
-function saveSale() {
-    const deviceId = document.getElementById('s-device').value;
-    const custName = document.getElementById('s-customer').value || 'Walk-in';
-    const custPhone = document.getElementById('s-phone').value || '';
-    const price = parseFloat(document.getElementById('s-price').value) || 0;
-    const paid = parseFloat(document.getElementById('s-paid').value) || 0;
-
-    if (!deviceId) return showToast('Please select a device.', 'err');
-    if (price <= 0) return showToast('Please enter a valid selling price.', 'err');
-
-    const deviceIndex = inventory.findIndex(p => p.id === deviceId);
-    if (deviceIndex === -1) return showToast('Device not found in inventory.', 'err');
-
-    const device = inventory[deviceIndex];
-    
-    let tiValue = 0;
-    let tiBrand = '';
-    let tiModel = '';
-    
-    const isKakara = document.getElementById('s-kakara-toggle') && document.getElementById('s-kakara-toggle').checked;
-    if (isKakara) {
-        tiBrand = document.getElementById('s-ti-brand').value || 'Unknown';
-        tiModel = document.getElementById('s-ti-model').value || 'Device';
-        tiValue = parseFloat(document.getElementById('s-ti-value').value) || 0;
-        
-        if (tiValue > 0) {
-            const newPhone = {
-                id: Date.now().toString() + 'ti',
-                date: new Date().toISOString().split('T')[0],
-                brand: tiBrand,
-                model: tiModel,
-                ram: '',
-                rom: '',
-                condition: 'Used - Grade A',
-                imei: '',
-                sellerName: custName,
-                sellerPhone: custPhone,
-                costPrice: tiValue,
-                sellingPrice: tiValue * 1.2,
-                status: 'Available'
-            };
-            inventory.push(newPhone);
+        if (tiDeviceId) {
+            const tiDeviceIndex = inventory.findIndex(p => p.id === tiDeviceId);
+            if (tiDeviceIndex !== -1) {
+                const tiDevice = inventory[tiDeviceIndex];
+                tiPhoneName = `${tiDevice.brand} ${tiDevice.model} (${tiDevice.ram || ''}/${tiDevice.rom || ''})`;
+                inventory[tiDeviceIndex].status = 'Sold'; // Mark the trade-in phone as taken
+            }
         }
     }
 
@@ -790,7 +754,8 @@ function saveSale() {
     sales.push(sale);
     saveData('sales', sales);
 
-    const waText = encodeURIComponent(`*Receipt - Elbabs Communications*\n\nCustomer: ${custName}\nDevice: ${sale.phoneName}\n\n*Total: ${formatNaira(price)}*\nPaid: ${formatNaira(paid)}\n*Balance: ${formatNaira(balance)}*\n\nThank you for your business!`);
+    let waText = `*Receipt - Elbabs Communications*\n\nCustomer: ${custName}\nDevice: ${sale.phoneName}\n\n*Total: ${formatNaira(price)}*\nPaid: ${formatNaira(paid)}\n` + (tiValue > 0 ? `Trade-In (${tiPhoneName}): ${formatNaira(tiValue)}\n` : '') + `*Balance: ${formatNaira(balance)}*\n\nThank you for your business!`;
+    waText = encodeURIComponent(waText);
     const waPhone = custPhone.replace(/^0/, '234');
     const waLink = `https://wa.me/${waPhone}?text=${waText}`;
 
@@ -826,6 +791,7 @@ function openSaleDetails(id) {
         <div class="kv"><span>Customer</span><strong>${s.customerName}</strong></div>
         <div class="kv"><span>Phone</span><strong>${s.customerPhone || 'N/A'}</strong></div>
         <div class="kv"><span>Device</span><strong>${s.phoneName}</strong></div>
+        ${s.tradeInValue > 0 ? `<div class="kv"><span>Trade-In (${s.tradeInDevice})</span><strong>${formatNaira(s.tradeInValue)}</strong></div>` : ''}
         <div class="kv"><span>Amount Paid</span><strong>${formatNaira(s.amountPaid)}</strong></div>
         
         ${s.customerSignature ? `<div style="margin-top:20px; text-align:center;"><p style="font-size:12px; color:#666;">Customer Signature</p><img src="${s.customerSignature}" style="max-width:150px; border:1px solid #ccc; border-radius:8px; padding:5px; background:#fff;"></div>` : ''}

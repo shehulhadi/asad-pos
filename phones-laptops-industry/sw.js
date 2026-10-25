@@ -1,4 +1,4 @@
-const CACHE_NAME = 'elbabs-v6';
+const CACHE_NAME = 'elbabs-v7';
 const ASSETS = [
   './',
   './index.html',

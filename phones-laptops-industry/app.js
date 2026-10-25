@@ -627,7 +627,7 @@ function openSaleModal() {
 
     let optionsHtml = '<option value="">-- Select a device --</option>';
     availablePhones.forEach(p => {
-        optionsHtml += `<option value="${p.id}" data-price="${p.sellingPrice}">${p.brand} ${p.model} (${p.ram || ''}/${p.rom || p.storage || ''}) - ${formatNaira(p.sellingPrice)}</option>`;
+        optionsHtml += `<option value="${p.id}" data-price="${p.sellingPrice}" data-cost="${p.costPrice}">${p.brand} ${p.model} (${p.ram || ''}/${p.rom || p.storage || ''}) - ${formatNaira(p.sellingPrice)}</option>`;
     });
 
     document.getElementById('modal-body').innerHTML = `
@@ -643,15 +643,17 @@ function openSaleModal() {
         <div class="form-group"><label>Customer Phone</label><input type="tel" id="s-phone" placeholder="Phone"></div>
 
         <div style="margin: 15px 0; display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:12px; border-radius:8px; border:1px solid var(--line);">
-            <label style="margin:0; font-weight:700;">🔄 Kakara (Trade-In)</label>
+            <label style="margin:0; font-weight:700;"> 🔄 Kakara (Trade-In)</label>
             <input type="checkbox" id="s-kakara-toggle" onchange="toggleKakara()" style="width:22px; height:22px; cursor:pointer;">
         </div>
 
         <div id="s-kakara-section" style="display:none; background:var(--bg); padding:15px; border-radius:8px; border:1px dashed var(--brand); margin-bottom:15px;">
-            <h4 style="margin-top:0; margin-bottom:10px; color:var(--brand);">Customer's Incoming Phone</h4>
-            <div class="row">
-                <div class="form-group"><label>Brand</label><input type="text" id="s-ti-brand" placeholder="e.g. Samsung"></div>
-                <div class="form-group"><label>Model</label><input type="text" id="s-ti-model" placeholder="e.g. A12"></div>
+            <h4 style="margin-top:0; margin-bottom:10px; color:var(--brand);">Trade-In Details</h4>
+            <div class="form-group">
+                <label>Select Phone He Sold (Incoming)</label>
+                <select id="s-ti-device" onchange="updateTradeInValue()">
+                    ${optionsHtml}
+                </select>
             </div>
             <div class="form-group"><label>Trade-In Value (₦)</label><input type="number" id="s-ti-value" placeholder="0" oninput="calcSale()"></div>
         </div>
@@ -669,6 +671,24 @@ function openSaleModal() {
         <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
     `;
     document.getElementById('modal').classList.add('active');
+}
+
+function updateTradeInValue() {
+    const select = document.getElementById('s-ti-device');
+    const selectedOption = select.options[select.selectedIndex];
+    if (selectedOption.value) {
+        document.getElementById('s-ti-value').value = selectedOption.getAttribute('data-cost');
+    } else {
+        document.getElementById('s-ti-value').value = 0;
+    }
+    calcSale();
+}
+
+function toggleKakara() {
+    const toggle = document.getElementById('s-kakara-toggle');
+    const section = document.getElementById('s-kakara-section');
+    section.style.display = toggle.checked ? 'block' : 'none';
+    calcSale();
 }
 
 function toggleKakara() {
@@ -761,7 +781,7 @@ function saveSale() {
         totalAmount: price,
         amountPaid: paid,
         tradeInValue: tiValue,
-        tradeInDevice: tiValue > 0 ? `${tiBrand} ${tiModel}` : '',
+        tradeInDevice: tiPhoneName,
         balanceOwing: balance
     };
 

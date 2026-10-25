@@ -792,6 +792,7 @@ function openSaleDetails(id) {
         <div class="kv"><span>Phone</span><strong>${s.customerPhone || 'N/A'}</strong></div>
         <div class="kv"><span>Device</span><strong>${s.phoneName}</strong></div>
         ${s.tradeInValue > 0 ? `<div class="kv"><span>Trade-In (${s.tradeInDevice})</span><strong>${formatNaira(s.tradeInValue)}</strong></div>` : ''}
+        ${s.tradeInValue > 0 ? `<div class="kv"><span>Trade-In (${s.tradeInDevice})</span><strong>${formatNaira(s.tradeInValue)}</strong></div>` : ''}
         <div class="kv"><span>Amount Paid</span><strong>${formatNaira(s.amountPaid)}</strong></div>
         
         ${s.customerSignature ? `<div style="margin-top:20px; text-align:center;"><p style="font-size:12px; color:#666;">Customer Signature</p><img src="${s.customerSignature}" style="max-width:150px; border:1px solid #ccc; border-radius:8px; padding:5px; background:#fff;"></div>` : ''}
